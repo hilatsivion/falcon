@@ -2,6 +2,10 @@
 
 .vs/
 
+appsettings.json
+appsettings.*.json
+FalconBackend/appsettings.json
+
 # dependencies
 node_modules/
 
