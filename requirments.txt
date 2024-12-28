@@ -1,0 +1,11 @@
+backend:
+Microsoft.EntityFrameworkCore.SqlServer
+Microsoft.EntityFrameworkCore.Tools
+Microsoft.EntityFrameworkCore
+Microsoft.EntityFrameworkCore.Analyzers
+System.IO.FileSystem
+
+frontend:
+
+
+python-server:
