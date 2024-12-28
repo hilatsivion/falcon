@@ -1,9 +1,11 @@
 backend:
-Microsoft.EntityFrameworkCore.SqlServer
-Microsoft.EntityFrameworkCore.Tools
-Microsoft.EntityFrameworkCore
-Microsoft.EntityFrameworkCore.Analyzers
-System.IO.FileSystem
+dotnet restore
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package Microsoft.EntityFrameworkCore
+dotnet add package Microsoft.EntityFrameworkCore.Analyzers
+dotnet add package System.IO.FileSystem
+
 
 frontend:
 
