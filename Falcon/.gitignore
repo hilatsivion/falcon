@@ -20,19 +20,89 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
+# Debug files
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
 # macOS
 .DS_Store
-*.pem
+.AppleDouble
+.LSOverride
 
-# local env files
-.env*.local
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# typescript
+# Linux
+*.pid
+
+# Logs
+*.log
+logs/
+logs/*
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# IDE/Editor configurations
+.idea/
+.vscode/
+*.sublime-workspace
+
+# Local environment files
+.env
+.env.*.local
+*.local
+
+# Build files
+build/
+dist/
+*.out
+*.o
+*.class
+*.so
+*.dll
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+
+# TypeScript
 *.tsbuildinfo
 
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.tmp
+*.backup
+
+# Test output
+coverage/
+*.lcov
+
+# Sensitive files
+config/secrets.json
+config/private_config.yaml
+*.crt
+*.pem
+
+# Example files
 app-example
+*.example.*
+*.sample.*
+
+# Additional exclusions
+private/
+keys/
+passwords.txt
+certificates/
+secrets/
