@@ -2,15 +2,16 @@
 using Microsoft.EntityFrameworkCore;
 using System.Net.Mail;
 
-
 namespace FalconBackend.Data
 {
     public class AppDbContext : DbContext
     {
+        // Constructor for Dependency Injection
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public AppDbContext() { }
 
+        // Define DbSets for your entities
         public DbSet<AppUser> AppUsers { get; set; }
         public DbSet<Analytics> Analytics { get; set; }
         public DbSet<MailAccount> MailAccounts { get; set; }
@@ -24,9 +25,20 @@ namespace FalconBackend.Data
         public DbSet<FavoriteTag> FavoriteTags { get; set; }
         public DbSet<Tag> Tags { get; set; }
 
+        // Fluent API configurations
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Fluent API configurations for relationships can be added here if necessary.
+            // Example configuration for relationships (you can customize this):
+            // Uncomment and customize as needed.
+
+            // Configure a one-to-many relationship
+            // modelBuilder.Entity<Contact>()
+            //     .HasMany(c => c.Mails)
+            //     .WithOne(m => m.Contact)
+            //     .HasForeignKey(m => m.ContactId);
+
+            // Additional configurations
+            base.OnModelCreating(modelBuilder);
         }
     }
 }
