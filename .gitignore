@@ -1,0 +1,116 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+.vs/
+
+*.cashe
+
+appsettings.json
+appsettings.*.json
+FalconBackend/appsettings.json
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# Debug files
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*.pid
+
+# Logs
+*.log
+logs/
+logs/*
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# IDE/Editor configurations
+.idea/
+.vscode/
+*.sublime-workspace
+
+# Local environment files
+.env
+.env.*.local
+*.local
+
+# Build files
+build/
+dist/
+*.out
+*.o
+*.class
+*.so
+*.dll
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.tmp
+*.backup
+
+# Test output
+coverage/
+*.lcov
+
+# Sensitive files
+config/secrets.json
+config/private_config.yaml
+*.crt
+*.pem
+
+# Example files
+app-example
+*.example.*
+*.sample.*
+
+# Additional exclusions
+private/
+keys/
+passwords.txt
+certificates/
+secrets/
