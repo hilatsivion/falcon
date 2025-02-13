@@ -1,13 +1,15 @@
 import React from "react";
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes";
 import "./styles/global.css";
 
 const App = () => {
   return (
-    <Router>
+    <BrowserRouter
+      basename={process.env.NODE_ENV === "production" ? "/falcon" : "/"}
+    >
       <AppRoutes />
-    </Router>
+    </BrowserRouter>
   );
 };
 
