@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import "./WelcomeScreen.css";
 import "../../../styles/global.css";
@@ -36,6 +36,7 @@ const buttonVariants = {
 };
 
 const WelcomeScreen = () => {
+  const navigate = useNavigate();
   return (
     <div className="welcome-container">
       <motion.div className="welcome-content">
@@ -76,8 +77,8 @@ const WelcomeScreen = () => {
         >
           <motion.button
             className="btn-white"
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/signup")}
           >
             Create Account
           </motion.button>

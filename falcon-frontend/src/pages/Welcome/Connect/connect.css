@@ -1,0 +1,93 @@
+/* Full-page container */
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: var(--gradient-blue);
+}
+
+/* Sign-up card */
+.signup-card {
+  max-width: 400px;
+  padding: 40px;
+  text-align: center;
+}
+
+/* Logo */
+.logo-full-white-small {
+  width: 80px;
+  position: relative;
+  bottom: 80px;
+}
+
+/* Title & Subtitle */
+.signup-title {
+  font-size: 30px;
+  color: var(--white);
+}
+
+.sub-title {
+  font-size: 14px;
+  color: var(--white);
+  margin-bottom: 20px;
+}
+
+/* Input Fields */
+input {
+  width: 100%;
+  padding: 12px 16px;
+  margin: 6px 0;
+  border: 1px solid #cccccc3c;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: inset 0px 2px 6px rgba(45, 52, 254, 0.2);
+}
+
+input::placeholder {
+  color: var(--faded-gray);
+}
+
+/* Already Registered */
+.signup-login {
+  font-size: 14px;
+  color: var(--white);
+  margin-top: 16px;
+}
+
+.signup-login a {
+  color: var(--white);
+}
+
+.btn-white {
+  margin-top: 40px;
+}
+
+/* Error Popup */
+.error-popup {
+  width: 80%;
+  position: absolute;
+  margin: auto;
+  top: 20px;
+  background: rgba(255, 77, 77, 1);
+  color: var(--white);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 3;
+  animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Error Animation */
+@keyframes slideDown {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
