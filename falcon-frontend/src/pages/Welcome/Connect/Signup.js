@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import "./connect.css";
 import "../../../styles/global.css";
@@ -58,7 +58,7 @@ const SignUp = () => {
     return true;
   };
 
-  // Show Error for 3 seconds
+  // Show Error for 5 seconds
   const showError = (message) => {
     setError(message);
     setTimeout(() => {
@@ -70,13 +70,14 @@ const SignUp = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      alert("Account Created Successfully! 🚀");
-      // Here, you would handle API submission or navigation
+      // API call to server, and then:
+      navigate("/interests");
     }
   };
+  const navigate = useNavigate();
 
   return (
-    <div className="signup-container">
+    <div className="welcome-screen-container">
       {/* Error Popup */}
       <AnimatePresence>
         {error && (

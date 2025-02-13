@@ -38,7 +38,7 @@ const buttonVariants = {
 const WelcomeScreen = () => {
   const navigate = useNavigate();
   return (
-    <div className="welcome-container">
+    <div className="welcome-screen-container">
       <motion.div className="welcome-content">
         {/* Logo & Header */}
         <motion.img
