@@ -1,0 +1,73 @@
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap");
+
+.welcome-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+  font-family: "Rubik", sans-serif;
+  background: linear-gradient(
+    180deg,
+    #004dff 0%,
+    #0457fe 29%,
+    #0d70fc 47%,
+    #00d0ff 100%
+  );
+}
+
+.welcome-content {
+  width: 90%;
+  max-width: 400px;
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+}
+
+.tagline {
+  font-size: 14px;
+  color: #eff6ff;
+  margin-bottom: 20px;
+}
+
+.welcome-image {
+  width: 100%;
+  max-width: 250px;
+  margin: 20px 0;
+}
+
+.create-account {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2d68fe;
+  background: #eff6ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: 0.3s;
+}
+
+.create-account:hover {
+  background: #d0e0ff;
+}
+
+.login-link {
+  font-size: 14px;
+  color: #2d68fe;
+  text-decoration: none;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}

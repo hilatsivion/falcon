@@ -1,7 +1,14 @@
-import "./App.css";
+import React from "react";
+import { BrowserRouter as Router } from "react-router-dom";
+import AppRoutes from "./routes";
+import "./styles/global.css";
 
-function App() {
-  return <div className="App">hila tsivion</div>;
-}
+const App = () => {
+  return (
+    <Router>
+      <AppRoutes />
+    </Router>
+  );
+};
 
 export default App;
