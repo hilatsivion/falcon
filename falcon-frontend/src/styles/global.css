@@ -1,0 +1,93 @@
+:root {
+  --white: #ffffff;
+  --primary-blue: #2d68fe;
+  --notifications: #ff472e;
+  --green: #22d240;
+  --selected-blue: #eff6ff;
+  --icons-grey: #71839b;
+  --dark-font-color: #324054;
+  --faded-gray: #a5b0bf;
+  --background-white: #fafafa;
+
+  /* Gradient */
+  --gradient-blue: linear-gradient(
+    180deg,
+    #004dff 0%,
+    #0457fe 29%,
+    #0d70fc 47%,
+    #00d0ff 100%
+  );
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap");
+
+body {
+  font-family: "Rubik", sans-serif;
+  background-color: var(--background-white);
+  color: var(--dark-font-color);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 32px;
+}
+
+h2 {
+  font-size: 28px;
+}
+
+h3 {
+  font-size: 24px;
+}
+
+h4 {
+  font-size: 20px;
+}
+
+p {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.small-text {
+  font-size: 14px;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.light {
+  font-weight: 300;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+button {
+  font-family: "Rubik", sans-serif;
+  border: none;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font-family: "Rubik", sans-serif;
+  outline: none;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+}
