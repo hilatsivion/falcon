@@ -76,18 +76,46 @@ p {
 }
 
 button {
-  font-family: "Rubik", sans-serif;
   border: none;
   cursor: pointer;
+  width: fit-content;
+  padding: 8px 40px;
+  font-size: 16px;
+  line-height: 28px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+button.btn-white {
+  color: var(--primary-blue);
+  background-color: var(--white);
+}
+
+button.btn-blue {
+  color: var(--white);
+  background-color: var(--primary-blue);
+}
+
+button.btn-border {
+  color: var(--icons-grey);
+  background-color: transparent;
+  border: 1.5px var(--icons-grey) solid;
 }
 
 input,
 textarea {
-  font-family: "Rubik", sans-serif;
   outline: none;
 }
 
 .container {
   width: 100%;
   max-width: 1200px;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
