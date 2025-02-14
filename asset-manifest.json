@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/falcon/static/css/main.5b7b7cc5.css",
-    "main.js": "/falcon/static/js/main.38283d9e.js",
+    "main.css": "/falcon/static/css/main.60052d99.css",
+    "main.js": "/falcon/static/js/main.7e12fe98.js",
     "static/js/488.d90e2fb3.chunk.js": "/falcon/static/js/488.d90e2fb3.chunk.js",
     "static/media/image-mail-intro.png": "/falcon/static/media/image-mail-intro.29bb7f51d9302e5a0561.png",
     "static/media/select-tag.mp3": "/falcon/static/media/select-tag.08acd6a4106841a511ad.mp3",
@@ -12,20 +12,22 @@
     "static/media/health.svg": "/falcon/static/media/health.435bef3485a88fc87b8090fe96776a15.svg",
     "static/media/family.svg": "/falcon/static/media/family.80666f82fec7723b5745156bdf4d4f49.svg",
     "static/media/news.svg": "/falcon/static/media/news.b4d8e9beb993172fe0adce691a778025.svg",
+    "static/media/eye-closed.svg": "/falcon/static/media/eye-closed.4daa1c66302e95095978e8df84537e4f.svg",
     "static/media/finance.svg": "/falcon/static/media/finance.eb02f19d88bfa1034366e424ae4ded60.svg",
     "static/media/school.svg": "/falcon/static/media/school.f580df9f69241342fe27fe5784674e17.svg",
     "static/media/promotions.svg": "/falcon/static/media/promotions.14cd672afbacec393ab4085a1c7d3837.svg",
     "static/media/travel.svg": "/falcon/static/media/travel.4093061b9d7ef71fb39a9d02b7731eaf.svg",
     "static/media/social.svg": "/falcon/static/media/social.f687a23a7ddba76a9d164b6dcff2af96.svg",
     "static/media/personal.svg": "/falcon/static/media/personal.6f6f3aef0de4732b7345ebe8147137d8.svg",
+    "static/media/eye-open.svg": "/falcon/static/media/eye-open.76457c51451f6779ba9484589263a5fa.svg",
     "index.html": "/falcon/index.html",
     "static/media/spinner.svg": "/falcon/static/media/spinner.64757a615b8e069d880d5ef08eb6a834.svg",
-    "main.5b7b7cc5.css.map": "/falcon/static/css/main.5b7b7cc5.css.map",
-    "main.38283d9e.js.map": "/falcon/static/js/main.38283d9e.js.map",
+    "main.60052d99.css.map": "/falcon/static/css/main.60052d99.css.map",
+    "main.7e12fe98.js.map": "/falcon/static/js/main.7e12fe98.js.map",
     "488.d90e2fb3.chunk.js.map": "/falcon/static/js/488.d90e2fb3.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.5b7b7cc5.css",
-    "static/js/main.38283d9e.js"
+    "static/css/main.60052d99.css",
+    "static/js/main.7e12fe98.js"
   ]
 }
