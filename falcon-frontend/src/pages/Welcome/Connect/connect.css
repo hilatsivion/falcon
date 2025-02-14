@@ -85,7 +85,7 @@ input::placeholder {
 
 /* Login card */
 .login-card {
-  max-width: 400px;
+  width: 100%;
   padding: 40px;
   text-align: center;
 }
@@ -116,7 +116,6 @@ input::placeholder {
   cursor: pointer;
   padding: 16px;
 }
-
 .toggle-password-btn img {
   width: 13px;
   height: 13px;

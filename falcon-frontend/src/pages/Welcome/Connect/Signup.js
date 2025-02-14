@@ -15,6 +15,10 @@ const fadeIn = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
 };
+const fadeInEye = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.4, delay: 0.7 } },
+};
 
 const errorAnimation = {
   hidden: { opacity: 0, y: -50 },
@@ -164,16 +168,19 @@ const SignUp = () => {
             initial="hidden"
             animate="visible"
           />
-          <button
+          <motion.button
             type="button"
             className="toggle-password-btn"
             onClick={togglePasswordVisibility}
+            variants={fadeInEye}
+            initial="hidden"
+            animate="visible"
           >
             <img
               src={showPassword ? eyeOpenIcon : eyeClosedIcon}
               alt="Toggle Password"
             />
-          </button>
+          </motion.button>
         </motion.div>
         <motion.input
           type="password"
