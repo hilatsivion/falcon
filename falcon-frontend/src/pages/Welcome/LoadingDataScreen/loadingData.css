@@ -1,0 +1,49 @@
+/* Full-page container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  background: var(--gradient-light);
+  padding: 20px;
+}
+
+/* Falcon Logo */
+.loading-logo {
+  width: 180px;
+  margin-bottom: 20px;
+}
+
+/* Spinning Loader */
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  animation: spin 2.7s linear infinite;
+  margin-bottom: 20px;
+}
+
+/* Loading Text */
+.loading-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--primary-blue);
+}
+
+/* Subtext */
+.loading-subtext {
+  font-size: 14px;
+  color: var(--gray-dark);
+  margin-top: 8px;
+}
+
+/* Spinner Animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

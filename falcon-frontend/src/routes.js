@@ -4,7 +4,7 @@ import WelcomeScreen from "./pages/Welcome/WelcomeScreens/WelcomeScreen";
 import Login from "./pages/Welcome/Connect/Login";
 import Signup from "./pages/Welcome/Connect/Signup";
 import SelectInterests from "./pages/Welcome/SelectInterests/SelectInterests";
-import LoadingScreen from "./pages/Welcome/LoadingScreen/LoadingScreen";
+import LoadingDataScreen from "./pages/Welcome/LoadingDataScreen/LoadingDataScreen";
 
 const AppRoutes = () => {
   return (
@@ -13,7 +13,7 @@ const AppRoutes = () => {
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/interests" element={<SelectInterests />} />
-      {/* <Route path="/loading" element={<LoadingScreen />} /> */}
+      <Route path="/loadingData" element={<LoadingDataScreen />} />
     </Routes>
   );
 };

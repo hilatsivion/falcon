@@ -52,7 +52,7 @@ const Login = () => {
     e.preventDefault();
     if (validateForm()) {
       // Simulate API Call (Replace with actual login logic)
-      navigate("/dashboard"); // Replace with your next page
+      navigate("/loadingData"); // Replace with your next page
     }
   };
 

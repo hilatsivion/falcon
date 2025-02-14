@@ -97,7 +97,7 @@ const SelectInterests = () => {
     }
     console.log("Selected Interests:", selectedTags);
     // Here you could send `selectedTags` to an API or store it
-    navigate("/next-page"); // Replace with the actual next page
+    navigate("/loadingData"); // Replace with the actual next page
   };
 
   return (
