@@ -174,7 +174,7 @@ const SignUp = () => {
 
         {/* Create Account Button */}
         <motion.button
-          className="btn-white"
+          className="btn-white btn-create"
           whileTap={{ scale: 0.95 }}
           variants={fadeIn}
           initial="hidden"

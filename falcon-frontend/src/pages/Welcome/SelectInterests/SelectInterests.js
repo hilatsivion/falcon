@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import "./interests.css";
 import "../../../styles/global.css";
 
+import selectSound from "../../../assets/sounds/select-tag.mp3";
 import logo from "../../../assets/images/falcon-white-full.svg";
 
 // Import icons from assets
@@ -44,11 +45,24 @@ const SelectInterests = () => {
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    setTimeout(() => {
+      setAnimatedTags(interestOptions.map((item) => item.name)); // Apply class to all tags
+    }, 2000);
+  }, []);
+
   // Toggle a single tag selection
   const toggleTag = (tag) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
+    setSelectedTags((prev) => {
+      const isSelected = prev.includes(tag);
+
+      if (!isSelected) {
+        const audio = new Audio(selectSound);
+        audio.play();
+      }
+
+      return isSelected ? prev.filter((t) => t !== tag) : [...prev, tag];
+    });
   };
 
   // Select All Tags
@@ -78,6 +92,11 @@ const SelectInterests = () => {
     console.log("Selected Interests:", selectedTags);
     // Here you could send `selectedTags` to an API or store it
     navigate("/next-page"); // Replace with the actual next page
+  };
+
+  const playSelectSound = () => {
+    const audio = new Audio(selectSound);
+    audio.play();
   };
 
   return (
@@ -113,8 +132,8 @@ const SelectInterests = () => {
           <div
             key={item.name}
             className={`tag animate pop ${
-              selectedTags.includes(item.name) ? "selected" : ""
-            }`}
+              animatedTags.includes(item.name) ? "animated-finish" : "animated"
+            } ${selectedTags.includes(item.name) ? "selected" : ""}`}
             style={{ animationDelay: `${Math.random() * 0.9}s` }}
             onClick={() => toggleTag(item.name)}
           >
@@ -124,7 +143,7 @@ const SelectInterests = () => {
         ))}
       </div>
 
-      <motion.button className="btn-all tag" onClick={selectAll}>
+      <motion.button className="btn-all" onClick={selectAll}>
         {selectedTags.length === interestOptions.length
           ? "Deselect All"
           : "Select All"}

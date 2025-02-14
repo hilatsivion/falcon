@@ -49,6 +49,9 @@ input::placeholder {
   color: var(--white);
 }
 
-.btn-white {
-  margin-top: 40px;
+.btn-create {
+  position: absolute;
+  bottom: 20px;
+  margin: auto;
+  justify-self: anchor-center;
 }
