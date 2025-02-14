@@ -1,3 +1,9 @@
+.signup-container {
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--white);
+}
+
 /* Sign-up card */
 .signup-card {
   max-width: 400px;
@@ -9,7 +15,7 @@
 .logo-full-white-small {
   width: 80px;
   position: relative;
-  bottom: 80px;
+  top: 50px;
 }
 
 /* Title & Subtitle */
@@ -25,23 +31,23 @@
 
 /* Input Fields */
 input {
+  font-size: 16px;
   width: 100%;
   padding: 12px 16px;
   margin: 6px 0;
   border: 1px solid #cccccc3c;
   border-radius: 6px;
-  font-size: 14px;
   box-shadow: inset 0px 2px 6px rgba(45, 52, 254, 0.2);
 }
 
 input::placeholder {
   color: var(--faded-gray);
+  font-size: 16px;
 }
 
 /* Already Registered */
 .signup-login {
   font-size: 14px;
-  color: var(--white);
   margin-top: 16px;
 }
 
@@ -50,8 +56,42 @@ input::placeholder {
 }
 
 .btn-create {
-  position: absolute;
+  position: relative;
   bottom: 20px;
-  margin: auto;
-  justify-self: anchor-center;
+}
+
+.full-width {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+}
+
+/*  */
+/*  */
+/*  */
+/* log in page */
+/*  */
+/*  */
+/*  */
+
+/* Login container */
+.login-container {
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--white);
+}
+
+/* Login card */
+.login-card {
+  max-width: 400px;
+  padding: 40px;
+  text-align: center;
+}
+
+/* Log In Button */
+.btn-login {
+  position: relative;
+  bottom: 20px;
 }

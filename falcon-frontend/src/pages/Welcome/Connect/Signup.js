@@ -77,7 +77,7 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="welcome-screen-container">
+    <div className="welcome-screen-container signup-container">
       {/* Error Popup */}
       <AnimatePresence>
         {error && (
@@ -93,19 +93,19 @@ const SignUp = () => {
         )}
       </AnimatePresence>
 
+      {/* Logo */}
+      <motion.img
+        className="logo-full-white-small"
+        src={logo}
+        alt="logo-falcon"
+      />
+
       <motion.div
         className="signup-card"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1 }}
       >
-        {/* Logo */}
-        <motion.img
-          className="logo-full-white-small"
-          src={logo}
-          alt="logo-falcon"
-        />
-
         {/* Title */}
         <motion.h2
           className="signup-title"
@@ -173,17 +173,11 @@ const SignUp = () => {
         </motion.p>
 
         {/* Create Account Button */}
-        <motion.button
-          className="btn-white btn-create"
-          whileTap={{ scale: 0.95 }}
-          variants={fadeIn}
-          initial="hidden"
-          animate="visible"
-          onClick={handleSubmit}
-        >
-          Create
-        </motion.button>
       </motion.div>
+
+      <button className="btn-white btn-create" onClick={handleSubmit}>
+        Create
+      </button>
     </div>
   );
 };

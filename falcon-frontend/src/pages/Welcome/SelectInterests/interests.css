@@ -2,6 +2,12 @@
 .interests-container {
   flex-direction: column;
   height: 100svh;
+  justify-content: space-between;
+}
+
+/* Sign-up card */
+.interests-content {
+  text-align: center;
 }
 
 /* Title & Subtitle */
@@ -55,7 +61,7 @@
 }
 
 .btn-done {
-  position: absolute;
+  position: relative;
   bottom: 20px;
 }
 

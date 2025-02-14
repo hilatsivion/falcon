@@ -51,14 +51,20 @@ const SelectInterests = () => {
     }, 2000);
   }, []);
 
+  let isPlaying = false;
   // Toggle a single tag selection
   const toggleTag = (tag) => {
     setSelectedTags((prev) => {
       const isSelected = prev.includes(tag);
 
-      if (!isSelected) {
+      if (!isSelected && !isPlaying) {
+        isPlaying = true; // Set flag to prevent multiple triggers
         const audio = new Audio(selectSound);
         audio.play();
+
+        setTimeout(() => {
+          isPlaying = false; // Reset after sound finishes
+        }, 500); // Adjust timeout if needed
       }
 
       return isSelected ? prev.filter((t) => t !== tag) : [...prev, tag];
@@ -94,11 +100,6 @@ const SelectInterests = () => {
     navigate("/next-page"); // Replace with the actual next page
   };
 
-  const playSelectSound = () => {
-    const audio = new Audio(selectSound);
-    audio.play();
-  };
-
   return (
     <div className="welcome-screen-container interests-container">
       {/* Error Popup */}
@@ -121,37 +122,39 @@ const SelectInterests = () => {
         src={logo}
         alt="logo-falcon"
       />
+      <div className="interests-content">
+        <motion.h2 className="interests-title">Select Your Interests</motion.h2>
+        <motion.p className="sub-title">
+          Select the tags most relevant and important to you.
+        </motion.p>
 
-      <motion.h2 className="interests-title">Select Your Interests</motion.h2>
-      <motion.p className="sub-title">
-        Select the tags most relevant and important to you.
-      </motion.p>
+        <div className="tags-containers">
+          {interestOptions.map((item, index) => (
+            <div
+              key={item.name}
+              className={`tag animate pop ${
+                animatedTags.includes(item.name)
+                  ? "animated-finish"
+                  : "animated"
+              } ${selectedTags.includes(item.name) ? "selected" : ""}`}
+              style={{ animationDelay: `${Math.random() * 0.9}s` }}
+              onPointerDown={(event) => toggleTag(item.name, event)}
+            >
+              <img src={item.icon} alt={item.name} />
+              <span>{item.name}</span>
+            </div>
+          ))}
+        </div>
 
-      <div className="tags-containers">
-        {interestOptions.map((item, index) => (
-          <div
-            key={item.name}
-            className={`tag animate pop ${
-              animatedTags.includes(item.name) ? "animated-finish" : "animated"
-            } ${selectedTags.includes(item.name) ? "selected" : ""}`}
-            style={{ animationDelay: `${Math.random() * 0.9}s` }}
-            onClick={() => toggleTag(item.name)}
-          >
-            <img src={item.icon} alt={item.name} />
-            <span>{item.name}</span>
-          </div>
-        ))}
+        <motion.button className="btn-all" onClick={selectAll}>
+          {selectedTags.length === interestOptions.length
+            ? "Deselect All"
+            : "Select All"}
+        </motion.button>
       </div>
-
-      <motion.button className="btn-all" onClick={selectAll}>
-        {selectedTags.length === interestOptions.length
-          ? "Deselect All"
-          : "Select All"}
-      </motion.button>
-
-      <motion.button className="btn-white btn-done" onClick={handleDone}>
+      <button className="btn-white btn-done" onClick={handleDone}>
         Done
-      </motion.button>
+      </button>
     </div>
   );
 };
