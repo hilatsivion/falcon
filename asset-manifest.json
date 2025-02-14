@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/falcon/static/css/main.9441755d.css",
-    "main.js": "/falcon/static/js/main.c790e16d.js",
+    "main.css": "/falcon/static/css/main.52e90dbf.css",
+    "main.js": "/falcon/static/js/main.9d1f5b0e.js",
     "static/js/488.d90e2fb3.chunk.js": "/falcon/static/js/488.d90e2fb3.chunk.js",
     "static/media/image-mail-intro.png": "/falcon/static/media/image-mail-intro.29bb7f51d9302e5a0561.png",
     "static/media/select-tag.mp3": "/falcon/static/media/select-tag.4378e9fa9e4ca0b2781e.mp3",
@@ -17,12 +17,12 @@
     "static/media/social.svg": "/falcon/static/media/social.f687a23a7ddba76a9d164b6dcff2af96.svg",
     "static/media/personal.svg": "/falcon/static/media/personal.6f6f3aef0de4732b7345ebe8147137d8.svg",
     "index.html": "/falcon/index.html",
-    "main.9441755d.css.map": "/falcon/static/css/main.9441755d.css.map",
-    "main.c790e16d.js.map": "/falcon/static/js/main.c790e16d.js.map",
+    "main.52e90dbf.css.map": "/falcon/static/css/main.52e90dbf.css.map",
+    "main.9d1f5b0e.js.map": "/falcon/static/js/main.9d1f5b0e.js.map",
     "488.d90e2fb3.chunk.js.map": "/falcon/static/js/488.d90e2fb3.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.9441755d.css",
-    "static/js/main.c790e16d.js"
+    "static/css/main.52e90dbf.css",
+    "static/js/main.9d1f5b0e.js"
   ]
 }
