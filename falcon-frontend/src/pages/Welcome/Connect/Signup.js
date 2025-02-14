@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import "./connect.css";
 import "../../../styles/global.css";
 
+import eyeOpenIcon from "../../../assets/icons/black/eye-open.svg";
+import eyeClosedIcon from "../../../assets/icons/black/eye-closed.svg";
+
 import logo from "../../../assets/images/falcon-white-full.svg";
 import errorSound from "../../../assets/sounds/error-message.mp3";
 
@@ -25,6 +28,8 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   // Validation Function
   const validateForm = () => {
@@ -77,7 +82,10 @@ const SignUp = () => {
       navigate("/interests");
     }
   };
-  const navigate = useNavigate();
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   return (
     <div className="welcome-screen-container signup-container">
@@ -146,15 +154,27 @@ const SignUp = () => {
           initial="hidden"
           animate="visible"
         />
-        <motion.input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          variants={fadeIn}
-          initial="hidden"
-          animate="visible"
-        />
+        <motion.div className="password-container">
+          <motion.input
+            type={showPassword ? "text" : "password"} // Toggle between text & password
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            variants={fadeIn}
+            initial="hidden"
+            animate="visible"
+          />
+          <button
+            type="button"
+            className="toggle-password-btn"
+            onClick={togglePasswordVisibility}
+          >
+            <img
+              src={showPassword ? eyeOpenIcon : eyeClosedIcon}
+              alt="Toggle Password"
+            />
+          </button>
+        </motion.div>
         <motion.input
           type="password"
           placeholder="Confirm Password"
