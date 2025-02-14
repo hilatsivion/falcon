@@ -5,6 +5,7 @@ import "./connect.css";
 import "../../../styles/global.css";
 
 import logo from "../../../assets/images/falcon-white-full.svg";
+import errorSound from "../../../assets/sounds/error-message.mp3";
 
 // Animation Variants
 const fadeIn = {
@@ -42,6 +43,8 @@ const Login = () => {
   // Show Error for 3 seconds
   const showError = (message) => {
     setError(message);
+    const audio = new Audio(errorSound);
+    audio.play();
     setTimeout(() => {
       setError("");
     }, 3000);

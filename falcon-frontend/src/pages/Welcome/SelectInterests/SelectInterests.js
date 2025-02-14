@@ -5,6 +5,7 @@ import "./interests.css";
 import "../../../styles/global.css";
 
 import selectSound from "../../../assets/sounds/select-tag.mp3";
+import errorSound from "../../../assets/sounds/error-message.mp3";
 import logo from "../../../assets/images/falcon-white-full.svg";
 
 // Import icons from assets
@@ -83,6 +84,8 @@ const SelectInterests = () => {
   // Show Error for 5 seconds
   const showError = (message) => {
     setError(message);
+    const audio = new Audio(errorSound);
+    audio.play();
     setTimeout(() => {
       setError("");
     }, 5000);
