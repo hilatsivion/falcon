@@ -1,4 +1,5 @@
 using FalconBackend.Data;
+using FalconBackend.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,9 @@ Console.WriteLine($"Connection String: {connectionString}");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+builder.Services.AddScoped<MailService>();
 
 // Add Controllers
 builder.Services.AddControllers();

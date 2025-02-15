@@ -1,4 +1,10 @@
-﻿namespace FalconBackend.Models
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace FalconBackend.Models
 {
     public class MailAccount
     {
@@ -19,6 +25,6 @@
         public int AppUserId { get; set; }
         public AppUser AppUser { get; set; }
         public ICollection<FavoriteTag> FavoriteTags { get; set; }
+        public ICollection<Mail> Mails { get; set; } 
     }
-
 }
