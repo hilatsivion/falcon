@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Net.Mail;
 
+
 namespace FalconBackend.Data
 {
     public class AppDbContext : DbContext
@@ -18,8 +19,8 @@ namespace FalconBackend.Data
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Mail> Mails { get; set; }
         public DbSet<Draft> Drafts { get; set; }
-        public DbSet<MailSent> MailSents { get; set; }
-        public DbSet<MailReceived> MailReceiveds { get; set; }
+        public DbSet<MailSent> MailSent { get; set; }
+        public DbSet<MailReceived> MailReceived { get; set; }
         public DbSet<Reply> Replies { get; set; }
         public DbSet<Attachments> Attachments { get; set; }
         public DbSet<FavoriteTag> FavoriteTags { get; set; }
