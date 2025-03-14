@@ -11,7 +11,8 @@ using Microsoft.AspNetCore.Http;
 namespace FalconBackend.Services
 {
     /// <summary>
-    /// This service contains all queries related to mails, including received emails, sent emails, drafts, and saving attachments.
+    /// Handles all queries related to emails, including received emails, sent emails, drafts, 
+    /// managing attachments, retrieving, marking, and deleting emails.
     /// </summary>
     public class MailService
     {
@@ -24,28 +25,60 @@ namespace FalconBackend.Services
             _fileStorageService = fileStorageService;
         }
 
-        // Get all received emails for the user
+        // Get all received emails for a user, including attachments
         public Task<List<MailReceived>> GetReceivedEmailsAsync(int userId) =>
             _context.MailReceived
-                .Include(mr => mr.Attachments) // Include attachments in response
+                .Include(mr => mr.Attachments)
                 .Where(mr => mr.MailAccount.AppUserId == userId)
                 .ToListAsync();
 
-        // Get all sent emails for the user
+        // Get all sent emails for a user, including attachments
         public Task<List<MailSent>> GetSentEmailsAsync(int userId) =>
             _context.MailSent
                 .Include(ms => ms.Attachments)
                 .Where(ms => ms.MailAccount.AppUserId == userId)
                 .ToListAsync();
 
-        // Get all draft emails for the user
+        // Get all draft emails for a user, including attachments
         public Task<List<Draft>> GetDraftEmailsAsync(int userId) =>
             _context.Drafts
                 .Include(d => d.Attachments)
                 .Where(d => d.MailAccount.AppUserId == userId)
                 .ToListAsync();
 
-        // Add a new received email with attachments
+        // Get a single email (received, sent, or draft) by ID, including attachments
+        public async Task<Mail> GetMailByIdAsync(int mailId)
+        {
+            var receivedMail = await _context.MailReceived
+                .Include(m => m.Attachments)
+                .FirstOrDefaultAsync(m => m.MailId == mailId);
+
+            if (receivedMail != null) return receivedMail;
+
+            var sentMail = await _context.MailSent
+                .Include(m => m.Attachments)
+                .FirstOrDefaultAsync(m => m.MailId == mailId);
+
+            if (sentMail != null) return sentMail;
+
+            return await _context.Drafts
+                .Include(m => m.Attachments)
+                .FirstOrDefaultAsync(m => m.MailId == mailId);
+        }
+
+        // Mark a received email as read
+        public async Task<bool> MarkAsReadAsync(int mailId)
+        {
+            var email = await _context.MailReceived.FirstOrDefaultAsync(m => m.MailId == mailId);
+            if (email == null)
+                return false;
+
+            email.IsRead = true;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Add a new received email and save attachments
         public async Task<MailReceived> AddReceivedEmailAsync(int mailAccountId, string sender, string subject, string body, List<IFormFile> attachments)
         {
             var receivedMail = new MailReceived
@@ -62,31 +95,13 @@ namespace FalconBackend.Services
             _context.MailReceived.Add(receivedMail);
             await _context.SaveChangesAsync(); // Save email first to get ID
 
-            // Save attachments
-            if (attachments != null)
-            {
-                foreach (var file in attachments)
-                {
-                    string filePath = await _fileStorageService.SaveAttachmentAsync(file, mailAccountId, mailAccountId, "Received");
-                    var attachment = new Attachments
-                    {
-                        MailId = receivedMail.MailId,
-                        Name = file.FileName,
-                        FileType = Path.GetExtension(file.FileName),
-                        FileSize = file.Length,
-                        FilePath = filePath
-                    };
-
-                    _context.Attachments.Add(attachment);
-                    receivedMail.Attachments.Add(attachment);
-                }
-            }
-
+            await SaveAttachmentsAsync(receivedMail.MailId, mailAccountId, "Received", attachments, receivedMail.Attachments.ToList());
             await _context.SaveChangesAsync();
+
             return receivedMail;
         }
 
-        // Add a new sent email with attachments
+        // Add a new sent email and save attachments
         public async Task<MailSent> AddSentEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
             var sentMail = new MailSent
@@ -101,30 +116,13 @@ namespace FalconBackend.Services
             _context.MailSent.Add(sentMail);
             await _context.SaveChangesAsync();
 
-            if (attachments != null)
-            {
-                foreach (var file in attachments)
-                {
-                    string filePath = await _fileStorageService.SaveAttachmentAsync(file, mailAccountId, mailAccountId, "Sent");
-                    var attachment = new Attachments
-                    {
-                        MailId = sentMail.MailId,
-                        Name = file.FileName,
-                        FileType = Path.GetExtension(file.FileName),
-                        FileSize = file.Length,
-                        FilePath = filePath
-                    };
-
-                    _context.Attachments.Add(attachment);
-                    sentMail.Attachments.Add(attachment);
-                }
-            }
-
+            await SaveAttachmentsAsync(sentMail.MailId, mailAccountId, "Sent", attachments, sentMail.Attachments.ToList());
             await _context.SaveChangesAsync();
+
             return sentMail;
         }
 
-        // Add a new draft email with attachments
+        // Add a new draft email and save attachments
         public async Task<Draft> AddDraftEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
             var draftMail = new Draft
@@ -140,27 +138,54 @@ namespace FalconBackend.Services
             _context.Drafts.Add(draftMail);
             await _context.SaveChangesAsync();
 
-            if (attachments != null)
-            {
-                foreach (var file in attachments)
-                {
-                    string filePath = await _fileStorageService.SaveAttachmentAsync(file, mailAccountId, mailAccountId, "Drafts");
-                    var attachment = new Attachments
-                    {
-                        MailId = draftMail.MailId,
-                        Name = file.FileName,
-                        FileType = Path.GetExtension(file.FileName),
-                        FileSize = file.Length,
-                        FilePath = filePath
-                    };
+            await SaveAttachmentsAsync(draftMail.MailId, mailAccountId, "Drafts", attachments, draftMail.Attachments.ToList());
+            await _context.SaveChangesAsync();
 
-                    _context.Attachments.Add(attachment);
-                    draftMail.Attachments.Add(attachment);
-                }
+            return draftMail;
+        }
+
+        // Helper function to save attachments
+        private async Task SaveAttachmentsAsync(int mailId, int mailAccountId, string emailType, List<IFormFile> attachments, List<Attachments> mailAttachments)
+        {
+            if (attachments == null || attachments.Count == 0) return;
+
+            foreach (var file in attachments)
+            {
+                string filePath = await _fileStorageService.SaveAttachmentAsync(file, mailAccountId, mailAccountId, mailId, emailType);
+                var attachment = new Attachments
+                {
+                    MailId = mailId,
+                    Name = file.FileName,
+                    FileType = Path.GetExtension(file.FileName),
+                    FileSize = file.Length,
+                    FilePath = filePath
+                };
+
+                _context.Attachments.Add(attachment);
+                mailAttachments.Add(attachment);
+            }
+        }
+
+        // Delete an email (received, sent, or draft) along with its attachments
+        public async Task<bool> DeleteMailAsync(int mailId)
+        {
+            var email = await GetMailByIdAsync(mailId);
+            if (email == null)
+                return false;
+
+            // Remove and delete all associated attachments
+            var attachments = _context.Attachments.Where(a => a.MailId == mailId).ToList();
+            foreach (var attachment in attachments)
+            {
+                if (File.Exists(attachment.FilePath))
+                    File.Delete(attachment.FilePath);
+
+                _context.Attachments.Remove(attachment);
             }
 
+            _context.Remove(email);
             await _context.SaveChangesAsync();
-            return draftMail;
+            return true;
         }
     }
 }

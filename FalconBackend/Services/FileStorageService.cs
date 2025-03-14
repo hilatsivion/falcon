@@ -1,12 +1,15 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace FalconBackend.Services
 {
     /// <summary>
-    /// Handles storing email attachments in a structured file system.
+    /// Manages storing and retrieving email attachments in a structured file system.
     /// </summary>
     public class FileStorageService
     {
@@ -18,10 +21,8 @@ namespace FalconBackend.Services
                 Directory.CreateDirectory(_basePath);
         }
 
-        /// <summary>
-        /// Saves an attachment in the correct folder for a user's email.
-        /// </summary>
-        public async Task<string> SaveAttachmentAsync(IFormFile file, int userId, int mailAccountId, string emailType)
+        // Saves an attachment with Mail ID and hash in the file name
+        public async Task<string> SaveAttachmentAsync(IFormFile file, int userId, int mailAccountId, int mailId, string emailType)
         {
             if (file == null || file.Length == 0)
                 throw new ArgumentException("File is empty or null.");
@@ -35,7 +36,11 @@ namespace FalconBackend.Services
 
             Directory.CreateDirectory(emailTypeFolder);
 
-            string fileName = $"{Guid.NewGuid()}_{file.FileName}";
+            // Generate a unique hash for each file
+            string fileHash = GenerateFileHash(file.FileName + DateTime.UtcNow.ToString());
+
+            // Append Mail ID and hash to the filename
+            string fileName = $"{mailId}_{fileHash}_{file.FileName}";
             string filePath = Path.Combine(emailTypeFolder, fileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -43,7 +48,17 @@ namespace FalconBackend.Services
                 await file.CopyToAsync(stream);
             }
 
-            return filePath; // Return the file path for database storage
+            return filePath; // Return path for database storage
+        }
+
+        // Generates a unique short hash for filenames
+        private string GenerateFileHash(string input)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+                return BitConverter.ToString(hashBytes).Replace("-", "").Substring(0, 8); // Use first 8 characters
+            }
         }
     }
 }
