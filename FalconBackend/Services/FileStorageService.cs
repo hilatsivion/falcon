@@ -1,63 +1,83 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace FalconBackend.Services
 {
     /// <summary>
-    /// Manages storing and retrieving email attachments in a structured file system.
+    /// Handles storing email attachments in a structured file system.
     /// </summary>
     public class FileStorageService
     {
-        private readonly string _basePath = "Storage"; // Root directory for storing files
+        private readonly string _basePath;
+        private readonly ILogger<FileStorageService> _logger;
 
-        public FileStorageService()
+        public FileStorageService(string basePath, ILogger<FileStorageService> logger)
         {
-            if (!Directory.Exists(_basePath))
-                Directory.CreateDirectory(_basePath);
+            _basePath = basePath ?? "Storage";
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            try
+            {
+                if (!Directory.Exists(_basePath))
+                    Directory.CreateDirectory(_basePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create base directory: {BasePath}", _basePath);
+                throw new IOException($"Failed to create storage directory at {_basePath}. Check permissions.", ex);
+            }
         }
 
-        // Saves an attachment with Mail ID and hash in the file name
-        public async Task<string> SaveAttachmentAsync(IFormFile file, int userId, int mailAccountId, int mailId, string emailType)
+        /// <summary>
+        /// Saves an attachment in the correct folder for a user's email.
+        /// </summary>
+        public async Task<string> SaveAttachmentAsync(IFormFile file, int userId, int mailAccountId, string emailType)
         {
             if (file == null || file.Length == 0)
+            {
+                _logger.LogWarning("File is empty or null.");
                 throw new ArgumentException("File is empty or null.");
+            }
 
             if (emailType != "Sent" && emailType != "Received" && emailType != "Drafts")
+            {
+                _logger.LogWarning("Invalid email type: {EmailType}", emailType);
                 throw new ArgumentException("Invalid email type. Use 'Sent', 'Received', or 'Drafts'.");
+            }
 
             string userFolder = Path.Combine(_basePath, $"User_{userId}");
             string accountFolder = Path.Combine(userFolder, $"Account_{mailAccountId}");
             string emailTypeFolder = Path.Combine(accountFolder, emailType, "Attachments");
 
-            Directory.CreateDirectory(emailTypeFolder);
-
-            // Generate a unique hash for each file
-            string fileHash = GenerateFileHash(file.FileName + DateTime.UtcNow.ToString());
-
-            // Append Mail ID and hash to the filename
-            string fileName = $"{mailId}_{fileHash}_{file.FileName}";
-            string filePath = Path.Combine(emailTypeFolder, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            try
             {
-                await file.CopyToAsync(stream);
+                Directory.CreateDirectory(emailTypeFolder);
+
+                string fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                string filePath = Path.Combine(emailTypeFolder, fileName);
+
+                // Ensure filename is unique
+                while (File.Exists(filePath))
+                {
+                    fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                    filePath = Path.Combine(emailTypeFolder, fileName);
+                }
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                _logger.LogInformation("File saved successfully at {FilePath}", filePath);
+                return filePath; // Return the file path for database storage
             }
-
-            return filePath; // Return path for database storage
-        }
-
-        // Generates a unique short hash for filenames
-        private string GenerateFileHash(string input)
-        {
-            using (SHA256 sha256 = SHA256.Create())
+            catch (Exception ex)
             {
-                byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
-                return BitConverter.ToString(hashBytes).Replace("-", "").Substring(0, 8); // Use first 8 characters
+                _logger.LogError(ex, "Failed to save attachment.");
+                throw;
             }
         }
     }

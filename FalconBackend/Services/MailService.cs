@@ -1,86 +1,59 @@
 ﻿using FalconBackend.Data;
 using FalconBackend.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace FalconBackend.Services
 {
-    /// <summary>
-    /// Handles all queries related to emails, including received emails, sent emails, drafts, 
-    /// managing attachments, retrieving, marking, and deleting emails.
-    /// </summary>
     public class MailService
     {
         private readonly AppDbContext _context;
         private readonly FileStorageService _fileStorageService;
+        private readonly ILogger<MailService> _logger;
 
-        public MailService(AppDbContext context, FileStorageService fileStorageService)
+        public MailService(AppDbContext context, FileStorageService fileStorageService, ILogger<MailService> logger)
         {
             _context = context;
             _fileStorageService = fileStorageService;
+            _logger = logger;
         }
 
-        // Get all received emails for a user, including attachments
         public Task<List<MailReceived>> GetReceivedEmailsAsync(int userId) =>
             _context.MailReceived
                 .Include(mr => mr.Attachments)
                 .Where(mr => mr.MailAccount.AppUserId == userId)
                 .ToListAsync();
 
-        // Get all sent emails for a user, including attachments
         public Task<List<MailSent>> GetSentEmailsAsync(int userId) =>
             _context.MailSent
                 .Include(ms => ms.Attachments)
                 .Where(ms => ms.MailAccount.AppUserId == userId)
                 .ToListAsync();
 
-        // Get all draft emails for a user, including attachments
         public Task<List<Draft>> GetDraftEmailsAsync(int userId) =>
             _context.Drafts
                 .Include(d => d.Attachments)
                 .Where(d => d.MailAccount.AppUserId == userId)
                 .ToListAsync();
 
-        // Get a single email (received, sent, or draft) by ID, including attachments
-        public async Task<Mail> GetMailByIdAsync(int mailId)
-        {
-            var receivedMail = await _context.MailReceived
-                .Include(m => m.Attachments)
-                .FirstOrDefaultAsync(m => m.MailId == mailId);
-
-            if (receivedMail != null) return receivedMail;
-
-            var sentMail = await _context.MailSent
-                .Include(m => m.Attachments)
-                .FirstOrDefaultAsync(m => m.MailId == mailId);
-
-            if (sentMail != null) return sentMail;
-
-            return await _context.Drafts
-                .Include(m => m.Attachments)
-                .FirstOrDefaultAsync(m => m.MailId == mailId);
-        }
-
-        // Mark a received email as read
-        public async Task<bool> MarkAsReadAsync(int mailId)
-        {
-            var email = await _context.MailReceived.FirstOrDefaultAsync(m => m.MailId == mailId);
-            if (email == null)
-                return false;
-
-            email.IsRead = true;
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        // Add a new received email and save attachments
         public async Task<MailReceived> AddReceivedEmailAsync(int mailAccountId, string sender, string subject, string body, List<IFormFile> attachments)
         {
+            _logger.LogInformation("Processing received email from {Sender} with subject: {Subject}", sender, subject);
+
+            // Skip if email already exists
+            var existingEmail = await _context.MailReceived.FirstOrDefaultAsync(m => m.MailAccountId == mailAccountId && m.Sender == sender && m.Subject == subject);
+
+            if (existingEmail != null)
+            {
+                _logger.LogWarning("Skipping duplicate received email from {Sender} with subject: {Subject}", sender, subject);
+                return existingEmail;
+            }
+
             var receivedMail = new MailReceived
             {
                 MailAccountId = mailAccountId,
@@ -92,18 +65,39 @@ namespace FalconBackend.Services
                 Attachments = new List<Attachments>()
             };
 
-            _context.MailReceived.Add(receivedMail);
-            await _context.SaveChangesAsync(); // Save email first to get ID
+            if (existingEmail != null)
+            {
+                _logger.LogWarning("Skipping duplicate received email from {Sender} with subject: {Subject}", sender, subject);
+                return existingEmail;
+            }
 
-            await SaveAttachmentsAsync(receivedMail.MailId, mailAccountId, "Received", attachments, receivedMail.Attachments.ToList());
-            await _context.SaveChangesAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            return receivedMail;
+            try
+            {
+                _context.MailReceived.Add(receivedMail);
+                await _context.SaveChangesAsync();
+
+                await SaveAttachments(attachments, receivedMail.MailId, mailAccountId, "Received", receivedMail.Attachments);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Received email from {Sender} saved successfully.", sender);
+                return receivedMail;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Failed to save received email.");
+                throw;
+            }
         }
 
-        // Add a new sent email and save attachments
         public async Task<MailSent> AddSentEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
+            _logger.LogInformation("Processing sent email with subject: {Subject}", subject);
+
             var sentMail = new MailSent
             {
                 MailAccountId = mailAccountId,
@@ -113,45 +107,96 @@ namespace FalconBackend.Services
                 Attachments = new List<Attachments>()
             };
 
-            _context.MailSent.Add(sentMail);
-            await _context.SaveChangesAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _context.MailSent.Add(sentMail);
+                await _context.SaveChangesAsync();
 
-            await SaveAttachmentsAsync(sentMail.MailId, mailAccountId, "Sent", attachments, sentMail.Attachments.ToList());
-            await _context.SaveChangesAsync();
+                await SaveAttachments(attachments, sentMail.MailId, mailAccountId, "Sent", sentMail.Attachments);
 
-            return sentMail;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Sent email saved successfully.");
+                return sentMail;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Failed to save sent email.");
+                throw;
+            }
         }
 
-        // Add a new draft email and save attachments
         public async Task<Draft> AddDraftEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
-            var draftMail = new Draft
+            _logger.LogInformation("Processing draft email with subject: {Subject}", subject);
+
+            var existingDraft = _context.Drafts.FirstOrDefault(d => d.MailAccountId == mailAccountId && d.Subject == subject);
+            if (existingDraft != null)
             {
-                MailAccountId = mailAccountId,
-                Subject = subject,
-                Body = body,
-                TimeCreated = DateTime.UtcNow,
-                IsSent = false,
-                Attachments = new List<Attachments>()
-            };
+                _logger.LogInformation("Updating existing draft email.");
+                existingDraft.Body = body;
+                existingDraft.TimeCreated = DateTime.UtcNow;
+            }
+            else
+            {
+                existingDraft = new Draft
+                {
+                    MailAccountId = mailAccountId,
+                    Subject = subject,
+                    Body = body,
+                    TimeCreated = DateTime.UtcNow,
+                    IsSent = false,
+                    Attachments = new List<Attachments>()
+                };
 
-            _context.Drafts.Add(draftMail);
-            await _context.SaveChangesAsync();
+                _context.Drafts.Add(existingDraft);
+            }
 
-            await SaveAttachmentsAsync(draftMail.MailId, mailAccountId, "Drafts", attachments, draftMail.Attachments.ToList());
-            await _context.SaveChangesAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
 
-            return draftMail;
+                await SaveAttachments(attachments, existingDraft.MailId, mailAccountId, "Drafts", existingDraft.Attachments);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Draft email saved successfully.");
+                return existingDraft;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Failed to save draft email.");
+                throw;
+            }
         }
 
-        // Helper function to save attachments
-        private async Task SaveAttachmentsAsync(int mailId, int mailAccountId, string emailType, List<IFormFile> attachments, List<Attachments> mailAttachments)
+        private async Task SaveAttachments(List<IFormFile> attachments, int mailId, int mailAccountId, string emailType, ICollection<Attachments> emailAttachments)
         {
-            if (attachments == null || attachments.Count == 0) return;
+            if (attachments == null || attachments.Count == 0)
+                return;
+
+            // Fetch all existing attachment names in one query for better performance
+            var existingAttachments = await _context.Attachments
+                .Where(a => a.MailId == mailId)
+                .Select(a => a.Name)
+                .ToListAsync();
 
             foreach (var file in attachments)
             {
-                string filePath = await _fileStorageService.SaveAttachmentAsync(file, mailAccountId, mailAccountId, mailId, emailType);
+                if (existingAttachments.Contains(file.FileName))
+                {
+                    _logger.LogWarning("Skipping duplicate attachment: {FileName}", file.FileName);
+                    continue;
+                }
+
+                string filePath = await _fileStorageService.SaveAttachmentAsync(file, mailAccountId, mailAccountId, emailType);
+
                 var attachment = new Attachments
                 {
                     MailId = mailId,
@@ -162,30 +207,11 @@ namespace FalconBackend.Services
                 };
 
                 _context.Attachments.Add(attachment);
-                mailAttachments.Add(attachment);
-            }
-        }
-
-        // Delete an email (received, sent, or draft) along with its attachments
-        public async Task<bool> DeleteMailAsync(int mailId)
-        {
-            var email = await GetMailByIdAsync(mailId);
-            if (email == null)
-                return false;
-
-            // Remove and delete all associated attachments
-            var attachments = _context.Attachments.Where(a => a.MailId == mailId).ToList();
-            foreach (var attachment in attachments)
-            {
-                if (File.Exists(attachment.FilePath))
-                    File.Delete(attachment.FilePath);
-
-                _context.Attachments.Remove(attachment);
+                emailAttachments.Add(attachment);
             }
 
-            _context.Remove(email);
-            await _context.SaveChangesAsync();
-            return true;
+            await _context.SaveChangesAsync(); 
         }
+
     }
 }
