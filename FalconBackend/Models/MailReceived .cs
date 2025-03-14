@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace FalconBackend.Models
@@ -19,5 +19,8 @@ namespace FalconBackend.Models
 
         public DateTime TimeReceived { get; set; }
         public bool IsRead { get; set; }
+
+        // Many-to-many relationship with tags
+        public ICollection<MailTag> MailTags { get; set; } = new List<MailTag>();
     }
 }

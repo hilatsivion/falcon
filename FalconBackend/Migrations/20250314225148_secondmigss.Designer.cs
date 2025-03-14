@@ -4,6 +4,7 @@ using FalconBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FalconBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250314225148_secondmigss")]
+    partial class secondmigss
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -188,21 +190,30 @@ namespace FalconBackend.Migrations
 
             modelBuilder.Entity("FalconBackend.Models.FavoriteTag", b =>
                 {
-                    b.Property<string>("AppUserEmail")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("TagName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.HasKey("AppUserEmail", "TagName");
+                    b.Property<string>("AppUserEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("MailAccountId")
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserEmail");
+
+                    b.HasIndex("MailAccountId");
 
                     b.HasIndex("TagName", "AppUserEmail")
                         .IsUnique();
@@ -285,28 +296,6 @@ namespace FalconBackend.Migrations
                         .IsUnique();
 
                     b.ToTable("MailAccounts");
-                });
-
-            modelBuilder.Entity("FalconBackend.Models.MailTag", b =>
-                {
-                    b.Property<int>("MailReceivedId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TagName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.HasKey("MailReceivedId", "TagName");
-
-                    b.HasIndex("TagName");
-
-                    b.ToTable("MailTags");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.Recipient", b =>
@@ -445,11 +434,15 @@ namespace FalconBackend.Migrations
 
             modelBuilder.Entity("FalconBackend.Models.FavoriteTag", b =>
                 {
-                    b.HasOne("FalconBackend.Models.AppUser", "AppUser")
+                    b.HasOne("FalconBackend.Models.AppUser", null)
                         .WithMany("FavoriteTags")
                         .HasForeignKey("AppUserEmail")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("FalconBackend.Models.MailAccount", "MailAccount")
+                        .WithMany()
+                        .HasForeignKey("MailAccountId");
 
                     b.HasOne("FalconBackend.Models.Tag", "Tag")
                         .WithMany("FavoriteTags")
@@ -457,7 +450,7 @@ namespace FalconBackend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AppUser");
+                    b.Navigation("MailAccount");
 
                     b.Navigation("Tag");
                 });
@@ -482,25 +475,6 @@ namespace FalconBackend.Migrations
                         .IsRequired();
 
                     b.Navigation("AppUser");
-                });
-
-            modelBuilder.Entity("FalconBackend.Models.MailTag", b =>
-                {
-                    b.HasOne("FalconBackend.Models.MailReceived", "MailReceived")
-                        .WithMany("MailTags")
-                        .HasForeignKey("MailReceivedId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FalconBackend.Models.Tag", "Tag")
-                        .WithMany("MailTags")
-                        .HasForeignKey("TagName")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MailReceived");
-
-                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.Recipient", b =>
@@ -552,13 +526,6 @@ namespace FalconBackend.Migrations
             modelBuilder.Entity("FalconBackend.Models.Tag", b =>
                 {
                     b.Navigation("FavoriteTags");
-
-                    b.Navigation("MailTags");
-                });
-
-            modelBuilder.Entity("FalconBackend.Models.MailReceived", b =>
-                {
-                    b.Navigation("MailTags");
                 });
 #pragma warning restore 612, 618
         }

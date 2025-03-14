@@ -4,6 +4,7 @@ using FalconBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FalconBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250314230236_secondmigssss")]
+    partial class secondmigssss
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -222,10 +224,6 @@ namespace FalconBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("bit");
 
@@ -233,6 +231,10 @@ namespace FalconBackend.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MailType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Subject")
                         .IsRequired()
@@ -244,7 +246,7 @@ namespace FalconBackend.Migrations
 
                     b.ToTable("Mails");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("Mail");
+                    b.HasDiscriminator<string>("MailType").HasValue("Mail");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.MailAccount", b =>
@@ -397,7 +399,7 @@ namespace FalconBackend.Migrations
                     b.Property<DateTime>("TimeReceived")
                         .HasColumnType("datetime2");
 
-                    b.HasDiscriminator().HasValue("MailReceived");
+                    b.HasDiscriminator().HasValue("Received");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.MailSent", b =>
@@ -407,7 +409,7 @@ namespace FalconBackend.Migrations
                     b.Property<DateTime>("TimeSent")
                         .HasColumnType("datetime2");
 
-                    b.HasDiscriminator().HasValue("MailSent");
+                    b.HasDiscriminator().HasValue("Sent");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.Analytics", b =>

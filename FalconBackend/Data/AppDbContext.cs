@@ -25,21 +25,94 @@ namespace FalconBackend.Data
         public DbSet<Attachments> Attachments { get; set; }
         public DbSet<FavoriteTag> FavoriteTags { get; set; }
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<MailTag> MailTags { get; set; }
 
         // Fluent API configurations
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Example configuration for relationships (you can customize this):
-            // Uncomment and customize as needed.
+            // AppUser <-> Analytics (One-to-One)
+            modelBuilder.Entity<AppUser>()
+                .HasOne(u => u.Analytics)
+                .WithOne(a => a.AppUser)
+                .HasForeignKey<Analytics>(a => a.AppUserEmail)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure a one-to-many relationship
-            // modelBuilder.Entity<Contact>()
-            //     .HasMany(c => c.Mails)
-            //     .WithOne(m => m.Contact)
-            //     .HasForeignKey(m => m.ContactId);
+            // AppUser <-> MailAccount (One-to-Many)
+            modelBuilder.Entity<MailAccount>()
+                .HasOne(ma => ma.AppUser)
+                .WithMany(u => u.MailAccounts)
+                .HasForeignKey(ma => ma.AppUserEmail)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // Additional configurations
+            // AppUser <-> Contacts (One-to-Many)
+            modelBuilder.Entity<Contact>()
+                .HasOne(c => c.AppUser)
+                .WithMany(u => u.Contacts)
+                .HasForeignKey(c => c.AppUserEmail)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // AppUser <-> FavoriteTags (Many-to-Many via FavoriteTags)
+            modelBuilder.Entity<FavoriteTag>()
+                .HasKey(ft => new { ft.AppUserEmail, ft.TagName });
+
+            modelBuilder.Entity<FavoriteTag>()
+                .HasOne(ft => ft.AppUser)
+                .WithMany(u => u.FavoriteTags)
+                .HasForeignKey(ft => ft.AppUserEmail)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FavoriteTag>()
+                .HasOne(ft => ft.Tag)
+                .WithMany(t => t.FavoriteTags)
+                .HasForeignKey(ft => ft.TagName)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // MailAccount <-> Mail (One-to-Many)
+            modelBuilder.Entity<Mail>()
+                .HasOne(m => m.MailAccount)
+                .WithMany(ma => ma.Mails)
+                .HasForeignKey(m => m.MailAccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Mail <-> Recipients (One-to-Many)
+            modelBuilder.Entity<Recipient>()
+                .HasOne(r => r.Mail)
+                .WithMany(m => m.Recipients)
+                .HasForeignKey(r => r.MailId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Mail <-> Attachments (One-to-Many)
+            modelBuilder.Entity<Attachments>()
+                .HasOne(a => a.Mail)
+                .WithMany(m => m.Attachments)
+                .HasForeignKey(a => a.MailId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Mail <-> Replies (One-to-Many)
+            modelBuilder.Entity<Reply>()
+                .HasOne(r => r.Mail)
+                .WithMany()
+                .HasForeignKey(r => r.RepliedToMailId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Many-to-Many: MailReceived <-> Tags (MailTags)
+            modelBuilder.Entity<MailTag>()
+                .HasKey(mt => new { mt.MailReceivedId, mt.TagName });
+
+            modelBuilder.Entity<MailTag>()
+                .HasOne(mt => mt.MailReceived)
+                .WithMany(mr => mr.MailTags)
+                .HasForeignKey(mt => mt.MailReceivedId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MailTag>()
+                .HasOne(mt => mt.Tag)
+                .WithMany(t => t.MailTags)
+                .HasForeignKey(mt => mt.TagName)
+                .OnDelete(DeleteBehavior.Cascade);
+
             base.OnModelCreating(modelBuilder);
         }
+
     }
 }

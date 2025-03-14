@@ -109,5 +109,62 @@ namespace FalconBackend.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+        public async Task<object> GetUserProfileAsync(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_jwtSecret);
+
+            try
+            {
+                var tokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                var principal = handler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+                var jwtToken = validatedToken as JwtSecurityToken;
+
+                if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                    return new { Error = "Invalid token" };
+
+                var emailClaim = principal.FindFirst(ClaimTypes.Email);
+                if (emailClaim == null)
+                    return new { Error = "Invalid token: Missing email claim" };
+
+                var user = await _context.AppUsers
+                    .Where(u => u.Email == emailClaim.Value)
+                    .Select(u => new
+                    {
+                        u.Email,
+                        u.Username,
+                        u.FullName,
+                        u.CreatedAt,
+                        u.LastLogin
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                    return new { Error = "User not found" };
+
+                return user; // Returning only necessary fields
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                return new { Error = "Token expired" };
+            }
+            catch (SecurityTokenException)
+            {
+                return new { Error = "Invalid token" };
+            }
+            catch (Exception ex)
+            {
+                return new { Error = $"An error occurred: {ex.Message}" };
+            }
+        }
+
     }
 }

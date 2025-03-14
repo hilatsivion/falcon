@@ -57,6 +57,37 @@ namespace FalconBackend.Controllers
 
             return Ok(new { Email = user.Email, Username = user.Username });
         }
+
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetUserProfile()
+        {
+            try
+            {
+                // Extract the token from the Authorization header
+                var authorizationHeader = Request.Headers["Authorization"].ToString();
+
+                if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+                    return Unauthorized("Missing or invalid authentication token.");
+
+                var token = authorizationHeader.Replace("Bearer ", "").Trim();
+                var userProfile = await _authService.GetUserProfileAsync(token);
+
+                if (userProfile is null)
+                    return Unauthorized("Invalid or expired token.");
+
+                // If the returned object contains an error, return it as a response
+                if (userProfile.GetType().GetProperty("Error") != null)
+                    return Unauthorized(userProfile);
+
+                return Ok(userProfile);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to retrieve user profile. Error: {ex.Message}");
+            }
+        }
+
     }
 
     public class LoginRequest

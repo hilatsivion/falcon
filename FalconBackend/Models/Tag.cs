@@ -14,5 +14,6 @@ namespace FalconBackend.Models
 
         // Relationships
         public ICollection<FavoriteTag> FavoriteTags { get; set; } = new List<FavoriteTag>();
+        public ICollection<MailTag> MailTags { get; set; } = new List<MailTag>();
     }
 }

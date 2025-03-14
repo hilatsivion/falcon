@@ -43,7 +43,6 @@ namespace FalconBackend.Models
 
         public AppUser AppUser { get; set; }
 
-        public ICollection<FavoriteTag> FavoriteTags { get; set; } = new List<FavoriteTag>();
         public ICollection<Mail> Mails { get; set; } = new List<Mail>();
     }
 }
