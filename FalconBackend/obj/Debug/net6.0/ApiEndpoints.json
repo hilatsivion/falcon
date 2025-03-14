@@ -1,0 +1,148 @@
+[
+  {
+    "ContainingType": "FalconBackend.Controllers.MailService",
+    "Method": "AddDraftEmailAsync",
+    "RelativePath": "api/mail/draft",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailAccountId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "subject",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "body",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "attachments",
+        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailService",
+    "Method": "GetDraftEmailsAsync",
+    "RelativePath": "api/mail/drafts/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailService",
+    "Method": "AddReceivedEmailAsync",
+    "RelativePath": "api/mail/received",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailAccountId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "sender",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "subject",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "body",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "attachments",
+        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailService",
+    "Method": "GetReceivedEmailsAsync",
+    "RelativePath": "api/mail/received/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailService",
+    "Method": "AddSentEmailAsync",
+    "RelativePath": "api/mail/sent",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailAccountId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "subject",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "body",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "attachments",
+        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailService",
+    "Method": "GetSentEmailsAsync",
+    "RelativePath": "api/mail/sent/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]

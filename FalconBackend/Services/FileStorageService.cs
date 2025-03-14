@@ -2,7 +2,6 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace FalconBackend.Services
 {
@@ -12,12 +11,10 @@ namespace FalconBackend.Services
     public class FileStorageService
     {
         private readonly string _basePath;
-        private readonly ILogger<FileStorageService> _logger;
 
-        public FileStorageService(string basePath, ILogger<FileStorageService> logger)
+        public FileStorageService(string basePath)
         {
             _basePath = basePath ?? "Storage";
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             try
             {
@@ -26,7 +23,6 @@ namespace FalconBackend.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to create base directory: {BasePath}", _basePath);
                 throw new IOException($"Failed to create storage directory at {_basePath}. Check permissions.", ex);
             }
         }
@@ -37,16 +33,10 @@ namespace FalconBackend.Services
         public async Task<string> SaveAttachmentAsync(IFormFile file, int userId, int mailAccountId, string emailType)
         {
             if (file == null || file.Length == 0)
-            {
-                _logger.LogWarning("File is empty or null.");
                 throw new ArgumentException("File is empty or null.");
-            }
 
             if (emailType != "Sent" && emailType != "Received" && emailType != "Drafts")
-            {
-                _logger.LogWarning("Invalid email type: {EmailType}", emailType);
                 throw new ArgumentException("Invalid email type. Use 'Sent', 'Received', or 'Drafts'.");
-            }
 
             string userFolder = Path.Combine(_basePath, $"User_{userId}");
             string accountFolder = Path.Combine(userFolder, $"Account_{mailAccountId}");
@@ -71,13 +61,11 @@ namespace FalconBackend.Services
                     await file.CopyToAsync(stream);
                 }
 
-                _logger.LogInformation("File saved successfully at {FilePath}", filePath);
                 return filePath; // Return the file path for database storage
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to save attachment.");
-                throw;
+                throw new IOException("Failed to save attachment.", ex);
             }
         }
     }

@@ -1,7 +1,6 @@
 ﻿using FalconBackend.Data;
 using FalconBackend.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +13,11 @@ namespace FalconBackend.Services
     {
         private readonly AppDbContext _context;
         private readonly FileStorageService _fileStorageService;
-        private readonly ILogger<MailService> _logger;
 
-        public MailService(AppDbContext context, FileStorageService fileStorageService, ILogger<MailService> logger)
+        public MailService(AppDbContext context, FileStorageService fileStorageService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
-            _logger = logger;
         }
 
         public Task<List<MailReceived>> GetReceivedEmailsAsync(int userId) =>
@@ -43,14 +40,12 @@ namespace FalconBackend.Services
 
         public async Task<MailReceived> AddReceivedEmailAsync(int mailAccountId, string sender, string subject, string body, List<IFormFile> attachments)
         {
-            _logger.LogInformation("Processing received email from {Sender} with subject: {Subject}", sender, subject);
-
             // Skip if email already exists
-            var existingEmail = await _context.MailReceived.FirstOrDefaultAsync(m => m.MailAccountId == mailAccountId && m.Sender == sender && m.Subject == subject);
+            var existingEmail = await _context.MailReceived
+                .FirstOrDefaultAsync(m => m.MailAccountId == mailAccountId && m.Sender == sender && m.Subject == subject);
 
             if (existingEmail != null)
             {
-                _logger.LogWarning("Skipping duplicate received email from {Sender} with subject: {Subject}", sender, subject);
                 return existingEmail;
             }
 
@@ -65,14 +60,7 @@ namespace FalconBackend.Services
                 Attachments = new List<Attachments>()
             };
 
-            if (existingEmail != null)
-            {
-                _logger.LogWarning("Skipping duplicate received email from {Sender} with subject: {Subject}", sender, subject);
-                return existingEmail;
-            }
-
             using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
                 _context.MailReceived.Add(receivedMail);
@@ -83,21 +71,17 @@ namespace FalconBackend.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("Received email from {Sender} saved successfully.", sender);
                 return receivedMail;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Failed to save received email.");
                 throw;
             }
         }
 
         public async Task<MailSent> AddSentEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
-            _logger.LogInformation("Processing sent email with subject: {Subject}", subject);
-
             var sentMail = new MailSent
             {
                 MailAccountId = mailAccountId,
@@ -118,25 +102,22 @@ namespace FalconBackend.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("Sent email saved successfully.");
                 return sentMail;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Failed to save sent email.");
                 throw;
             }
         }
 
         public async Task<Draft> AddDraftEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
-            _logger.LogInformation("Processing draft email with subject: {Subject}", subject);
+            var existingDraft = await _context.Drafts
+                .FirstOrDefaultAsync(d => d.MailAccountId == mailAccountId && d.Subject == subject);
 
-            var existingDraft = _context.Drafts.FirstOrDefault(d => d.MailAccountId == mailAccountId && d.Subject == subject);
             if (existingDraft != null)
             {
-                _logger.LogInformation("Updating existing draft email.");
                 existingDraft.Body = body;
                 existingDraft.TimeCreated = DateTime.UtcNow;
             }
@@ -165,13 +146,11 @@ namespace FalconBackend.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("Draft email saved successfully.");
                 return existingDraft;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Failed to save draft email.");
                 throw;
             }
         }
@@ -191,7 +170,6 @@ namespace FalconBackend.Services
             {
                 if (existingAttachments.Contains(file.FileName))
                 {
-                    _logger.LogWarning("Skipping duplicate attachment: {FileName}", file.FileName);
                     continue;
                 }
 
@@ -210,8 +188,7 @@ namespace FalconBackend.Services
                 emailAttachments.Add(attachment);
             }
 
-            await _context.SaveChangesAsync(); 
+            await _context.SaveChangesAsync();
         }
-
     }
 }
