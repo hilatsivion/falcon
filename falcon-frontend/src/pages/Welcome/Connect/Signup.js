@@ -43,7 +43,7 @@ const SignUp = () => {
 
     if (!usernameRegex.test(username)) {
       showError(
-        "Username must be at least 3 letters and contain no special characters."
+        "Username must be at least 3 letters in English and contain no special characters."
       );
       return false;
     }
