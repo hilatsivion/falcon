@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FalconBackend.Models
 {
-    [Index(nameof(Username), IsUnique = true)]  
-    [Index(nameof(Email), IsUnique = true)]     
+    [Index(nameof(Username), IsUnique = true)]
+    [Index(nameof(Email), IsUnique = true)]
     public class AppUser
     {
         [Key]
-        public int Id { get; set; }
+        [MaxLength(255)]
+        [EmailAddress]
+        public string Email { get; set; }  // Now the primary key
 
         [Required]
         [MaxLength(100)]
@@ -22,19 +24,14 @@ namespace FalconBackend.Models
         public string Username { get; set; }
 
         [Required]
-        [MaxLength(255)]
-        [EmailAddress]
-        public string Email { get; set; }  
-
-        [Required]
         [DataType(DataType.Password)]
-        public string Password { get; set; }  
+        public string HashedPassword { get; set; }
 
-        public bool IsActive { get; set; } = true; 
+        public bool IsActive { get; set; } = true;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;  
-        public DateTime? LastLogin { get; set; } 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? LastLogin { get; set; }
 
         // Relationships
         public Analytics Analytics { get; set; }

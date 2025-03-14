@@ -13,214 +13,147 @@ namespace FalconBackend.Controllers
 {
     [ApiController]
     [Route("api/mail")]
-    public class MailService : ControllerBase
+    public class MailController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly FileStorageService _fileStorageService;
+        private readonly MailService _mailService;
 
-        public MailService(AppDbContext context, FileStorageService fileStorageService)
+        public MailController(MailService mailService)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
+            _mailService = mailService ?? throw new ArgumentNullException(nameof(mailService));
         }
 
-        [HttpGet("received/{userId}")]
-        public async Task<IActionResult> GetReceivedEmailsAsync(int userId)
+        [HttpGet("received/{userEmail}")]
+        public async Task<IActionResult> GetReceivedEmailsAsync(string userEmail)
         {
-            var emails = await _context.MailReceived
-                .Include(mr => mr.Attachments)
-                .Where(mr => mr.MailAccount.AppUserId == userId)
-                .ToListAsync();
-
-            if (!emails.Any())
-                return NotFound("No received emails found for this user.");
-
-            return Ok(emails);
+            try
+            {
+                var emails = await _mailService.GetReceivedEmailsAsync(userEmail);
+                if (!emails.Any())
+                    return NotFound("No received emails found for this user.");
+                return Ok(emails);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to retrieve received emails. Error: {ex.Message}");
+            }
         }
 
-        [HttpGet("sent/{userId}")]
-        public async Task<IActionResult> GetSentEmailsAsync(int userId)
+        [HttpGet("sent/{userEmail}")]
+        public async Task<IActionResult> GetSentEmailsAsync(string userEmail)
         {
-            var emails = await _context.MailSent
-                .Include(ms => ms.Attachments)
-                .Where(ms => ms.MailAccount.AppUserId == userId)
-                .ToListAsync();
-
-            if (!emails.Any())
-                return NotFound("No sent emails found for this user.");
-
-            return Ok(emails);
+            try
+            {
+                var emails = await _mailService.GetSentEmailsAsync(userEmail);
+                if (!emails.Any())
+                    return NotFound("No sent emails found for this user.");
+                return Ok(emails);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to retrieve sent emails. Error: {ex.Message}");
+            }
         }
 
-        [HttpGet("drafts/{userId}")]
-        public async Task<IActionResult> GetDraftEmailsAsync(int userId)
+        [HttpGet("drafts/{userEmail}")]
+        public async Task<IActionResult> GetDraftEmailsAsync(string userEmail)
         {
-            var drafts = await _context.Drafts
-                .Include(d => d.Attachments)
-                .Where(d => d.MailAccount.AppUserId == userId)
-                .ToListAsync();
-
-            if (!drafts.Any())
-                return NotFound("No drafts found for this user.");
-
-            return Ok(drafts);
+            try
+            {
+                var drafts = await _mailService.GetDraftEmailsAsync(userEmail);
+                if (!drafts.Any())
+                    return NotFound("No drafts found for this user.");
+                return Ok(drafts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to retrieve drafts. Error: {ex.Message}");
+            }
         }
 
         [HttpPost("received")]
-        public async Task<IActionResult> AddReceivedEmailAsync(int mailAccountId, string sender, string subject, string body, List<IFormFile> attachments)
+        public async Task<IActionResult> AddReceivedEmailAsync(string mailAccountToken, string sender, string subject, string body, List<IFormFile> attachments)
         {
-            if (string.IsNullOrEmpty(sender) || string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
-                return BadRequest("Sender, subject, and body are required.");
-
-            var existingEmail = await _context.MailReceived
-                .FirstOrDefaultAsync(m => m.MailAccountId == mailAccountId && m.Sender == sender && m.Subject == subject);
-
-            if (existingEmail != null)
-                return Conflict("Duplicate email detected.");
-
-            var receivedMail = new MailReceived
-            {
-                MailAccountId = mailAccountId,
-                Sender = sender,
-                Subject = subject,
-                Body = body,
-                TimeReceived = DateTime.UtcNow,
-                IsRead = false,
-                Attachments = new List<Attachments>()
-            };
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                _context.MailReceived.Add(receivedMail);
-                await _context.SaveChangesAsync();
+                if (string.IsNullOrEmpty(sender) || string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
+                    return BadRequest("Sender, subject, and body are required.");
 
-                await SaveAttachments(attachments, receivedMail.MailId, mailAccountId, "Received", receivedMail.Attachments);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
+                var result = await _mailService.AddReceivedEmailAsync(mailAccountToken, sender, subject, body, attachments);
+                if (result == null)
+                    return Conflict("Duplicate email detected.");
 
-                return CreatedAtAction(nameof(GetReceivedEmailsAsync), new { userId = mailAccountId }, receivedMail);
+                return CreatedAtAction(nameof(GetReceivedEmailsAsync), new { userEmail = mailAccountToken }, result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, "Failed to save received email.");
+                return StatusCode(500, $"Failed to save received email. Error: {ex.Message}");
             }
         }
 
         [HttpPost("sent")]
-        public async Task<IActionResult> AddSentEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
+        public async Task<IActionResult> AddSentEmailAsync(string mailAccountToken, string subject, string body, List<IFormFile> attachments)
         {
-            if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
-                return BadRequest("Subject and body are required.");
-
-            var sentMail = new MailSent
-            {
-                MailAccountId = mailAccountId,
-                Subject = subject,
-                Body = body,
-                TimeSent = DateTime.UtcNow,
-                Attachments = new List<Attachments>()
-            };
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                _context.MailSent.Add(sentMail);
-                await _context.SaveChangesAsync();
+                if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
+                    return BadRequest("Subject and body are required.");
 
-                await SaveAttachments(attachments, sentMail.MailId, mailAccountId, "Sent", sentMail.Attachments);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return CreatedAtAction(nameof(GetSentEmailsAsync), new { userId = mailAccountId }, sentMail);
+                var result = await _mailService.AddSentEmailAsync(mailAccountToken, subject, body, attachments);
+                return CreatedAtAction(nameof(GetSentEmailsAsync), new { userEmail = mailAccountToken }, result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, "Failed to save sent email.");
+                return StatusCode(500, $"Failed to save sent email. Error: {ex.Message}");
             }
         }
 
         [HttpPost("draft")]
-        public async Task<IActionResult> AddDraftEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
+        public async Task<IActionResult> AddDraftEmailAsync(string mailAccountToken, string subject, string body, List<IFormFile> attachments)
         {
-            if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
-                return BadRequest("Subject and body are required.");
-
-            var existingDraft = await _context.Drafts
-                .FirstOrDefaultAsync(d => d.MailAccountId == mailAccountId && d.Subject == subject);
-
-            if (existingDraft != null)
-            {
-                existingDraft.Body = body;
-                existingDraft.TimeCreated = DateTime.UtcNow;
-            }
-            else
-            {
-                existingDraft = new Draft
-                {
-                    MailAccountId = mailAccountId,
-                    Subject = subject,
-                    Body = body,
-                    TimeCreated = DateTime.UtcNow,
-                    IsSent = false,
-                    Attachments = new List<Attachments>()
-                };
-
-                _context.Drafts.Add(existingDraft);
-            }
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                await _context.SaveChangesAsync();
-                await SaveAttachments(attachments, existingDraft.MailId, mailAccountId, "Drafts", existingDraft.Attachments);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
+                if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
+                    return BadRequest("Subject and body are required.");
 
-                return CreatedAtAction(nameof(GetDraftEmailsAsync), new { userId = mailAccountId }, existingDraft);
+                var result = await _mailService.AddDraftEmailAsync(mailAccountToken, subject, body, attachments);
+                return CreatedAtAction(nameof(GetDraftEmailsAsync), new { userEmail = mailAccountToken }, result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, "Failed to save draft email.");
+                return StatusCode(500, $"Failed to save draft email. Error: {ex.Message}");
             }
         }
-
-        private async Task SaveAttachments(List<IFormFile> attachments, int mailId, int mailAccountId, string emailType, ICollection<Attachments> emailAttachments)
+        [HttpPut("favorite/{mailId}/{isFavorite}")]
+        public async Task<IActionResult> ToggleFavorite(int mailId, bool isFavorite)
         {
-            if (attachments == null || attachments.Count == 0)
-                return;
-
-            var existingAttachments = await _context.Attachments
-                .Where(a => a.MailId == mailId)
-                .Select(a => a.Name)
-                .ToListAsync();
-
-            foreach (var file in attachments)
+            try
             {
-                if (existingAttachments.Contains(file.FileName))
-                {
-                    continue;
-                }
-
-                string filePath = await _fileStorageService.SaveAttachmentAsync(file, mailAccountId, mailAccountId, emailType);
-
-                var attachment = new Attachments
-                {
-                    MailId = mailId,
-                    Name = file.FileName,
-                    FileType = Path.GetExtension(file.FileName),
-                    FileSize = file.Length,
-                    FilePath = filePath
-                };
-
-                _context.Attachments.Add(attachment);
-                emailAttachments.Add(attachment);
+                var result = await _mailService.ToggleFavoriteAsync(mailId, isFavorite);
+                if (!result)
+                    return NotFound("Email not found.");
+                return Ok(isFavorite ? "Email marked as favorite." : "Email unmarked as favorite.");
             }
-
-            await _context.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to update favorite status. Error: {ex.Message}");
+            }
         }
+
+        [HttpPut("read/{mailId}/{isRead}")]
+        public async Task<IActionResult> ToggleRead(int mailId, bool isRead)
+        {
+            try
+            {
+                var result = await _mailService.ToggleReadAsync(mailId, isRead);
+                if (!result)
+                    return NotFound("Email not found.");
+                return Ok(isRead ? "Email marked as read." : "Email marked as unread.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to update read status. Error: {ex.Message}");
+            }
+        }
+
     }
 }

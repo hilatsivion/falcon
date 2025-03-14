@@ -2,9 +2,9 @@
 
 #nullable disable
 
-namespace FalconBackend.Data.Migrations
+namespace FalconBackend.Migrations
 {
-    public partial class AddMailAccountToMails : Migration
+    public partial class secondmigs : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

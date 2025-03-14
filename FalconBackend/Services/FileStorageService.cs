@@ -30,7 +30,7 @@ namespace FalconBackend.Services
         /// <summary>
         /// Saves an attachment in the correct folder for a user's email.
         /// </summary>
-        public async Task<string> SaveAttachmentAsync(IFormFile file, int userId, int mailAccountId, string emailType)
+        public async Task<string> SaveAttachmentAsync(IFormFile file, string userEmail, string mailAccountId, string emailType)
         {
             if (file == null || file.Length == 0)
                 throw new ArgumentException("File is empty or null.");
@@ -38,21 +38,21 @@ namespace FalconBackend.Services
             if (emailType != "Sent" && emailType != "Received" && emailType != "Drafts")
                 throw new ArgumentException("Invalid email type. Use 'Sent', 'Received', or 'Drafts'.");
 
-            string userFolder = Path.Combine(_basePath, $"User_{userId}");
-            string accountFolder = Path.Combine(userFolder, $"Account_{mailAccountId}");
+            string userFolder = Path.Combine(_basePath, $"User_{SanitizeFileName(userEmail)}");
+            string accountFolder = Path.Combine(userFolder, $"Account_{SanitizeFileName(mailAccountId)}");
             string emailTypeFolder = Path.Combine(accountFolder, emailType, "Attachments");
 
             try
             {
                 Directory.CreateDirectory(emailTypeFolder);
 
-                string fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                string fileName = $"{Guid.NewGuid()}_{SanitizeFileName(file.FileName)}";
                 string filePath = Path.Combine(emailTypeFolder, fileName);
 
                 // Ensure filename is unique
                 while (File.Exists(filePath))
                 {
-                    fileName = $"{Guid.NewGuid()}_{file.FileName}";
+                    fileName = $"{Guid.NewGuid()}_{SanitizeFileName(file.FileName)}";
                     filePath = Path.Combine(emailTypeFolder, fileName);
                 }
 
@@ -67,6 +67,18 @@ namespace FalconBackend.Services
             {
                 throw new IOException("Failed to save attachment.", ex);
             }
+        }
+
+        /// <summary>
+        /// Sanitizes file names to prevent issues with special characters.
+        /// </summary>
+        private string SanitizeFileName(string input)
+        {
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                input = input.Replace(c, '_');
+            }
+            return input;
         }
     }
 }

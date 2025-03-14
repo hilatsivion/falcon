@@ -9,31 +9,26 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace FalconBackend.Data.Migrations
+namespace FalconBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241228151759_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250314221153_secondmig")]
+    partial class secondmig
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.0")
+                .HasAnnotation("ProductVersion", "6.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
             modelBuilder.Entity("FalconBackend.Models.Analytics", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("AppUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("AppUserEmail")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<float>("AvgTimeSpentDaily")
                         .HasColumnType("real");
@@ -42,6 +37,15 @@ namespace FalconBackend.Data.Migrations
                         .HasColumnType("real");
 
                     b.Property<int>("EmailsReceivedWeekly")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EmailsSentWeekly")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReadEmailsWeekly")
                         .HasColumnType("int");
 
                     b.Property<int>("SpamEmailsWeekly")
@@ -53,35 +57,52 @@ namespace FalconBackend.Data.Migrations
                     b.Property<float>("TimeSpentToday")
                         .HasColumnType("real");
 
-                    b.HasKey("Id");
+                    b.HasKey("AppUserEmail");
 
-                    b.HasIndex("AppUserId")
-                        .IsUnique();
+                    b.HasIndex("AppUserEmail");
 
                     b.ToTable("Analytics");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.AppUser", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Password")
+                    b.Property<string>("HashedPassword")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastLogin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id");
+                    b.HasKey("Email");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("AppUsers");
                 });
@@ -96,21 +117,24 @@ namespace FalconBackend.Data.Migrations
 
                     b.Property<string>("FilePath")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<float>("FileSize")
                         .HasColumnType("real");
 
                     b.Property<string>("FileType")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("MailId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.HasKey("Id");
 
@@ -127,12 +151,15 @@ namespace FalconBackend.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("AppUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("AppUserEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("EmailAddress")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("bit");
@@ -142,11 +169,14 @@ namespace FalconBackend.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppUserId");
+                    b.HasIndex("AppUserEmail");
+
+                    b.HasIndex("EmailAddress");
 
                     b.ToTable("Contacts");
                 });
@@ -159,17 +189,22 @@ namespace FalconBackend.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("MailAccountId")
-                        .HasColumnType("int");
+                    b.Property<string>("MailAccountId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("TagId")
-                        .HasColumnType("int");
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MailAccountId");
 
-                    b.HasIndex("TagId");
+                    b.HasIndex("TagName", "MailAccountId")
+                        .IsUnique();
 
                     b.ToTable("FavoriteTags");
                 });
@@ -193,11 +228,18 @@ namespace FalconBackend.Data.Migrations
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("bit");
 
+                    b.Property<string>("MailAccountId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Subject")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("MailId");
+
+                    b.HasIndex("MailAccountId");
 
                     b.ToTable("Mails");
 
@@ -206,18 +248,19 @@ namespace FalconBackend.Data.Migrations
 
             modelBuilder.Entity("FalconBackend.Models.MailAccount", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.Property<string>("MailAccountId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("AppUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("AppUserEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("EmailAddress")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("bit");
@@ -230,11 +273,15 @@ namespace FalconBackend.Data.Migrations
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                    b.HasKey("Id");
+                    b.HasKey("MailAccountId");
 
-                    b.HasIndex("AppUserId");
+                    b.HasIndex("AppUserEmail");
+
+                    b.HasIndex("EmailAddress")
+                        .IsUnique();
 
                     b.ToTable("MailAccounts");
                 });
@@ -249,12 +296,15 @@ namespace FalconBackend.Data.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("MailId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email");
 
                     b.HasIndex("MailId");
 
@@ -269,9 +319,6 @@ namespace FalconBackend.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("MailId")
-                        .HasColumnType("int");
-
                     b.Property<int>("RepliedToMailId")
                         .HasColumnType("int");
 
@@ -280,24 +327,21 @@ namespace FalconBackend.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MailId");
+                    b.HasIndex("RepliedToMailId");
 
                     b.ToTable("Replies");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.Tag", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
                     b.Property<string>("TagName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("Id");
+                    b.HasKey("TagName");
+
+                    b.HasIndex("TagName")
+                        .IsUnique();
 
                     b.ToTable("Tags");
                 });
@@ -305,6 +349,9 @@ namespace FalconBackend.Data.Migrations
             modelBuilder.Entity("FalconBackend.Models.Draft", b =>
                 {
                     b.HasBaseType("FalconBackend.Models.Mail");
+
+                    b.Property<bool>("IsSent")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("TimeCreated")
                         .HasColumnType("datetime2");
@@ -316,15 +363,13 @@ namespace FalconBackend.Data.Migrations
                 {
                     b.HasBaseType("FalconBackend.Models.Mail");
 
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
 
                     b.Property<string>("Sender")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<DateTime>("TimeReceived")
                         .HasColumnType("datetime2");
@@ -336,10 +381,6 @@ namespace FalconBackend.Data.Migrations
                 {
                     b.HasBaseType("FalconBackend.Models.Mail");
 
-                    b.Property<int>("Id")
-                        .HasColumnType("int")
-                        .HasColumnName("MailSent_Id");
-
                     b.Property<DateTime>("TimeSent")
                         .HasColumnType("datetime2");
 
@@ -350,7 +391,7 @@ namespace FalconBackend.Data.Migrations
                 {
                     b.HasOne("FalconBackend.Models.AppUser", "AppUser")
                         .WithOne("Analytics")
-                        .HasForeignKey("FalconBackend.Models.Analytics", "AppUserId")
+                        .HasForeignKey("FalconBackend.Models.Analytics", "AppUserEmail")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -372,7 +413,7 @@ namespace FalconBackend.Data.Migrations
                 {
                     b.HasOne("FalconBackend.Models.AppUser", "AppUser")
                         .WithMany("Contacts")
-                        .HasForeignKey("AppUserId")
+                        .HasForeignKey("AppUserEmail")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -389,7 +430,7 @@ namespace FalconBackend.Data.Migrations
 
                     b.HasOne("FalconBackend.Models.Tag", "Tag")
                         .WithMany("FavoriteTags")
-                        .HasForeignKey("TagId")
+                        .HasForeignKey("TagName")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -398,11 +439,22 @@ namespace FalconBackend.Data.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("FalconBackend.Models.Mail", b =>
+                {
+                    b.HasOne("FalconBackend.Models.MailAccount", "MailAccount")
+                        .WithMany("Mails")
+                        .HasForeignKey("MailAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MailAccount");
+                });
+
             modelBuilder.Entity("FalconBackend.Models.MailAccount", b =>
                 {
                     b.HasOne("FalconBackend.Models.AppUser", "AppUser")
                         .WithMany("MailAccounts")
-                        .HasForeignKey("AppUserId")
+                        .HasForeignKey("AppUserEmail")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -424,7 +476,7 @@ namespace FalconBackend.Data.Migrations
                 {
                     b.HasOne("FalconBackend.Models.Mail", "Mail")
                         .WithMany()
-                        .HasForeignKey("MailId")
+                        .HasForeignKey("RepliedToMailId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -451,6 +503,8 @@ namespace FalconBackend.Data.Migrations
             modelBuilder.Entity("FalconBackend.Models.MailAccount", b =>
                 {
                     b.Navigation("FavoriteTags");
+
+                    b.Navigation("Mails");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.Tag", b =>

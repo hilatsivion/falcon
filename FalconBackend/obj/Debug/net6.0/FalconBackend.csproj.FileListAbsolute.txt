@@ -204,4 +204,3 @@ C:\Users\user\Documents\GitHub\falcon\FalconBackend\obj\Debug\net6.0\FalconBacke
 C:\Users\user\Documents\GitHub\falcon\FalconBackend\obj\Debug\net6.0\refint\FalconBackend.dll
 C:\Users\user\Documents\GitHub\falcon\FalconBackend\obj\Debug\net6.0\FalconBackend.genruntimeconfig.cache
 C:\Users\user\Documents\GitHub\falcon\FalconBackend\obj\Debug\net6.0\ref\FalconBackend.dll
-C:\Users\user\Documents\GitHub\falcon\FalconBackend\obj\Debug\net6.0\staticwebassets.upToDateCheck.txt

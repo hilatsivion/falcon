@@ -20,25 +20,25 @@ namespace FalconBackend.Services
             _fileStorageService = fileStorageService;
         }
 
-        public Task<List<MailReceived>> GetReceivedEmailsAsync(int userId) =>
+        public Task<List<MailReceived>> GetReceivedEmailsAsync(string mailAccountId) =>
             _context.MailReceived
                 .Include(mr => mr.Attachments)
-                .Where(mr => mr.MailAccount.AppUserId == userId)
+                .Where(mr => mr.MailAccount.MailAccountId == mailAccountId)
                 .ToListAsync();
 
-        public Task<List<MailSent>> GetSentEmailsAsync(int userId) =>
+        public Task<List<MailSent>> GetSentEmailsAsync(string mailAccountId) =>
             _context.MailSent
                 .Include(ms => ms.Attachments)
-                .Where(ms => ms.MailAccount.AppUserId == userId)
+                .Where(ms => ms.MailAccount.MailAccountId == mailAccountId)
                 .ToListAsync();
 
-        public Task<List<Draft>> GetDraftEmailsAsync(int userId) =>
+        public Task<List<Draft>> GetDraftEmailsAsync(string mailAccountId) =>
             _context.Drafts
                 .Include(d => d.Attachments)
-                .Where(d => d.MailAccount.AppUserId == userId)
+                .Where(d => d.MailAccount.MailAccountId == mailAccountId)
                 .ToListAsync();
 
-        public async Task<MailReceived> AddReceivedEmailAsync(int mailAccountId, string sender, string subject, string body, List<IFormFile> attachments)
+        public async Task<MailReceived> AddReceivedEmailAsync(string mailAccountId, string sender, string subject, string body, List<IFormFile> attachments)
         {
             // Skip if email already exists
             var existingEmail = await _context.MailReceived
@@ -80,7 +80,7 @@ namespace FalconBackend.Services
             }
         }
 
-        public async Task<MailSent> AddSentEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
+        public async Task<MailSent> AddSentEmailAsync(string mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
             var sentMail = new MailSent
             {
@@ -111,7 +111,7 @@ namespace FalconBackend.Services
             }
         }
 
-        public async Task<Draft> AddDraftEmailAsync(int mailAccountId, string subject, string body, List<IFormFile> attachments)
+        public async Task<Draft> AddDraftEmailAsync(string mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
             var existingDraft = await _context.Drafts
                 .FirstOrDefaultAsync(d => d.MailAccountId == mailAccountId && d.Subject == subject);
@@ -155,7 +155,7 @@ namespace FalconBackend.Services
             }
         }
 
-        private async Task SaveAttachments(List<IFormFile> attachments, int mailId, int mailAccountId, string emailType, ICollection<Attachments> emailAttachments)
+        private async Task SaveAttachments(List<IFormFile> attachments, int mailId, string mailAccountId, string emailType, ICollection<Attachments> emailAttachments)
         {
             if (attachments == null || attachments.Count == 0)
                 return;
@@ -190,5 +190,27 @@ namespace FalconBackend.Services
 
             await _context.SaveChangesAsync();
         }
+        public async Task<bool> ToggleFavoriteAsync(int mailId, bool isFavorite)
+        {
+            var mail = await _context.Mails.FindAsync(mailId);
+            if (mail == null)
+                return false;
+
+            mail.IsFavorite = isFavorite;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ToggleReadAsync(int mailId, bool isRead)
+        {
+            var mail = await _context.MailReceived.FindAsync(mailId);
+            if (mail == null)
+                return false;
+
+            mail.IsRead = isRead;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

@@ -6,13 +6,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FalconBackend.Models
 {
+    [Index(nameof(EmailAddress), IsUnique = true)] // Ensures email accounts are unique
     public class MailAccount
     {
-        public int Id { get; set; }
-        public string Token { get; set; }
-        public string EmailAddress { get; set; }
-        public DateTime LastMailSync { get; set; }
+        [Key]
+        [MaxLength(100)]
+        public string MailAccountId { get; set; } = Guid.NewGuid().ToString("N");  // Hashed unique ID
+
+        [Required]
+        [MaxLength(500)]
+        public string Token { get; set; }  // Kept for authentication
+
+        [Required]
+        [MaxLength(255)]
+        [EmailAddress]
+        public string EmailAddress { get; set; } // Email for reference
+
+        public DateTime LastMailSync { get; set; } = DateTime.UtcNow;
         public bool IsDefault { get; set; }
+
+        [Required]
         public MailProvider Provider { get; set; }
 
         public enum MailProvider
@@ -22,9 +35,15 @@ namespace FalconBackend.Models
         }
 
         // Relationships
-        public int AppUserId { get; set; }
+        [Required]
+        [ForeignKey("AppUser")]
+        [MaxLength(255)]
+        [EmailAddress]
+        public string AppUserEmail { get; set; }  // Foreign key to AppUser.Email
+
         public AppUser AppUser { get; set; }
-        public ICollection<FavoriteTag> FavoriteTags { get; set; }
-        public ICollection<Mail> Mails { get; set; } 
+
+        public ICollection<FavoriteTag> FavoriteTags { get; set; } = new List<FavoriteTag>();
+        public ICollection<Mail> Mails { get; set; } = new List<Mail>();
     }
 }
