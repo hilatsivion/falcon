@@ -13,41 +13,71 @@ namespace FalconBackend.Services
     {
         private readonly AppDbContext _context;
         private readonly FileStorageService _fileStorageService;
+        private readonly AnalyticsService _analyticsService;
 
-        public MailService(AppDbContext context, FileStorageService fileStorageService)
+        public MailService(AppDbContext context, FileStorageService fileStorageService, AnalyticsService analyticsService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
-        }
+            _analyticsService = analyticsService;
+        } 
 
-        public Task<List<MailReceived>> GetReceivedEmailsAsync(string mailAccountId) =>
-            _context.MailReceived
-                .Include(mr => mr.Attachments)
-                .Where(mr => mr.MailAccount.MailAccountId == mailAccountId)
-                .ToListAsync();
+        public Task<List<MailReceived>> GetReceivedEmailsByMailAccountAsync(string mailAccountId) =>
+          _context.MailReceived
+              .Include(mr => mr.Attachments)
+              .Where(mr => mr.MailAccount.MailAccountId == mailAccountId)
+              .ToListAsync();
 
-        public Task<List<MailSent>> GetSentEmailsAsync(string mailAccountId) =>
+        public Task<List<MailSent>> GetSentEmailsByMailAccountAsync(string mailAccountId) =>
             _context.MailSent
                 .Include(ms => ms.Attachments)
                 .Where(ms => ms.MailAccount.MailAccountId == mailAccountId)
                 .ToListAsync();
 
-        public Task<List<Draft>> GetDraftEmailsAsync(string mailAccountId) =>
+        public Task<List<Draft>> GetDraftEmailsByMailAccountAsync(string mailAccountId) =>
             _context.Drafts
                 .Include(d => d.Attachments)
                 .Where(d => d.MailAccount.MailAccountId == mailAccountId)
                 .ToListAsync();
 
+        // New methods to get emails across all mail accounts of a user
+        public async Task<List<MailReceived>> GetAllReceivedEmailsByUserAsync(string userEmail) =>
+            await _context.MailReceived
+                .Include(mr => mr.Attachments)
+                .Where(mr => _context.MailAccounts
+                    .Where(ma => ma.AppUserEmail == userEmail)
+                    .Select(ma => ma.MailAccountId)
+                    .Contains(mr.MailAccountId))
+                .ToListAsync();
+
+        public async Task<List<MailSent>> GetAllSentEmailsByUserAsync(string userEmail) =>
+            await _context.MailSent
+                .Include(ms => ms.Attachments)
+                .Where(ms => _context.MailAccounts
+                    .Where(ma => ma.AppUserEmail == userEmail)
+                    .Select(ma => ma.MailAccountId)
+                    .Contains(ms.MailAccountId))
+                .ToListAsync();
+
+        public async Task<List<Draft>> GetAllDraftEmailsByUserAsync(string userEmail) =>
+            await _context.Drafts
+                .Include(d => d.Attachments)
+                .Where(d => _context.MailAccounts
+                    .Where(ma => ma.AppUserEmail == userEmail)
+                    .Select(ma => ma.MailAccountId)
+                    .Contains(d.MailAccountId))
+                .ToListAsync();
+
         public async Task<MailReceived> AddReceivedEmailAsync(string mailAccountId, string sender, string subject, string body, List<IFormFile> attachments)
         {
-            // Skip if email already exists
-            var existingEmail = await _context.MailReceived
-                .FirstOrDefaultAsync(m => m.MailAccountId == mailAccountId && m.Sender == sender && m.Subject == subject);
+            var mailAccount = await _context.MailAccounts
+                .Include(ma => ma.AppUser)
+                .FirstOrDefaultAsync(ma => ma.MailAccountId == mailAccountId);
 
-            if (existingEmail != null)
-            {
-                return existingEmail;
-            }
+            if (mailAccount == null)
+                throw new Exception("Mail account not found.");
+
+            string userEmail = mailAccount.AppUserEmail;
 
             var receivedMail = new MailReceived
             {
@@ -67,9 +97,11 @@ namespace FalconBackend.Services
                 await _context.SaveChangesAsync();
 
                 await SaveAttachments(attachments, receivedMail.MailId, mailAccountId, "Received", receivedMail.Attachments);
-
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // Update analytics for received email
+                await _analyticsService.UpdateEmailsReceivedWeeklyAsync(userEmail);
 
                 return receivedMail;
             }
@@ -82,6 +114,15 @@ namespace FalconBackend.Services
 
         public async Task<MailSent> AddSentEmailAsync(string mailAccountId, string subject, string body, List<IFormFile> attachments)
         {
+            var mailAccount = await _context.MailAccounts
+                .Include(ma => ma.AppUser)
+                .FirstOrDefaultAsync(ma => ma.MailAccountId == mailAccountId);
+
+            if (mailAccount == null)
+                throw new Exception("Mail account not found.");
+
+            string userEmail = mailAccount.AppUserEmail;
+
             var sentMail = new MailSent
             {
                 MailAccountId = mailAccountId,
@@ -98,9 +139,11 @@ namespace FalconBackend.Services
                 await _context.SaveChangesAsync();
 
                 await SaveAttachments(attachments, sentMail.MailId, mailAccountId, "Sent", sentMail.Attachments);
-
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // Update analytics for sent email
+                await _analyticsService.UpdateEmailsSentWeeklyAsync(userEmail);
 
                 return sentMail;
             }
@@ -207,8 +250,17 @@ namespace FalconBackend.Services
             if (mail == null)
                 return false;
 
+            var mailAccount = await _context.MailAccounts
+                .Include(ma => ma.AppUser)
+                .FirstOrDefaultAsync(ma => ma.MailAccountId == mail.MailAccountId);
+
             mail.IsRead = isRead;
             await _context.SaveChangesAsync();
+
+            string userEmail = mailAccount.AppUserEmail;
+
+            if (isRead)
+                await _analyticsService.UpdateReadEmailsWeeklyAsync(userEmail);
             return true;
         }
 

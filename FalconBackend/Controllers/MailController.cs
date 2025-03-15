@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 
 namespace FalconBackend.Controllers
 {
@@ -35,13 +36,65 @@ namespace FalconBackend.Controllers
             return jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
         }
 
+        // Fetch received emails for a specific mail account
+        [HttpGet("received/byMailAccount/{mailAccountId}")]
+        public async Task<IActionResult> GetReceivedEmailsByMailAccountAsync(string mailAccountId)
+        {
+            try
+            {
+                var emails = await _mailService.GetReceivedEmailsByMailAccountAsync(mailAccountId);
+                if (!emails.Any())
+                    return NotFound("No received emails found for this mail account.");
+                return Ok(emails);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to retrieve received emails. Error: {ex.Message}");
+            }
+        }
+
+        // Fetch sent emails for a specific mail account
+        [HttpGet("sent/byMailAccount/{mailAccountId}")]
+        public async Task<IActionResult> GetSentEmailsByMailAccountAsync(string mailAccountId)
+        {
+            try
+            {
+                var emails = await _mailService.GetSentEmailsByMailAccountAsync(mailAccountId);
+                if (!emails.Any())
+                    return NotFound("No sent emails found for this mail account.");
+                return Ok(emails);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to retrieve sent emails. Error: {ex.Message}");
+            }
+        }
+
+        // Fetch draft emails for a specific mail account
+        [HttpGet("drafts/byMailAccount/{mailAccountId}")]
+        public async Task<IActionResult> GetDraftEmailsByMailAccountAsync(string mailAccountId)
+        {
+            try
+            {
+                var drafts = await _mailService.GetDraftEmailsByMailAccountAsync(mailAccountId);
+                if (!drafts.Any())
+                    return NotFound("No drafts found for this mail account.");
+                return Ok(drafts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to retrieve drafts. Error: {ex.Message}");
+            }
+        }
+
+        // Fetch all received emails across all mail accounts of the user
         [HttpGet("received")]
-        public async Task<IActionResult> GetReceivedEmailsAsync()
+        public async Task<IActionResult> GetAllReceivedEmailsByUserAsync()
         {
             try
             {
                 var userEmail = GetUserEmailFromToken();
-                var emails = await _mailService.GetReceivedEmailsAsync(userEmail);
+                var emails = await _mailService.GetAllReceivedEmailsByUserAsync(userEmail);
                 if (!emails.Any())
                     return NotFound("No received emails found for this user.");
                 return Ok(emails);
@@ -56,13 +109,14 @@ namespace FalconBackend.Controllers
             }
         }
 
+        // Fetch all sent emails across all mail accounts of the user
         [HttpGet("sent")]
-        public async Task<IActionResult> GetSentEmailsAsync()
+        public async Task<IActionResult> GetAllSentEmailsByUserAsync()
         {
             try
             {
                 var userEmail = GetUserEmailFromToken();
-                var emails = await _mailService.GetSentEmailsAsync(userEmail);
+                var emails = await _mailService.GetAllSentEmailsByUserAsync(userEmail);
                 if (!emails.Any())
                     return NotFound("No sent emails found for this user.");
                 return Ok(emails);
@@ -77,13 +131,14 @@ namespace FalconBackend.Controllers
             }
         }
 
+        // Fetch all draft emails across all mail accounts of the user
         [HttpGet("drafts")]
-        public async Task<IActionResult> GetDraftEmailsAsync()
+        public async Task<IActionResult> GetAllDraftEmailsByUserAsync()
         {
             try
             {
                 var userEmail = GetUserEmailFromToken();
-                var drafts = await _mailService.GetDraftEmailsAsync(userEmail);
+                var drafts = await _mailService.GetAllDraftEmailsByUserAsync(userEmail);
                 if (!drafts.Any())
                     return NotFound("No drafts found for this user.");
                 return Ok(drafts);
@@ -95,75 +150,6 @@ namespace FalconBackend.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Failed to retrieve drafts. Error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("received")]
-        public async Task<IActionResult> AddReceivedEmailAsync(string sender, string subject, string body, List<IFormFile> attachments)
-        {
-            try
-            {
-                var userEmail = GetUserEmailFromToken();
-                if (string.IsNullOrEmpty(sender) || string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
-                    return BadRequest("Sender, subject, and body are required.");
-
-                var result = await _mailService.AddReceivedEmailAsync(userEmail, sender, subject, body, attachments);
-                if (result == null)
-                    return Conflict("Duplicate email detected.");
-
-                return CreatedAtAction(nameof(GetReceivedEmailsAsync), new { userEmail }, result);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Failed to save received email. Error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("sent")]
-        public async Task<IActionResult> AddSentEmailAsync(string subject, string body, List<IFormFile> attachments)
-        {
-            try
-            {
-                var userEmail = GetUserEmailFromToken();
-                if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
-                    return BadRequest("Subject and body are required.");
-
-                var result = await _mailService.AddSentEmailAsync(userEmail, subject, body, attachments);
-                return CreatedAtAction(nameof(GetSentEmailsAsync), new { userEmail }, result);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Failed to save sent email. Error: {ex.Message}");
-            }
-        }
-
-        [HttpPost("draft")]
-        public async Task<IActionResult> AddDraftEmailAsync(string subject, string body, List<IFormFile> attachments)
-        {
-            try
-            {
-                var userEmail = GetUserEmailFromToken();
-                if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body))
-                    return BadRequest("Subject and body are required.");
-
-                var result = await _mailService.AddDraftEmailAsync(userEmail, subject, body, attachments);
-                return CreatedAtAction(nameof(GetDraftEmailsAsync), new { userEmail }, result);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Failed to save draft email. Error: {ex.Message}");
             }
         }
 

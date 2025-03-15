@@ -210,3 +210,4 @@ C:\Users\user\Documents\GitHub\falcon\FalconBackend\bin\Debug\net6.0\Microsoft.B
 C:\Users\user\Documents\GitHub\falcon\FalconBackend\bin\Debug\net6.0\Microsoft.Bcl.Memory.dll
 C:\Users\user\Documents\GitHub\falcon\FalconBackend\bin\Debug\net6.0\Microsoft.Bcl.TimeProvider.dll
 C:\Users\user\Documents\GitHub\falcon\FalconBackend\bin\Debug\net6.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\user\Documents\GitHub\falcon\FalconBackend\obj\Debug\net6.0\staticwebassets.upToDateCheck.txt

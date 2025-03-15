@@ -1,148 +1,226 @@
 [
   {
-    "ContainingType": "FalconBackend.Controllers.MailService",
-    "Method": "AddDraftEmailAsync",
-    "RelativePath": "api/mail/draft",
+    "ContainingType": "FalconBackend.Controllers.AuthController",
+    "Method": "LogIn",
+    "RelativePath": "api/auth/login",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "mailAccountId",
-        "Type": "System.Int32",
-        "IsRequired": false
-      },
-      {
-        "Name": "subject",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "body",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "attachments",
-        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FalconBackend.Controllers.MailService",
-    "Method": "GetDraftEmailsAsync",
-    "RelativePath": "api/mail/drafts/{userId}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "userId",
-        "Type": "System.Int32",
+        "Name": "request",
+        "Type": "FalconBackend.Controllers.LoginRequest",
         "IsRequired": true
       }
     ],
     "ReturnTypes": []
   },
   {
-    "ContainingType": "FalconBackend.Controllers.MailService",
-    "Method": "AddReceivedEmailAsync",
+    "ContainingType": "FalconBackend.Controllers.AuthController",
+    "Method": "LogOut",
+    "RelativePath": "api/auth/logout",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.AuthController",
+    "Method": "GetUserProfile",
+    "RelativePath": "api/auth/profile",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.AuthController",
+    "Method": "SignUp",
+    "RelativePath": "api/auth/signup",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Controllers.SignUpRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.AuthController",
+    "Method": "AuthenticateUser",
+    "RelativePath": "api/auth/validate",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetAllDraftEmailsByUserAsync",
+    "RelativePath": "api/mail/drafts",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetDraftEmailsByMailAccountAsync",
+    "RelativePath": "api/mail/drafts/byMailAccount/{mailAccountId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailAccountId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "ToggleFavorite",
+    "RelativePath": "api/mail/favorite/{mailId}/{isFavorite}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "isFavorite",
+        "Type": "System.Boolean",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "ToggleRead",
+    "RelativePath": "api/mail/read/{mailId}/{isRead}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "isRead",
+        "Type": "System.Boolean",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetAllReceivedEmailsByUserAsync",
     "RelativePath": "api/mail/received",
-    "HttpMethod": "POST",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "mailAccountId",
-        "Type": "System.Int32",
-        "IsRequired": false
-      },
-      {
-        "Name": "sender",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "subject",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "body",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "attachments",
-        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
-        "IsRequired": false
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
-    "ContainingType": "FalconBackend.Controllers.MailService",
-    "Method": "GetReceivedEmailsAsync",
-    "RelativePath": "api/mail/received/{userId}",
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetReceivedEmailsByMailAccountAsync",
+    "RelativePath": "api/mail/received/byMailAccount/{mailAccountId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "userId",
-        "Type": "System.Int32",
+        "Name": "mailAccountId",
+        "Type": "System.String",
         "IsRequired": true
       }
     ],
     "ReturnTypes": []
   },
   {
-    "ContainingType": "FalconBackend.Controllers.MailService",
-    "Method": "AddSentEmailAsync",
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetAllSentEmailsByUserAsync",
     "RelativePath": "api/mail/sent",
-    "HttpMethod": "POST",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "mailAccountId",
-        "Type": "System.Int32",
-        "IsRequired": false
-      },
-      {
-        "Name": "subject",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "body",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "attachments",
-        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
-        "IsRequired": false
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
-    "ContainingType": "FalconBackend.Controllers.MailService",
-    "Method": "GetSentEmailsAsync",
-    "RelativePath": "api/mail/sent/{userId}",
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetSentEmailsByMailAccountAsync",
+    "RelativePath": "api/mail/sent/byMailAccount/{mailAccountId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "userId",
-        "Type": "System.Int32",
+        "Name": "mailAccountId",
+        "Type": "System.String",
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.UserController",
+    "Method": "CreateTag",
+    "RelativePath": "api/user/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Controllers.CreateTagRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.UserController",
+    "Method": "SaveUserTags",
+    "RelativePath": "api/user/save-tags",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Controllers.SaveUserTagsRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.UserController",
+    "Method": "GetAllTags",
+    "RelativePath": "api/user/tags",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   }
 ]

@@ -1,40 +1,41 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using FalconBackend.Models;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
-namespace FalconBackend.Models
+public class Analytics
 {
-    [Index(nameof(AppUserEmail), IsUnique = false)] // Index for faster lookups
-    public class Analytics
-    {
-        [Key]
-        [ForeignKey("AppUser")]
-        [MaxLength(255)]
-        [EmailAddress]
-        public string AppUserEmail { get; set; } // Now the primary key, linked to AppUser.Email
+    [Key]
+    [ForeignKey("AppUser")]
+    [MaxLength(255)]
+    [EmailAddress]
+    public string AppUserEmail { get; set; }
 
-        // Time Tracking
-        public float TimeSpentToday { get; set; }
-        public float AvgTimeSpentDaily { get; set; }
-        public float TimeSpentThisWeek { get; set; }
-        public float AvgTimeSpentWeekly { get; set; }
+    // Time Tracking
+    public float TimeSpentToday { get; set; } = 0;
+    public float AvgTimeSpentDaily { get; set; } = 0;
+    public float TimeSpentThisWeek { get; set; } = 0;
+    public float AvgTimeSpentWeekly { get; set; } = 0;
+    public float TotalTimeSpent { get; set; } = 0; 
+    public int TotalDaysTracked { get; set; } = 0; 
 
-        // Email Tracking
-        public int EmailsReceivedWeekly { get; set; }
-        public int EmailsSentWeekly { get; set; }
-        public int SpamEmailsWeekly { get; set; }
-        public int ReadEmailsWeekly { get; set; }
+    // Email Tracking
+    public int EmailsReceivedWeekly { get; set; } = 0;
+    public int EmailsSentWeekly { get; set; } = 0;
+    public int SpamEmailsWeekly { get; set; } = 0;
+    public int ReadEmailsWeekly { get; set; } = 0;
+    public float AvgEmailsPerDay { get; set; } = 0;
+    public float AvgEmailsPerWeek { get; set; } = 0;
 
-        // Spam Detection Rate (Calculated Field)
-        [NotMapped] // Prevents EF from mapping to the database
-        public float SpamDetectionRate => EmailsReceivedWeekly == 0 ? 0 :
-            (float)SpamEmailsWeekly / EmailsReceivedWeekly * 100;
+    // Streak Tracking
+    public int CurrentStreak { get; set; } = 0;
+    public int LongestStreak { get; set; } = 0;
 
-        // Timestamp (Last Updated)
-        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+    // Tracking Resets
+    public DateTime LastResetDate { get; set; } = DateTime.UtcNow;
+    public bool IsActiveToday { get; set; } = false;
 
-        // Relationships
-        public AppUser AppUser { get; set; }
-    }
+    // Timestamp
+    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+
+    public AppUser AppUser { get; set; }
 }

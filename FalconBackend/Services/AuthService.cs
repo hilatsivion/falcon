@@ -16,11 +16,13 @@ namespace FalconBackend.Services
     {
         private readonly AppDbContext _context;
         private readonly string _jwtSecret;
+        private readonly AnalyticsService _analyticsService;
 
-        public AuthService(AppDbContext context, IConfiguration configuration) // Inject IConfiguration
+        public AuthService(AppDbContext context, IConfiguration configuration, AnalyticsService analyticsService)
         {
             _context = context;
             _jwtSecret = configuration["JwtSettings:SecretKey"] ?? throw new Exception("JWT Secret Key not found in configuration.");
+            _analyticsService = analyticsService;
         }
 
         public async Task<string> LogInAsync(string email, string password)
@@ -32,10 +34,32 @@ namespace FalconBackend.Services
             if (!BCrypt.Net.BCrypt.Verify(password, user.HashedPassword))
                 throw new Exception("Incorrect password");
 
+            // Ensure stats are up to date before login
+            await _analyticsService.CheckAndResetStatsOnLoginAsync(email);
+
+            // Update session time tracking
+            if (user.LastLogin.HasValue)
+            {
+                await _analyticsService.UpdateTimeSpentTodayAsync(email);
+            }
+
+            // Update LastLogin time
             user.LastLogin = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             return GenerateJwtToken(user);
+        }
+
+        public async Task<bool> LogOutAsync(string email)
+        {
+            var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+                throw new Exception("User not found");
+
+            // Update time spent in the app before logging out
+            await _analyticsService.UpdateTimeSpentTodayAsync(email);
+
+            return true;
         }
 
         public async Task<bool> SignUpAsync(string fullName, string username, string email, string password)
@@ -51,11 +75,15 @@ namespace FalconBackend.Services
                 FullName = fullName,
                 Username = username,
                 HashedPassword = hashedPassword,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                RefreshToken = string.Empty 
             };
 
             _context.AppUsers.Add(newUser);
             await _context.SaveChangesAsync();
+
+            // Create analytics for the new user
+            await _analyticsService.CreateAnalyticsForUserAsync(email);
 
             return true;
         }
@@ -102,13 +130,14 @@ namespace FalconBackend.Services
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Name, user.Username)
                 }),
-                Expires = DateTime.UtcNow.AddHours(1),
+                Expires = DateTime.UtcNow.AddHours(12),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
         public async Task<object> GetUserProfileAsync(string token)
         {
             var handler = new JwtSecurityTokenHandler();
@@ -150,7 +179,7 @@ namespace FalconBackend.Services
                 if (user == null)
                     return new { Error = "User not found" };
 
-                return user; // Returning only necessary fields
+                return user;
             }
             catch (SecurityTokenExpiredException)
             {
@@ -165,6 +194,5 @@ namespace FalconBackend.Services
                 return new { Error = $"An error occurred: {ex.Message}" };
             }
         }
-
     }
 }

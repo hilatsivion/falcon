@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
 
 namespace FalconBackend.Controllers
@@ -14,7 +15,7 @@ namespace FalconBackend.Controllers
 
         public AuthController(AuthService authService)
         {
-            _authService = authService;
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
         }
 
         [HttpPost("login")]
@@ -45,6 +46,36 @@ namespace FalconBackend.Controllers
             }
         }
 
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> LogOut()
+        {
+            try
+            {
+                // Extract the email from the JWT token
+                var authorizationHeader = Request.Headers["Authorization"].ToString();
+                if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+                    return Unauthorized("Missing or invalid authentication token.");
+
+                var token = authorizationHeader.Replace("Bearer ", "").Trim();
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
+
+                var emailClaim = jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value;
+                if (string.IsNullOrEmpty(emailClaim))
+                    return Unauthorized("Invalid token: Email not found.");
+
+                // Call logout service
+                await _authService.LogOutAsync(emailClaim);
+
+                return Ok("User logged out successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to log out. Error: {ex.Message}");
+            }
+        }
+
         [HttpGet("validate")]
         [Authorize]
         public async Task<IActionResult> AuthenticateUser()
@@ -64,9 +95,7 @@ namespace FalconBackend.Controllers
         {
             try
             {
-                // Extract the token from the Authorization header
                 var authorizationHeader = Request.Headers["Authorization"].ToString();
-
                 if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
                     return Unauthorized("Missing or invalid authentication token.");
 
@@ -76,7 +105,6 @@ namespace FalconBackend.Controllers
                 if (userProfile is null)
                     return Unauthorized("Invalid or expired token.");
 
-                // If the returned object contains an error, return it as a response
                 if (userProfile.GetType().GetProperty("Error") != null)
                     return Unauthorized(userProfile);
 
@@ -87,7 +115,6 @@ namespace FalconBackend.Controllers
                 return StatusCode(500, $"Failed to retrieve user profile. Error: {ex.Message}");
             }
         }
-
     }
 
     public class LoginRequest
