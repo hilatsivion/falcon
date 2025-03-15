@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace FalconBackend.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class AddCreatedByUserToTags : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -16,8 +16,10 @@ namespace FalconBackend.Migrations
                     Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    HashedPassword = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RefreshTokenExpiry = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastLogin = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -25,17 +27,6 @@ namespace FalconBackend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AppUsers", x => x.Email);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Tags",
-                columns: table => new
-                {
-                    TagName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Tags", x => x.TagName);
                 });
 
             migrationBuilder.CreateTable(
@@ -111,29 +102,23 @@ namespace FalconBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "FavoriteTags",
+                name: "Tags",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     TagName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    MailAccountId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    TagType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedByUserEmail = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FavoriteTags", x => x.Id);
+                    table.PrimaryKey("PK_Tags", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_FavoriteTags_MailAccounts_MailAccountId",
-                        column: x => x.MailAccountId,
-                        principalTable: "MailAccounts",
-                        principalColumn: "MailAccountId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_FavoriteTags_Tags_TagName",
-                        column: x => x.TagName,
-                        principalTable: "Tags",
-                        principalColumn: "TagName",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_Tags_AppUsers_CreatedByUserEmail",
+                        column: x => x.CreatedByUserEmail,
+                        principalTable: "AppUsers",
+                        principalColumn: "Email");
                 });
 
             migrationBuilder.CreateTable(
@@ -166,6 +151,30 @@ namespace FalconBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "FavoriteTags",
+                columns: table => new
+                {
+                    TagId = table.Column<int>(type: "int", nullable: false),
+                    AppUserEmail = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FavoriteTags", x => new { x.AppUserEmail, x.TagId });
+                    table.ForeignKey(
+                        name: "FK_FavoriteTags_AppUsers_AppUserEmail",
+                        column: x => x.AppUserEmail,
+                        principalTable: "AppUsers",
+                        principalColumn: "Email");
+                    table.ForeignKey(
+                        name: "FK_FavoriteTags_Tags_TagId",
+                        column: x => x.TagId,
+                        principalTable: "Tags",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Attachments",
                 columns: table => new
                 {
@@ -185,6 +194,32 @@ namespace FalconBackend.Migrations
                         column: x => x.MailId,
                         principalTable: "Mails",
                         principalColumn: "MailId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MailTags",
+                columns: table => new
+                {
+                    MailReceivedId = table.Column<int>(type: "int", nullable: false),
+                    TagId = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MailTags", x => new { x.MailReceivedId, x.TagId });
+                    table.ForeignKey(
+                        name: "FK_MailTags_Mails_MailReceivedId",
+                        column: x => x.MailReceivedId,
+                        principalTable: "Mails",
+                        principalColumn: "MailId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MailTags_Tags_TagId",
+                        column: x => x.TagId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -261,14 +296,9 @@ namespace FalconBackend.Migrations
                 column: "EmailAddress");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FavoriteTags_MailAccountId",
+                name: "IX_FavoriteTags_TagId_AppUserEmail",
                 table: "FavoriteTags",
-                column: "MailAccountId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_FavoriteTags_TagName_MailAccountId",
-                table: "FavoriteTags",
-                columns: new[] { "TagName", "MailAccountId" },
+                columns: new[] { "TagId", "AppUserEmail" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -288,6 +318,11 @@ namespace FalconBackend.Migrations
                 column: "MailAccountId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_MailTags_TagId",
+                table: "MailTags",
+                column: "TagId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Recipient_Email",
                 table: "Recipient",
                 column: "Email");
@@ -303,10 +338,9 @@ namespace FalconBackend.Migrations
                 column: "RepliedToMailId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tags_TagName",
+                name: "IX_Tags_CreatedByUserEmail",
                 table: "Tags",
-                column: "TagName",
-                unique: true);
+                column: "CreatedByUserEmail");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -322,6 +356,9 @@ namespace FalconBackend.Migrations
 
             migrationBuilder.DropTable(
                 name: "FavoriteTags");
+
+            migrationBuilder.DropTable(
+                name: "MailTags");
 
             migrationBuilder.DropTable(
                 name: "Recipient");

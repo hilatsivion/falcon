@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FalconBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250314230236_secondmigssss")]
-    partial class secondmigssss
+    [Migration("20250315001504_AddCreatedByUserToTags")]
+    partial class AddCreatedByUserToTags
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -194,9 +194,8 @@ namespace FalconBackend.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("TagName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<int>("TagId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -204,9 +203,9 @@ namespace FalconBackend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.HasKey("AppUserEmail", "TagName");
+                    b.HasKey("AppUserEmail", "TagId");
 
-                    b.HasIndex("TagName", "AppUserEmail")
+                    b.HasIndex("TagId", "AppUserEmail")
                         .IsUnique();
 
                     b.ToTable("FavoriteTags");
@@ -224,6 +223,10 @@ namespace FalconBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("bit");
 
@@ -231,10 +234,6 @@ namespace FalconBackend.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("MailType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Subject")
                         .IsRequired()
@@ -246,7 +245,7 @@ namespace FalconBackend.Migrations
 
                     b.ToTable("Mails");
 
-                    b.HasDiscriminator<string>("MailType").HasValue("Mail");
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Mail");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.MailAccount", b =>
@@ -294,9 +293,8 @@ namespace FalconBackend.Migrations
                     b.Property<int>("MailReceivedId")
                         .HasColumnType("int");
 
-                    b.Property<string>("TagName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<int>("TagId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -304,9 +302,9 @@ namespace FalconBackend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.HasKey("MailReceivedId", "TagName");
+                    b.HasKey("MailReceivedId", "TagId");
 
-                    b.HasIndex("TagName");
+                    b.HasIndex("TagId");
 
                     b.ToTable("MailTags");
                 });
@@ -357,18 +355,28 @@ namespace FalconBackend.Migrations
                     b.ToTable("Replies");
                 });
 
-            modelBuilder.Entity("FalconBackend.Models.Tag", b =>
+            modelBuilder.Entity("Tag", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
                     b.Property<string>("TagName")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("TagName");
+                    b.Property<string>("TagType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex("TagName")
-                        .IsUnique();
+                    b.HasKey("Id");
 
                     b.ToTable("Tags");
+
+                    b.HasDiscriminator<string>("TagType").HasValue("SystemTag");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.Draft", b =>
@@ -399,7 +407,7 @@ namespace FalconBackend.Migrations
                     b.Property<DateTime>("TimeReceived")
                         .HasColumnType("datetime2");
 
-                    b.HasDiscriminator().HasValue("Received");
+                    b.HasDiscriminator().HasValue("MailReceived");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.MailSent", b =>
@@ -409,7 +417,21 @@ namespace FalconBackend.Migrations
                     b.Property<DateTime>("TimeSent")
                         .HasColumnType("datetime2");
 
-                    b.HasDiscriminator().HasValue("Sent");
+                    b.HasDiscriminator().HasValue("MailSent");
+                });
+
+            modelBuilder.Entity("FalconBackend.Models.UserCreatedTag", b =>
+                {
+                    b.HasBaseType("Tag");
+
+                    b.Property<string>("CreatedByUserEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasIndex("CreatedByUserEmail");
+
+                    b.HasDiscriminator().HasValue("UserTag");
                 });
 
             modelBuilder.Entity("FalconBackend.Models.Analytics", b =>
@@ -450,13 +472,13 @@ namespace FalconBackend.Migrations
                     b.HasOne("FalconBackend.Models.AppUser", "AppUser")
                         .WithMany("FavoriteTags")
                         .HasForeignKey("AppUserEmail")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("FalconBackend.Models.Tag", "Tag")
+                    b.HasOne("Tag", "Tag")
                         .WithMany("FavoriteTags")
-                        .HasForeignKey("TagName")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("AppUser");
@@ -494,9 +516,9 @@ namespace FalconBackend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FalconBackend.Models.Tag", "Tag")
+                    b.HasOne("Tag", "Tag")
                         .WithMany("MailTags")
-                        .HasForeignKey("TagName")
+                        .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -527,6 +549,17 @@ namespace FalconBackend.Migrations
                     b.Navigation("Mail");
                 });
 
+            modelBuilder.Entity("FalconBackend.Models.UserCreatedTag", b =>
+                {
+                    b.HasOne("FalconBackend.Models.AppUser", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserEmail")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+                });
+
             modelBuilder.Entity("FalconBackend.Models.AppUser", b =>
                 {
                     b.Navigation("Analytics")
@@ -551,7 +584,7 @@ namespace FalconBackend.Migrations
                     b.Navigation("Mails");
                 });
 
-            modelBuilder.Entity("FalconBackend.Models.Tag", b =>
+            modelBuilder.Entity("Tag", b =>
                 {
                     b.Navigation("FavoriteTags");
 

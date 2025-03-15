@@ -42,8 +42,8 @@ namespace FalconBackend.Services
 
                 var favoriteTag = new FavoriteTag
                 {
-                    AppUserEmail = userEmail, // Links tag to the user
-                    TagName = tag.TagName
+                    AppUserEmail = userEmail,
+                    TagId = tag.Id
                 };
 
                 _context.FavoriteTags.Add(favoriteTag);
@@ -52,5 +52,46 @@ namespace FalconBackend.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+
+        public async Task CreateUserTagAsync(string userEmail, string tagName)
+        {
+            var existingTag = await _context.Tags
+                .Where(t => t.TagName == tagName)
+                .OfType<UserCreatedTag>() 
+                .FirstOrDefaultAsync();
+
+            if (existingTag != null)
+                throw new Exception("Tag already exists");
+
+            var userTag = new UserCreatedTag
+            {
+                TagName = tagName,
+                CreatedByUserEmail = userEmail
+            };
+
+            _context.Tags.Add(userTag);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<TagDto>> GetAllTagsAsync(string userEmail)
+        {
+            return await _context.Tags
+                .Where(t => !(t is UserCreatedTag) || ((UserCreatedTag)t).CreatedByUserEmail == userEmail)
+                .Select(t => new TagDto
+                {
+                    TagId = t.Id,
+                    TagName = t.TagName
+                })
+                .ToListAsync();
+        }
+
+
+        public struct TagDto
+        {
+            public int TagId { get; set; }
+            public string TagName { get; set; }
+        }
+
     }
 }

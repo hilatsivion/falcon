@@ -26,6 +26,7 @@ namespace FalconBackend.Data
         public DbSet<FavoriteTag> FavoriteTags { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<MailTag> MailTags { get; set; }
+        public DbSet<UserCreatedTag> UserCreatedTag { get; set; }
 
         // Fluent API configurations
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -53,19 +54,19 @@ namespace FalconBackend.Data
 
             // AppUser <-> FavoriteTags (Many-to-Many via FavoriteTags)
             modelBuilder.Entity<FavoriteTag>()
-                .HasKey(ft => new { ft.AppUserEmail, ft.TagName });
+                .HasKey(ft => new { ft.AppUserEmail, ft.TagId });
 
             modelBuilder.Entity<FavoriteTag>()
                 .HasOne(ft => ft.AppUser)
                 .WithMany(u => u.FavoriteTags)
                 .HasForeignKey(ft => ft.AppUserEmail)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<FavoriteTag>()
                 .HasOne(ft => ft.Tag)
                 .WithMany(t => t.FavoriteTags)
-                .HasForeignKey(ft => ft.TagName)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(ft => ft.TagId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // MailAccount <-> Mail (One-to-Many)
             modelBuilder.Entity<Mail>()
@@ -97,7 +98,7 @@ namespace FalconBackend.Data
 
             // Many-to-Many: MailReceived <-> Tags (MailTags)
             modelBuilder.Entity<MailTag>()
-                .HasKey(mt => new { mt.MailReceivedId, mt.TagName });
+                .HasKey(mt => new { mt.MailReceivedId, mt.TagId });
 
             modelBuilder.Entity<MailTag>()
                 .HasOne(mt => mt.MailReceived)
@@ -108,8 +109,19 @@ namespace FalconBackend.Data
             modelBuilder.Entity<MailTag>()
                 .HasOne(mt => mt.Tag)
                 .WithMany(t => t.MailTags)
-                .HasForeignKey(mt => mt.TagName)
+                .HasForeignKey(mt => mt.TagId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Tag>()
+                .HasDiscriminator<string>("TagType")
+                .HasValue<Tag>("SystemTag")
+                .HasValue<UserCreatedTag>("UserTag");
+
+            modelBuilder.Entity<UserCreatedTag>()
+                .HasOne(uct => uct.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(uct => uct.CreatedByUserEmail)
+                .OnDelete(DeleteBehavior.NoAction);
 
             base.OnModelCreating(modelBuilder);
         }

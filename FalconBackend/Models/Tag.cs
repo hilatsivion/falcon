@@ -1,19 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using FalconBackend.Models;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace FalconBackend.Models
+public class Tag
 {
-    [Index(nameof(TagName), IsUnique = true)] // Ensure unique tag names for consistency
-    public class Tag
-    {
-        [Key]
-        [MaxLength(100)]
-        public string TagName { get; set; } // Now the primary key
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
 
-        // Relationships
-        public ICollection<FavoriteTag> FavoriteTags { get; set; } = new List<FavoriteTag>();
-        public ICollection<MailTag> MailTags { get; set; } = new List<MailTag>();
-    }
+    [MaxLength(100)]
+    public string TagName { get; set; }
+
+    public ICollection<FavoriteTag> FavoriteTags { get; set; } = new List<FavoriteTag>();
+    public ICollection<MailTag> MailTags { get; set; } = new List<MailTag>();
 }

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FalconBackend.Models
 {
-    [Index(nameof(TagName), nameof(AppUserEmail), IsUnique = true)] // Ensures a tag is favorited only once per account
+    [Index(nameof(TagId), nameof(AppUserEmail), IsUnique = true)] // Ensures a tag is favorited only once per account
     public class FavoriteTag
     {
         [Key]
@@ -13,9 +13,7 @@ namespace FalconBackend.Models
 
         [Required]
         [ForeignKey("Tag")]
-        [MaxLength(100)]
-        public string TagName { get; set; }
-
+        public int TagId { get; set; } 
         public Tag Tag { get; set; }
 
         [Required]

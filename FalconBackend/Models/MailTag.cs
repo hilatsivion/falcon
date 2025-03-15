@@ -16,8 +16,7 @@ namespace FalconBackend.Models
 
         [Required]
         [ForeignKey("Tag")]
-        [MaxLength(100)]
-        public string TagName { get; set; }
+        public int TagId { get; set; } 
         public Tag Tag { get; set; }
     }
 }
