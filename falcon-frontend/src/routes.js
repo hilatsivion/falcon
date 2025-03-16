@@ -6,6 +6,8 @@ import Signup from "./pages/Welcome/Connect/Signup";
 import SelectInterests from "./pages/Welcome/SelectInterests/SelectInterests";
 import LoadingDataScreen from "./pages/Welcome/LoadingDataScreen/LoadingDataScreen";
 
+import Inbox from "./pages/Main/Inbox/Inbox";
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -14,6 +16,8 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/interests" element={<SelectInterests />} />
       <Route path="/loadingData" element={<LoadingDataScreen />} />
+
+      <Route path="/inbox" element={<Inbox />} />
     </Routes>
   );
 };

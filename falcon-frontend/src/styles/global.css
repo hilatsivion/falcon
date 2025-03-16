@@ -8,6 +8,8 @@
   --dark-font-color: #324054;
   --faded-gray: #a5b0bf;
   --background-white: #fafafa;
+  --favorite: #ffbc13;
+  --favorite-opacity: #ffbc1333;
 
   /* Gradient */
   --gradient-blue: linear-gradient(
@@ -17,12 +19,16 @@
     #0d70fc 47%,
     #00d0ff 100%
   );
+
+  /* Font */
+  --font-primary: "Roboto", sans-serif;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap");
+/* Import Roboto */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
 
 body {
-  font-family: "Rubik", sans-serif;
+  font-family: var(--font-primary);
   background-color: var(--background-white);
   color: var(--dark-font-color);
 }
@@ -34,6 +40,7 @@ h4,
 h5,
 h6 {
   font-weight: 700;
+  font-family: var(--font-primary);
 }
 
 h1 {
@@ -56,7 +63,6 @@ h4 {
 p {
   font-size: 16px;
   font-weight: 400;
-  font-weight: 300;
 }
 
 .small-text {
@@ -71,10 +77,12 @@ p {
   font-weight: 300;
 }
 
+/* Apply font globally */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: var(--font-primary);
 }
 
 button {
@@ -87,6 +95,7 @@ button {
   font-weight: 500;
   border-radius: 8px;
   transition: 0.3s;
+  font-family: var(--font-primary);
 }
 
 button.btn-white {

@@ -1,0 +1,123 @@
+/* Left Section: Avatar & Sender Name */
+.email-left {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Ensure consistent spacing */
+}
+
+/* Avatar */
+.email-avatar {
+  min-width: 24px;
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 400;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* Email Content: Sender, Subject, Preview */
+.email-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* Reduced gap for better alignment */
+}
+
+/* Sender Name */
+.email-sender {
+  font-weight: 600; /* Semibold */
+  font-size: 15px;
+  color: var(--dark-font-color);
+}
+
+/* Subject */
+.email-subject {
+  font-weight: 600; /* Semibold */
+  font-size: 13px;
+  color: var(--dark-font-color);
+}
+
+/* Email Preview */
+.email-preview {
+  font-size: 11px;
+  color: var(--icons-grey);
+  font-weight: 400;
+}
+
+/* Right Section: Time & Star Icon */
+.email-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Time */
+.email-time {
+  font-size: 12px;
+  color: var(--icons-grey);
+}
+
+/* Tags Section */
+.email-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* Individual Tag */
+.email-tag {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Main Email Item Container */
+.email-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.3s ease;
+}
+
+/* Apply background when starred */
+.email-item.starred {
+  background-color: var(--favorite-opacity);
+}
+
+/* Footer: Tags + Star */
+.email-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Star Icon */
+.email-star {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+}
+
+.email-sender-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.email-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
