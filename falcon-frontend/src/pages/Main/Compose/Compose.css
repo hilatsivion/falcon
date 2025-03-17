@@ -1,0 +1,13 @@
+.compose-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+.compose-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--dark-font-color);
+}

@@ -1,6 +1,5 @@
 import React from "react";
 import { EmailItem } from "../../../components/EmailItem/EmailItem";
-import Navbar from "../../../components/Navbar/Navbar";
 
 import "./Inbox.css";
 
@@ -38,7 +37,6 @@ const Inbox = () => {
       {emails.map((email, index) => (
         <EmailItem key={index} {...email} />
       ))}
-      <Navbar />
     </div>
   );
 };

@@ -77,7 +77,6 @@ p {
   font-weight: 300;
 }
 
-/* Apply font globally */
 * {
   margin: 0;
   padding: 0;
@@ -96,6 +95,12 @@ button {
   border-radius: 8px;
   transition: 0.3s;
   font-family: var(--font-primary);
+}
+
+/* Disable the grey touch feedback effect on mobile */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
 }
 
 button.btn-white {

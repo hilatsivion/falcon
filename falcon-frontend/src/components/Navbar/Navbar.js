@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ReactComponent as InboxIcon } from "../../assets/icons/black/direct.svg";
 import { ReactComponent as InboxIconActive } from "../../assets/icons/blue/direct.svg";
 import { ReactComponent as AnalyticsIcon } from "../../assets/icons/black/diagram.svg";
@@ -8,15 +9,18 @@ import { ReactComponent as ComposeIconActive } from "../../assets/icons/blue/add
 import "./Navbar.css";
 
 const Navbar = () => {
-  const [activePage, setActivePage] = useState("inbox");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <nav className="navbar">
       <div
-        className={`nav-item ${activePage === "analytics" ? "active" : ""}`}
-        onClick={() => setActivePage("analytics")}
+        className={`nav-item ${
+          location.pathname === "/analytics" ? "active" : ""
+        }`}
+        onClick={() => navigate("/analytics")}
       >
-        {activePage === "analytics" ? (
+        {location.pathname === "/analytics" ? (
           <AnalyticsIconActive />
         ) : (
           <AnalyticsIcon />
@@ -25,18 +29,24 @@ const Navbar = () => {
       </div>
 
       <div
-        className={`nav-item ${activePage === "inbox" ? "active" : ""}`}
-        onClick={() => setActivePage("inbox")}
+        className={`nav-item ${location.pathname === "/inbox" ? "active" : ""}`}
+        onClick={() => navigate("/inbox")}
       >
-        {activePage === "inbox" ? <InboxIconActive /> : <InboxIcon />}
+        {location.pathname === "/inbox" ? <InboxIconActive /> : <InboxIcon />}
         <span>inbox</span>
       </div>
 
       <div
-        className={`nav-item ${activePage === "compose" ? "active" : ""}`}
-        onClick={() => setActivePage("compose")}
+        className={`nav-item ${
+          location.pathname === "/compose" ? "active" : ""
+        }`}
+        onClick={() => navigate("/compose")}
       >
-        {activePage === "compose" ? <ComposeIconActive /> : <ComposeIcon />}
+        {location.pathname === "/compose" ? (
+          <ComposeIconActive />
+        ) : (
+          <ComposeIcon />
+        )}
         <span>compose</span>
       </div>
     </nav>
