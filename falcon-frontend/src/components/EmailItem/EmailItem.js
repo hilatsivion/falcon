@@ -28,16 +28,27 @@ const Tag = ({ name }) => (
 
 const EmailItem = ({ sender, subject, preview, tags, time, avatarColor }) => {
   const [isStarred, setIsStarred] = useState(false); // ⭐ Track starred state
+  const [isRead, setIsRead] = useState(false); // 📩 Track read state
 
-  const handleStarClick = () => {
-    setIsStarred((prev) => !prev); // Toggle star
+  const handleStarClick = (event) => {
+    event.stopPropagation(); // Prevent triggering read when clicking the star
+    setIsStarred((prev) => !prev);
+  };
+
+  const handleEmailClick = () => {
+    setIsRead(true); // Mark email as read
   };
 
   return (
-    <div className={`email-item ${isStarred ? "starred" : ""}`}>
-      {/* Div2: Sender Name + Time */}
+    <div
+      className={`email-item ${isStarred ? "starred" : ""} ${
+        isRead ? "read" : ""
+      }`}
+      onClick={handleEmailClick}
+    >
+      {/* Sender Name + Time */}
       <div className="email-header">
-        {/* Div1: Avatar + Sender Name */}
+        {/* Avatar + Sender */}
         <div className="email-sender-container">
           <div
             className="email-avatar"
@@ -52,15 +63,15 @@ const EmailItem = ({ sender, subject, preview, tags, time, avatarColor }) => {
         <span className="email-time">{time}</span>
       </div>
 
-      {/* Div3: Subject + Email Body */}
+      {/* Subject + Email Body */}
       <div className="email-body">
         <div className="email-subject">{subject}</div>
         <div className="email-preview">{preview}</div>
       </div>
 
-      {/* Div6: Tags List + Star Icon */}
+      {/* Tags List + Star Icon */}
       <div className="email-footer">
-        {/* Div5: Tags List */}
+        {/* Tags List */}
         <div className="email-tags">
           {tags.map((tag, index) => (
             <Tag key={index} name={tag} />

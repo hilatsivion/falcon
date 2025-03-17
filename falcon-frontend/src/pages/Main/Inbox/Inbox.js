@@ -1,5 +1,7 @@
 import React from "react";
 import { EmailItem } from "../../../components/EmailItem/EmailItem";
+import Navbar from "../../../components/Navbar/Navbar";
+
 import "./Inbox.css";
 
 const Inbox = () => {
@@ -8,7 +10,7 @@ const Inbox = () => {
       sender: "John Doe",
       subject: "Meeting Reminder",
       preview: "Don't forget about our meeting tomorrow at 10 AM...",
-      tags: ["Work"],
+      tags: ["Work", "Social", "School"],
       time: "10:30",
       avatarColor: "#ff5733",
     },
@@ -36,6 +38,7 @@ const Inbox = () => {
       {emails.map((email, index) => (
         <EmailItem key={index} {...email} />
       ))}
+      <Navbar />
     </div>
   );
 };

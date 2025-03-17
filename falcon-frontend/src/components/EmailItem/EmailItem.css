@@ -1,8 +1,49 @@
-/* Left Section: Avatar & Sender Name */
+/* Main Email Item */
+.email-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 18px;
+  border-bottom: 1px solid #a5b0bf2e;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+  cursor: pointer; /* Make it clickable */
+}
+
+/* Apply background when starred */
+.email-item.starred {
+  background-color: var(--favorite-opacity);
+}
+
+/* Apply opacity when email is read */
+.email-item.read {
+  opacity: 0.7;
+  background-color: rgb(243, 243, 243);
+}
+
+.email-item.read .email-sender,
+.email-item.read .email-subject {
+  font-weight: 400;
+}
+
+/* Sender Name + Avatar */
+.email-sender-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Header: Sender + Time */
+.email-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Left Section */
 .email-left {
   display: flex;
   align-items: center;
-  gap: 8px; /* Ensure consistent spacing */
+  gap: 8px;
 }
 
 /* Avatar */
@@ -24,19 +65,19 @@
 .email-content {
   display: flex;
   flex-direction: column;
-  gap: 2px; /* Reduced gap for better alignment */
+  gap: 2px;
 }
 
-/* Sender Name */
+/* Sender */
 .email-sender {
-  font-weight: 600; /* Semibold */
+  font-weight: 500;
   font-size: 15px;
   color: var(--dark-font-color);
 }
 
 /* Subject */
 .email-subject {
-  font-weight: 600; /* Semibold */
+  font-weight: 500;
   font-size: 13px;
   color: var(--dark-font-color);
 }
@@ -46,6 +87,13 @@
   font-size: 11px;
   color: var(--icons-grey);
   font-weight: 400;
+}
+
+/* Email Body */
+.email-body {
+  gap: 4px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Right Section: Time & Star Icon */
@@ -71,26 +119,10 @@
 
 /* Individual Tag */
 .email-tag {
-  font-size: 12px;
+  font-size: 10px;
   padding: 4px 8px;
-  border-radius: 8px;
-  font-weight: bold;
-  color: #333;
-}
-
-/* Main Email Item Container */
-.email-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-bottom: 1px solid #ddd;
-  transition: background-color 0.3s ease;
-}
-
-/* Apply background when starred */
-.email-item.starred {
-  background-color: var(--favorite-opacity);
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 /* Footer: Tags + Star */
@@ -108,16 +140,4 @@
   justify-content: center;
   width: 17px;
   height: 17px;
-}
-
-.email-sender-container {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.email-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
