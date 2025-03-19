@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { EmailItem } from "../../../components/EmailItem/EmailItem";
-
+import listIcon from "../../../assets/icons/black/list.svg";
+import folderIcon from "../../../assets/icons/black/folder.svg";
 import "./Inbox.css";
 
 const Inbox = () => {
+  const [isListView, setIsListView] = useState(true);
+
   const emails = [
     {
       sender: "John Doe",
@@ -29,14 +32,49 @@ const Inbox = () => {
       time: "18:00",
       avatarColor: "#ffd700",
     },
+    {
+      sender: "Hila Tsivion",
+      subject: "Meeting Reminder",
+      preview: "Don't forget about our meeting tomorrow at 10 AM...",
+      tags: ["Work", "Social", "School"],
+      time: "10:30",
+      avatarColor: "#f23858",
+    },
   ];
 
   return (
     <div className="inbox-container">
-      <h2 className="inbox-title">Inbox</h2>
-      {emails.map((email, index) => (
-        <EmailItem key={index} {...email} />
-      ))}
+      <div className="inbox-header">
+        <h2 className="inbox-title">Inbox</h2>
+
+        {/* Switch Button */}
+        <div
+          className="switch-button"
+          onClick={() => setIsListView(!isListView)}
+        >
+          {/* White Circle */}
+          <div
+            className={`switch-circle ${isListView ? "left" : "right"}`}
+          ></div>
+          {/* Icons */}
+          <img
+            src={listIcon}
+            alt="List View"
+            className={`switch-icon ${isListView ? "active" : "inactive"}`}
+          />
+          <img
+            src={folderIcon}
+            alt="Folder View"
+            className={`switch-icon ${isListView ? "inactive" : "active"}`}
+          />
+        </div>
+      </div>
+
+      <div className="emails-container">
+        {emails.map((email, index) => (
+          <EmailItem key={index} {...email} />
+        ))}
+      </div>
     </div>
   );
 };

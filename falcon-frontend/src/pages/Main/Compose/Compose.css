@@ -5,6 +5,7 @@
   justify-content: center;
   height: 100vh;
   text-align: center;
+  background-color: var(--white);
 }
 .compose-title {
   font-size: 24px;

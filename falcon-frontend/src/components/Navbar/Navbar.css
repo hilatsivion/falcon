@@ -10,6 +10,7 @@
   height: 73px;
   padding: 12px 20px;
   box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 4;
 }
 
 .nav-item {
