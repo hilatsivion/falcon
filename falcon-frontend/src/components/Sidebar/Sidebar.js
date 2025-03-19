@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { ReactComponent as XIcon } from "../../assets/icons/black/x.svg";
 import { ReactComponent as FalconLogo } from "../../assets/images/Falcon-sidebar.svg";
 import "./Sidebar.css";
@@ -13,10 +14,10 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
   }, [isOpen]);
 
   const handleClose = () => {
-    setIsClosing(true); // Start closing animation
+    setIsClosing(true);
     setTimeout(() => {
-      closeSidebar(); // Hide sidebar completely after animation ends
-    }, 300); // Matches transition duration
+      closeSidebar();
+    }, 300);
   };
 
   return (
@@ -31,7 +32,10 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sidebar-header">
-          <FalconLogo />
+          <Link to="/inbox" onClick={(e) => e.stopPropagation()}>
+            <FalconLogo />
+          </Link>
+
           <button className="close-btn" onClick={handleClose}>
             <XIcon />
           </button>

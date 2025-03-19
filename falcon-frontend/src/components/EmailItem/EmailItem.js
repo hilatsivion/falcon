@@ -27,11 +27,11 @@ const Tag = ({ name }) => (
 );
 
 const EmailItem = ({ sender, subject, preview, tags, time, avatarColor }) => {
-  const [isStarred, setIsStarred] = useState(false); // ⭐ Track starred state
-  const [isRead, setIsRead] = useState(false); // 📩 Track read state
+  const [isStarred, setIsStarred] = useState(false);
+  const [isRead, setIsRead] = useState(false);
 
   const handleStarClick = (event) => {
-    event.stopPropagation(); // Prevent triggering read when clicking the star
+    // event.stopPropagation(); // Prevent triggering read when clicking the star
     setIsStarred((prev) => !prev);
   };
 

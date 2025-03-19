@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import { EmailItem } from "../../../components/EmailItem/EmailItem";
-import EmailView from "../../../components/EmailView/EmailView";
 import listIcon from "../../../assets/icons/black/list.svg";
 import folderIcon from "../../../assets/icons/black/folder.svg";
 import "./Inbox.css";
 
 const Inbox = () => {
   const [isListView, setIsListView] = useState(true);
-  const [selectedEmail, setSelectedEmail] = useState(null); // Controls EmailView visibility
 
   const emails = [
     {
@@ -54,9 +52,11 @@ const Inbox = () => {
           className="switch-button"
           onClick={() => setIsListView(!isListView)}
         >
+          {/* White Circle */}
           <div
             className={`switch-circle ${isListView ? "left" : "right"}`}
           ></div>
+          {/* Icons */}
           <img
             src={listIcon}
             alt="List View"
@@ -70,25 +70,11 @@ const Inbox = () => {
         </div>
       </div>
 
-      {/* Email List */}
-      <div className="emails-container">
+      <div className="">
         {emails.map((email, index) => (
-          <div
-            key={index}
-            onClick={(e) => {
-              // Prevent triggering when clicking on elements inside EmailItem (like the star)
-              if (!e.target.closest(".email-star")) {
-                setSelectedEmail(email);
-              }
-            }}
-          >
-            <EmailItem {...email} />
-          </div>
+          <EmailItem key={index} {...email} />
         ))}
       </div>
-
-      {/* Email View (Slides up when an email is clicked) */}
-      <EmailView email={selectedEmail} onClose={() => setSelectedEmail(null)} />
     </div>
   );
 };
