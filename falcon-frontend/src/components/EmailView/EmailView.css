@@ -36,8 +36,9 @@
   align-items: center;
 }
 
-.email-body {
+.email-view .email-body {
   padding: 1rem 20px;
+  line-height: 1.3rem;
 }
 
 /* Avatar */
