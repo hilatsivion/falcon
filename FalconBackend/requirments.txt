@@ -1,0 +1,13 @@
+   Top-level Package                                      Requested   Resolved
+   > BCrypt.Net-Next                                      4.0.3       4.0.3
+   > Microsoft.AspNetCore.Authentication.JwtBearer        6.0.2       6.0.2
+   > Microsoft.EntityFrameworkCore                        6.0.2       6.0.2
+   > Microsoft.EntityFrameworkCore.Design                 6.0.2       6.0.2
+   > Microsoft.EntityFrameworkCore.Relational             6.0.2       6.0.2
+   > Microsoft.EntityFrameworkCore.SqlServer              6.0.2       6.0.2
+   > Microsoft.EntityFrameworkCore.Tools                  6.0.2       6.0.2
+   > Microsoft.Extensions.DependencyInjection             6.0.0       6.0.0
+   > Microsoft.Extensions.FileProviders.Abstractions      6.0.0       6.0.0
+   > Microsoft.Extensions.Primitives                      6.0.0       6.0.0
+   > Swashbuckle.AspNetCore                               6.5.0       6.5.0
+   > System.IdentityModel.Tokens.Jwt                      8.6.1       8.6.1

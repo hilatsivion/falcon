@@ -16,7 +16,7 @@ namespace FalconBackend.Services
         {
             // Get the directory where the server is running
             string serverDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            _basePath = Path.Combine(serverDirectory, "Storage"); // ✅ Storage folder inside the server directory
+            _basePath = Path.Combine(serverDirectory, "Storage"); // Storage folder inside the server directory
 
             try
             {
