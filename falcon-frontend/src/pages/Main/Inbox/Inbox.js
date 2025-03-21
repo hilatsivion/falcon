@@ -5,9 +5,33 @@ import listIcon from "../../../assets/icons/black/list.svg";
 import folderIcon from "../../../assets/icons/black/folder.svg";
 import "./Inbox.css";
 
+// Centralized tag colors
+const tagColors = {
+  Inbox: "#cbd5ff",
+  Social: "#c8facc",
+  School: "#f6d6b8",
+  Work: "#b8ebf6",
+  Personal: "#ffb3c6",
+  Finance: "#ffd700",
+  Promotions: "#ff9f43",
+  Updates: "#6c757d",
+  Forums: "#28a745",
+  Travel: "#007bff",
+};
+
+// Reusable Tag component
+export const Tag = ({ name }) => (
+  <span
+    className="email-tag"
+    style={{ backgroundColor: tagColors[name] || "#ddd" }}
+  >
+    {name}
+  </span>
+);
+
 const Inbox = () => {
   const [isListView, setIsListView] = useState(true);
-  const [selectedEmail, setSelectedEmail] = useState(null); // Controls EmailView visibility
+  const [selectedEmail, setSelectedEmail] = useState(null);
 
   const [emails, setEmails] = useState([
     {
@@ -57,7 +81,6 @@ const Inbox = () => {
       <div className="inbox-header">
         <h2 className="inbox-title">Inbox</h2>
 
-        {/* Switch Button */}
         <div
           className="switch-button"
           onClick={() => setIsListView(!isListView)}
@@ -78,13 +101,11 @@ const Inbox = () => {
         </div>
       </div>
 
-      {/* Email List */}
       <div className="emails-container">
         {emails.map((email, index) => (
           <div
             key={index}
             onClick={(e) => {
-              // Prevent triggering when clicking on elements inside EmailItem (like the star)
               if (!e.target.closest(".email-star")) {
                 setSelectedEmail(email);
               }
@@ -92,23 +113,18 @@ const Inbox = () => {
           >
             <EmailItem
               {...email}
-              onClick={() => setSelectedEmail(email)}
+              onClick={() => setSelectedEmail(email)} // Pass onClick correctly
               onStarToggle={() => {
-                const updated = [...emails];
-                updated[index].isStarred = !updated[index].isStarred;
-                setEmails(updated);
-              }}
-              onMarkAsRead={() => {
-                const updated = [...emails];
-                updated[index].isRead = true;
-                setEmails(updated);
+                const updatedEmails = [...emails];
+                updatedEmails[index].isStarred =
+                  !updatedEmails[index].isStarred;
+                setEmails(updatedEmails);
               }}
             />
           </div>
         ))}
       </div>
 
-      {/* Email View (Slides up when an email is clicked) */}
       <EmailView email={selectedEmail} onClose={() => setSelectedEmail(null)} />
     </div>
   );

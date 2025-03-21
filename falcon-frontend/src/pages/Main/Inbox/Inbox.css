@@ -83,3 +83,36 @@
   opacity: 0.5;
   filter: brightness(0.7);
 }
+
+/* Tags Section */
+.email-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* Individual Tag */
+.email-tag {
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Footer: Tags + Star */
+.email-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Star Icon */
+.email-star {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+}

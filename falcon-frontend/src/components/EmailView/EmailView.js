@@ -7,6 +7,7 @@ import trashIcon from "../../assets/icons/black/trash-red-icon.svg";
 import backIcon from "../../assets/icons/black/arrow-left-20.svg";
 import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-star.svg";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
+import { Tag } from "../../pages/Main/Inbox/Inbox";
 
 const EmailView = ({ email, onClose }) => {
   const [isStarred, setIsStarred] = useState(email?.isStarred || false);
@@ -17,15 +18,12 @@ const EmailView = ({ email, onClose }) => {
 
   const handleStarClick = () => {
     setIsStarred((prev) => !prev);
-    // optional: if you want to update the main inbox state too,
-    // you can call a parent-provided `onToggleStar(email)` here
   };
 
   return (
     <div className={`email-view ${email ? "visible" : ""}`}>
       {email && (
         <>
-          {/* Email Header */}
           <div className="email-detail">
             <div className="email-detail-header">
               <div className="email-sender-container">
@@ -35,14 +33,15 @@ const EmailView = ({ email, onClose }) => {
                 >
                   {email.sender.charAt(0).toUpperCase()}
                 </div>
-                <span className="email-sender">{email.sender}</span>
+                <div className="email-sender-info">
+                  <span className="email-sender">{email.sender}</span>
+                  <span className="email-time">{email.time}</span>
+                </div>
               </div>
-              <span className="email-time">{email.time}</span>
             </div>
 
             <div className="email-header-view">
               <h3 className="email-subject">{email.subject}</h3>
-
               <div className="email-star" onClick={handleStarClick}>
                 {isStarred ? <StarIconFull /> : <StarIconEmpty />}
               </div>
@@ -50,13 +49,10 @@ const EmailView = ({ email, onClose }) => {
 
             <div className="email-tags">
               {email.tags.map((tag, index) => (
-                <span key={index} className="email-tag">
-                  {tag}
-                </span>
+                <Tag key={index} name={tag} />
               ))}
             </div>
           </div>
-
           {/* Email Body */}
           <div className="email-body">
             <p>Dear readers,</p>
