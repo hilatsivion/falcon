@@ -1,6 +1,8 @@
 import React from "react";
 import "./EmailView.css";
 import moreIcon from "../../assets/icons/black/more-icon.svg";
+import forwardingIcon from "../../assets/icons/black/forward-icon.svg";
+import replyIcon from "../../assets/icons/black/reply-icon.svg";
 
 const EmailView = ({ email, onClose }) => {
   return (
@@ -35,6 +37,19 @@ const EmailView = ({ email, onClose }) => {
                 </span>
               ))}
             </div>
+          </div>
+
+          <div className="email-tools">
+            <img
+              src={replyIcon}
+              alt="More options"
+              className="email-more-icon"
+            />
+            <img
+              src={forwardingIcon}
+              alt="More options"
+              className="email-more-icon"
+            />
           </div>
 
           {/* Placeholder for Email Body */}
