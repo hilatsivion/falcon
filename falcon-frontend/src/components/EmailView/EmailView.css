@@ -149,3 +149,13 @@
 .email-view .trash-icon {
   width: 47.36px;
 }
+
+.email-header-view {
+  display: flex;
+  justify-content: space-between;
+}
+
+.email-time {
+  font-size: 12px;
+  color: #777;
+}

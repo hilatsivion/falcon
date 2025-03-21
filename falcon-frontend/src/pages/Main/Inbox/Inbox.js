@@ -9,7 +9,7 @@ const Inbox = () => {
   const [isListView, setIsListView] = useState(true);
   const [selectedEmail, setSelectedEmail] = useState(null); // Controls EmailView visibility
 
-  const emails = [
+  const [emails, setEmails] = useState([
     {
       sender: "John Doe",
       subject: "Meeting Reminder",
@@ -17,14 +17,18 @@ const Inbox = () => {
       tags: ["Work", "Social", "School"],
       time: "10:30",
       avatarColor: "#ff5733",
+      isRead: false,
+      isStarred: true,
     },
     {
       sender: "Jane Smith",
       subject: "New Social Event!",
       preview: "Join us this weekend for a fun gathering...",
       tags: ["Social"],
-      time: "2:45",
+      time: "14:45",
       avatarColor: "#33aaff",
+      isRead: false,
+      isStarred: false,
     },
     {
       sender: "Banking Services",
@@ -33,6 +37,8 @@ const Inbox = () => {
       tags: ["Finance"],
       time: "18:00",
       avatarColor: "#ffd700",
+      isRead: true,
+      isStarred: false,
     },
     {
       sender: "Hila Tsivion",
@@ -41,8 +47,10 @@ const Inbox = () => {
       tags: ["Work", "Social", "School"],
       time: "10:30",
       avatarColor: "#f23858",
+      isRead: false,
+      isStarred: true,
     },
-  ];
+  ]);
 
   return (
     <div className="inbox-container">
@@ -82,7 +90,20 @@ const Inbox = () => {
               }
             }}
           >
-            <EmailItem {...email} />
+            <EmailItem
+              {...email}
+              onClick={() => setSelectedEmail(email)}
+              onStarToggle={() => {
+                const updated = [...emails];
+                updated[index].isStarred = !updated[index].isStarred;
+                setEmails(updated);
+              }}
+              onMarkAsRead={() => {
+                const updated = [...emails];
+                updated[index].isRead = true;
+                setEmails(updated);
+              }}
+            />
           </div>
         ))}
       </div>

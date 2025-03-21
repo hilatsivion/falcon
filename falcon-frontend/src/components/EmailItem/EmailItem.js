@@ -26,29 +26,31 @@ const Tag = ({ name }) => (
   </span>
 );
 
-const EmailItem = ({ sender, subject, preview, tags, time, avatarColor }) => {
-  const [isStarred, setIsStarred] = useState(false);
-  const [isRead, setIsRead] = useState(false);
-
-  const handleStarClick = (event) => {
-    // event.stopPropagation(); // Prevent triggering read when clicking the star
-    setIsStarred((prev) => !prev);
-  };
-
-  const handleEmailClick = () => {
-    setIsRead(true); // Mark email as read
-  };
-
+const EmailItem = ({
+  sender,
+  subject,
+  preview,
+  tags,
+  time,
+  avatarColor,
+  isRead,
+  isStarred,
+  onClick,
+  onStarToggle,
+  onMarkAsRead,
+}) => {
   return (
     <div
       className={`email-item ${isStarred ? "starred" : ""} ${
         isRead ? "read" : ""
       }`}
-      onClick={handleEmailClick}
+      onClick={() => {
+        onClick();
+        onMarkAsRead();
+      }}
     >
-      {/* Sender Name + Time */}
+      {/* Header */}
       <div className="email-header">
-        {/* Avatar + Sender */}
         <div className="email-sender-container">
           <div
             className="email-avatar"
@@ -58,28 +60,30 @@ const EmailItem = ({ sender, subject, preview, tags, time, avatarColor }) => {
           </div>
           <span className="email-sender">{sender}</span>
         </div>
-
-        {/* Time Received */}
         <span className="email-time">{time}</span>
       </div>
 
-      {/* Subject + Email Body */}
+      {/* Subject & Preview */}
       <div className="email-body">
         <div className="email-subject">{subject}</div>
         <div className="email-preview">{preview}</div>
       </div>
 
-      {/* Tags List + Star Icon */}
+      {/* Footer */}
       <div className="email-footer">
-        {/* Tags List */}
         <div className="email-tags">
           {tags.map((tag, index) => (
             <Tag key={index} name={tag} />
           ))}
         </div>
 
-        {/* Star Icon */}
-        <div className="email-star" onClick={handleStarClick}>
+        <div
+          className="email-star"
+          onClick={(e) => {
+            e.stopPropagation();
+            onStarToggle();
+          }}
+        >
           {isStarred ? <StarIconFull /> : <StarIconEmpty />}
         </div>
       </div>
