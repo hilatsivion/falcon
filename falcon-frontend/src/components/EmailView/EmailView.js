@@ -1,8 +1,10 @@
 import React from "react";
 import "./EmailView.css";
-import moreIcon from "../../assets/icons/black/more-icon.svg";
 import forwardingIcon from "../../assets/icons/black/forward-icon.svg";
 import replyIcon from "../../assets/icons/black/reply-icon.svg";
+import unreadIcon from "../../assets/icons/black/unread-icon.svg";
+import trashIcon from "../../assets/icons/black/trash-red-icon.svg";
+import backIcon from "../../assets/icons/black/arrow-left-20.svg";
 
 const EmailView = ({ email, onClose }) => {
   return (
@@ -21,11 +23,6 @@ const EmailView = ({ email, onClose }) => {
                 </div>
                 <span className="email-sender">{email.sender}</span>
               </div>
-              <img
-                src={moreIcon}
-                alt="More options"
-                className="email-more-icon"
-              />
             </div>
 
             <div className="email-subject">{email.subject}</div>
@@ -39,19 +36,6 @@ const EmailView = ({ email, onClose }) => {
             </div>
           </div>
 
-          <div className="email-tools">
-            <img
-              src={replyIcon}
-              alt="More options"
-              className="email-more-icon"
-            />
-            <img
-              src={forwardingIcon}
-              alt="More options"
-              className="email-more-icon"
-            />
-          </div>
-
           {/* Placeholder for Email Body */}
           <div className="email-body">
             <p>Dear readers,</p>
@@ -59,6 +43,28 @@ const EmailView = ({ email, onClose }) => {
             <p>More words can be here.</p>
             <p>Thanks,</p>
             <p>Hila Tsivion</p>
+          </div>
+
+          {/* Email Tools - Positioned Above Navbar */}
+          <div className="email-toolbar">
+            <button className="email-toolbar-item" onClick={onClose}>
+              <img src={backIcon} alt="Back" />
+              <span className="small-text">back</span>
+            </button>
+            <div className="flex-row-gap-20">
+              <button className="email-toolbar-item">
+                <img src={unreadIcon} alt="Mark as Unread" />
+              </button>
+              <button className="email-toolbar-item">
+                <img src={replyIcon} alt="Reply" />
+              </button>
+              <button className="email-toolbar-item">
+                <img src={forwardingIcon} alt="Forward" />
+              </button>
+            </div>
+            <button className="email-toolbar-item trash-icon">
+              <img src={trashIcon} alt="Delete" />
+            </button>
           </div>
         </>
       )}

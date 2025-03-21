@@ -77,7 +77,7 @@
 }
 
 .email-view .email-tools {
-  background-color: rgb(241, 247, 255);
+  background-color: #ebf1f9;
   stroke: 1px solid #e2ebff;
   height: 28px;
   width: 100px;
@@ -91,4 +91,61 @@
   position: relative;
   margin-left: 18px;
   margin-top: 10px;
+}
+
+.email-view .email-toolbar > button,
+.email-view .email-toolbar > div > button {
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Email Toolbar */
+.email-view .email-toolbar {
+  width: 90%;
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fbfcff;
+  padding: 10px 20px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 4;
+}
+
+/* Toolbar Items */
+.email-view .email-toolbar-item {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark-font-color);
+}
+
+/* Toolbar Icons */
+.email-view .email-toolbar-item img {
+  width: 20px;
+  height: 20px;
+}
+
+.flex-row-gap-20 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.email-view .small-text {
+  font-weight: 400;
+}
+
+.email-view .trash-icon {
+  width: 47.36px;
 }
