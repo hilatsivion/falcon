@@ -114,3 +114,14 @@ keys/
 passwords.txt
 certificates/
 secrets/
+FalconBackend/obj/project.nuget.cache
+FalconBackend/obj/project.nuget.cache
+FalconBackend/obj/project.assets.json
+*.targets
+FalconBackend/obj/FalconBackend.csproj.nuget.g.props
+FalconBackend/obj/FalconBackend.csproj.nuget.dgspec.json
+FalconBackend/obj/Debug/net6.0/FalconBackend.GeneratedMSBuildEditorConfig.editorconfig
+FalconBackend/obj/Debug/net6.0/FalconBackend.csproj.AssemblyReference.cache
+FalconBackend/obj/Debug/net6.0/FalconBackend.assets.cache
+FalconBackend/obj/Debug/net6.0/FalconBackend.AssemblyInfoInputs.cache
+FalconBackend/obj/Debug/net6.0/FalconBackend.AssemblyInfo.cs
