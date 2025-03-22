@@ -1,0 +1,62 @@
+.insight-card {
+  background-color: var(--white);
+  border-radius: 12px;
+  padding: 14px 16px;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0px 2px 6px rgba(210, 209, 221, 0.57);
+}
+
+.insight-title {
+  font-size: 12px;
+  color: var(--icons-grey);
+  font-weight: 500;
+}
+
+.no-padding {
+  padding: 0;
+}
+
+.insight-value {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.insight-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.insight-change {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.insight-change.positive {
+  color: var(--green);
+}
+
+.insight-change.negative {
+  color: var(--notifications);
+}
+
+.insight-change.neutral {
+  color: var(--icons-grey);
+}
+
+.insight-card.edit-mode {
+  border: 1px dashed rgba(165, 176, 191, 0.42);
+  position: relative;
+}
+
+.checkbox-icon {
+  width: 16px;
+  height: 16px;
+  position: relative;
+  right: 2px;
+}
+
+.insight-card.dimmed {
+  opacity: 0.6;
+}

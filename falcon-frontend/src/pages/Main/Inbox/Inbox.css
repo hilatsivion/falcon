@@ -1,8 +1,3 @@
-.emails-container {
-  height: fit-content;
-  padding-bottom: 5rem;
-}
-
 .switch-button {
   display: flex;
   align-items: center;
@@ -12,7 +7,6 @@
   background-color: #d9e9ff;
   border-radius: 15px;
   position: relative;
-  cursor: pointer;
   padding: 3px 4px;
   transition: background-color 0.3s ease-in-out;
 }
@@ -67,8 +61,8 @@
 .email-tags {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 4px;
+  overflow-y: scroll;
+  padding-bottom: 4px;
 }
 
 /* Individual Tag */
@@ -88,7 +82,6 @@
 
 /* Star Icon */
 .email-star {
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;

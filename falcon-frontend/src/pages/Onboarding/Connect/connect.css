@@ -103,7 +103,7 @@ input::placeholder {
 
 .password-container input {
   width: 100%;
-  padding-right: 30px; /* Space for the button */
+  padding-right: 30px;
 }
 
 .toggle-password-btn {
@@ -113,7 +113,6 @@ input::placeholder {
   transform: translateY(-50%);
   background: none;
   border: none;
-  cursor: pointer;
   padding: 16px;
 }
 .toggle-password-btn img {

@@ -18,7 +18,6 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  cursor: pointer;
   transition: color 0.2s ease-in-out;
 }
 

@@ -1,21 +1,7 @@
-.space-between-full-wid {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.small-blue-btn {
-  font-size: 14px;
-  color: #3567ff;
-  cursor: pointer;
-}
-
 .toggle-arrow {
   width: 18px;
   height: 18px;
   transition: transform 0.3s ease;
-  cursor: pointer;
 }
 
 .toggle-arrow.rotated {
@@ -27,9 +13,40 @@
   transition: max-height 0.3s ease, opacity 0.3s ease;
   max-height: 1000px;
   opacity: 1;
+  padding: 20px;
 }
 
 .activity-content.collapsed {
   max-height: 0;
   opacity: 0;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+  margin-top: 12px;
+}
+
+.padding-sides {
+  padding: 0 18px;
+}
+
+.activity-header {
+  padding: 4px 0 18px 0;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 2px 10px;
+  width: 80px;
+  font-size: 11px;
+  align-items: center;
+  justify-content: center;
+  font-weight: 400;
+}
+
+.edit-buttons {
+  gap: 8px;
+  display: flex;
 }
