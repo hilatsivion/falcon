@@ -1,14 +1,102 @@
-.compose-container {
+.compose-page {
+  height: 100dvh;
+}
+
+.ai-button {
+  padding: 2px 12px 2px 8px;
+  font-size: 11px;
+  font-weight: 400;
+  border-radius: 999px; /* ← ROUND CORNERS */
+  background: linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(90deg, #004dff, #0457fe, #0d70fc, #00d0ff) border-box;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-button .gradient-text {
+  background: linear-gradient(90deg, #004dff, #0457fe, #0d70fc, #00d0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.send-btn {
+  font-size: 11px;
+  background: var(--gradient-blue);
+  color: white;
+  border: none;
+  padding: 2px 16px 2px 12px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.compose-input {
+  font-size: 16px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  color: var(--dark-font-color);
+  outline: none;
+  font-weight: 400;
+}
+
+.from-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dark-font-color);
+}
+
+.from-select {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--faded-grey);
+}
+
+.files-btn {
+  border: 1px solid #a5b0bf77;
+  background: white;
+  padding: 0px 12px 0px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2b2b2b;
+  width: fit-content;
+  margin-left: 18px;
+}
+
+.flex-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  text-align: center;
-  background-color: var(--white);
+  gap: 10px;
+  width: 100%;
+  justify-content: space-between;
+  padding: 18px;
 }
-.compose-title {
-  font-size: 24px;
-  font-weight: 600;
+
+.flex-col input {
+  width: 100%;
+}
+
+.compose-body {
+  height: 100%;
+  width: 100%;
+  border: none;
+  font-size: 16px;
+  outline: none;
+  resize: none;
   color: var(--dark-font-color);
+  padding: 18px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--faded-grey);
 }

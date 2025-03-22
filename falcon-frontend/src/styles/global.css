@@ -100,17 +100,20 @@ a {
 button.btn-white {
   color: var(--primary-blue);
   background-color: var(--white);
+  font-weight: 400;
 }
 
 button.btn-blue {
   color: var(--white);
   background-color: var(--primary-blue);
+  font-weight: 400;
 }
 
 button.btn-border {
   color: var(--icons-grey);
   background-color: transparent;
   border: 1.5px var(--icons-grey) solid;
+  font-weight: 400;
 }
 
 input,
