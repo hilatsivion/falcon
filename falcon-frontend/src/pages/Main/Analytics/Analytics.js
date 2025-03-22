@@ -105,7 +105,7 @@ const Analytics = () => {
   return (
     <div className="page-container">
       {/* Header */}
-      <div className="space-between-full-wid">
+      <div className="space-between-full-wid header-analytics">
         <h1>Analytics</h1>
         {isEditMode ? (
           <div className="edit-buttons">
