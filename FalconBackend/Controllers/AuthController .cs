@@ -80,11 +80,15 @@ namespace FalconBackend.Controllers
         [Authorize]
         public async Task<IActionResult> AuthenticateUser()
         {
-            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-            var user = await _authService.AuthenticateUserAsync(token);
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+
+            if (email == null)
+                return Unauthorized("Invalid token (email missing)");
+
+            var user = await _authService.GetUserByEmailAsync(email); // <- you can add this simple method
 
             if (user == null)
-                return Unauthorized("Invalid token");
+                return Unauthorized("User not found");
 
             return Ok(new { Email = user.Email, Username = user.Username });
         }

@@ -6,21 +6,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FalconBackend.Models
 {
-    [Index(nameof(EmailAddress), IsUnique = true)] // Ensures email accounts are unique
+    [Index(nameof(EmailAddress), IsUnique = true)]
     public class MailAccount
     {
         [Key]
         [MaxLength(100)]
-        public string MailAccountId { get; set; } = Guid.NewGuid().ToString("N");  // Hashed unique ID
+        public string MailAccountId { get; set; } = Guid.NewGuid().ToString("N"); 
 
         [Required]
         [MaxLength(500)]
-        public string Token { get; set; }  // Kept for authentication
+        public string Token { get; set; }  
 
         [Required]
         [MaxLength(255)]
         [EmailAddress]
-        public string EmailAddress { get; set; } // Email for reference
+        public string EmailAddress { get; set; }
 
         public DateTime LastMailSync { get; set; } = DateTime.UtcNow;
         public bool IsDefault { get; set; }

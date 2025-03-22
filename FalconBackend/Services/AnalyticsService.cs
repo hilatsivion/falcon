@@ -166,17 +166,25 @@ namespace FalconBackend.Services
 
             if (analytics.LastUpdated.Date < DateTime.UtcNow.Date)
             {
-                // Update daily averages before resetting
-                await UpdateAvgTimeSpentDailyAsync(userEmail);
+                // Calculate average directly here to avoid cycle
+                if (analytics.TotalDaysTracked == 0)
+                    analytics.TotalDaysTracked = 1;
+
+                analytics.TotalTimeSpent += analytics.TimeSpentToday;
+                if (analytics.LastUpdated.Date < DateTime.UtcNow.Date)
+                    analytics.TotalDaysTracked += 1;
+
+                analytics.AvgTimeSpentDaily = analytics.TotalTimeSpent / analytics.TotalDaysTracked;
+
                 analytics.AvgEmailsPerDay = (float)(analytics.EmailsReceivedWeekly + analytics.EmailsSentWeekly) / Math.Max(1, analytics.TotalDaysTracked);
 
-                // Reset daily values
                 analytics.TimeSpentToday = 0;
                 analytics.IsActiveToday = false;
 
                 await SaveAnalyticsAsync(analytics);
             }
         }
+
 
         /// Resets weekly statistics.
         public async Task ResetWeeklyStatsAsync(string userEmail)

@@ -12,8 +12,8 @@ namespace FalconBackend.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int MailId { get; set; }
 
-        public virtual string Body { get; set; }
-        public virtual string Subject { get; set; }
+        public string Body { get; set; }
+        public string Subject { get; set; }
         public bool IsFavorite { get; set; } = false;
 
         // Relationships

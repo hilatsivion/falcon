@@ -17,13 +17,17 @@ namespace FalconBackend.Services
         private readonly AppDbContext _context;
         private readonly string _jwtSecret;
         private readonly AnalyticsService _analyticsService;
+        private readonly IConfiguration _configuration;
+
 
         public AuthService(AppDbContext context, IConfiguration configuration, AnalyticsService analyticsService)
         {
             _context = context;
-            _jwtSecret = configuration["JwtSettings:SecretKey"] ?? throw new Exception("JWT Secret Key not found in configuration.");
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _jwtSecret = configuration["JwtSettings:Key"] ?? throw new Exception("JWT Secret Key not found in configuration.");
             _analyticsService = analyticsService;
         }
+
 
         public async Task<string> LogInAsync(string email, string password)
         {
@@ -75,8 +79,7 @@ namespace FalconBackend.Services
                 FullName = fullName,
                 Username = username,
                 HashedPassword = hashedPassword,
-                CreatedAt = DateTime.UtcNow,
-                RefreshToken = string.Empty 
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.AppUsers.Add(newUser);
@@ -118,6 +121,15 @@ namespace FalconBackend.Services
             }
         }
 
+        public async Task<AppUser> GetUserByEmailAsync(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return null;
+
+            return await _context.AppUsers.FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+
         private string GenerateJwtToken(AppUser user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -131,12 +143,15 @@ namespace FalconBackend.Services
                     new Claim(ClaimTypes.Name, user.Username)
                 }),
                 Expires = DateTime.UtcNow.AddHours(12),
+                Issuer = _configuration["JwtSettings:Issuer"],      // ✅ Add this
+                Audience = _configuration["JwtSettings:Audience"],  // ✅ And this
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
 
         public async Task<object> GetUserProfileAsync(string token)
         {

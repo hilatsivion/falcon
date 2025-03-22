@@ -182,6 +182,54 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "FalconBackend.Controllers.TestController",
+    "Method": "CreateRandomMailAccount",
+    "RelativePath": "api/test/create-mailaccount/{userEmail}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userEmail",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.TestController",
+    "Method": "GenerateMixedMailsForAccount",
+    "RelativePath": "api/test/generate-mails/{mailAccountId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailAccountId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.TestController",
+    "Method": "TagMailsWithRandomTags",
+    "RelativePath": "api/test/tag-mails/{mailAccountId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailAccountId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "FalconBackend.Controllers.UserController",
     "Method": "CreateTag",
     "RelativePath": "api/user/create",
