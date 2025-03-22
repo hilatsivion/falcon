@@ -77,9 +77,9 @@ const Inbox = () => {
   ]);
 
   return (
-    <div className="inbox-container">
-      <div className="inbox-header">
-        <h2 className="inbox-title">Inbox</h2>
+    <div className="page-container">
+      <div className="space-between-full-wid bottom-line-grey">
+        <h1>Inbox</h1>
 
         <div
           className="switch-button"

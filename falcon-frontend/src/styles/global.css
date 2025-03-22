@@ -6,7 +6,7 @@
   --selected-blue: #eff6ff;
   --icons-grey: #71839b;
   --dark-font-color: #324054;
-  --faded-gray: #a5b0bf;
+  --faded-grey: #a5b0bf;
   --background-white: #fafafa;
   --favorite: #ffbc13;
   --favorite-opacity: #ffbc1333;
@@ -42,11 +42,12 @@ h6 {
 }
 
 h1 {
-  font-size: 32px;
+  font-size: 22px;
+  font-weight: 500;
 }
 
 h2 {
-  font-size: 30px;
+  font-size: 20px;
   font-weight: 500;
 }
 
@@ -123,6 +124,14 @@ textarea {
   max-width: 1200px;
 }
 
+.page-container {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: var(--white);
+  overflow: hidden;
+  padding-top: 3rem;
+}
+
 .flex-col {
   display: flex;
   flex-direction: column;
@@ -154,6 +163,24 @@ textarea {
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 3;
   animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.small-blue-btn {
+  font-size: 10px;
+  color: var(--primary-blue);
+  font-weight: 400;
+}
+
+.space-between-full-wid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 18px;
+}
+
+.bottom-line-grey {
+  border-bottom: 1px solid #a5b0bf34;
 }
 
 /* Error Animation */

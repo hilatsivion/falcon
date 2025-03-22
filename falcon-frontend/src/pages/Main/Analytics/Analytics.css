@@ -1,14 +1,40 @@
-.analytics-container {
+.space-between-full-wid {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  height: 100vh;
-  text-align: center;
-  background-color: var(--white);
+  width: 100%;
 }
-.analytics-title {
-  font-size: 24px;
+
+.small-blue-btn {
+  font-size: 14px;
+  color: #3567ff;
+  cursor: pointer;
+}
+
+.bold {
   font-weight: 600;
-  color: var(--dark-font-color);
+  font-size: 16px;
+}
+
+.toggle-arrow {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.toggle-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+.activity-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  max-height: 1000px;
+  opacity: 1;
+}
+
+.activity-content.collapsed {
+  max-height: 0;
+  opacity: 0;
 }

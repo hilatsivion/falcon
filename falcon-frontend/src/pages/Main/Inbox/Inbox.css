@@ -1,27 +1,6 @@
-.inbox-container {
-  max-width: 600px;
-  margin: 0 auto;
-  background-color: var(--white);
-  overflow: hidden;
-  padding-top: 3rem;
-}
-
-.inbox-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 18px;
-  border-bottom: 1px solid #a5b0bf34;
-}
-
 .emails-container {
   height: fit-content;
   padding-bottom: 5rem;
-}
-
-.inbox-title {
-  text-align: center;
-  color: var(--dark-font-color);
-  font-size: 22px;
 }
 
 .switch-button {

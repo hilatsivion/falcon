@@ -41,7 +41,7 @@ input {
 }
 
 input::placeholder {
-  color: var(--faded-gray);
+  color: var(--faded-grey);
   font-size: 16px;
 }
 
