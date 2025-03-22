@@ -103,7 +103,103 @@
         }
       }
     },
-    "/api/mail/received/byMailAccount/{mailAccountId}": {
+    "/api/mail/received/preview": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/mail/sent/preview": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/mail/drafts/preview": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/mail/received/byMailAccount/{mailAccountId}/preview": {
       "get": {
         "tags": [
           "Mail"
@@ -116,6 +212,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
           }
         ],
         "responses": {
@@ -125,7 +239,7 @@
         }
       }
     },
-    "/api/mail/sent/byMailAccount/{mailAccountId}": {
+    "/api/mail/sent/byMailAccount/{mailAccountId}/preview": {
       "get": {
         "tags": [
           "Mail"
@@ -138,6 +252,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
           }
         ],
         "responses": {
@@ -147,7 +279,7 @@
         }
       }
     },
-    "/api/mail/drafts/byMailAccount/{mailAccountId}": {
+    "/api/mail/drafts/byMailAccount/{mailAccountId}/preview": {
       "get": {
         "tags": [
           "Mail"
@@ -160,43 +292,25 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/mail/received": {
-      "get": {
-        "tags": [
-          "Mail"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/mail/sent": {
-      "get": {
-        "tags": [
-          "Mail"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/mail/drafts": {
-      "get": {
-        "tags": [
-          "Mail"
         ],
         "responses": {
           "200": {
@@ -236,8 +350,150 @@
         }
       }
     },
-    "/api/mail/read/{mailId}/{isRead}": {
+    "/api/mail/read": {
       "put": {
+        "tags": [
+          "Mail"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ToggleReadDto"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ToggleReadDto"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ToggleReadDto"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/mail/send": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "MailAccountId": {
+                    "type": "string"
+                  },
+                  "Subject": {
+                    "type": "string"
+                  },
+                  "Body": {
+                    "type": "string"
+                  },
+                  "Recipients": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "attachments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "MailAccountId": {
+                  "style": "form"
+                },
+                "Subject": {
+                  "style": "form"
+                },
+                "Body": {
+                  "style": "form"
+                },
+                "Recipients": {
+                  "style": "form"
+                },
+                "attachments": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/mail/delete": {
+      "delete": {
+        "tags": [
+          "Mail"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MailDeleteDto"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MailDeleteDto"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MailDeleteDto"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/mail/received/full/{mailId}": {
+      "get": {
         "tags": [
           "Mail"
         ],
@@ -250,13 +506,51 @@
               "type": "integer",
               "format": "int32"
             }
-          },
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/mail/sent/full/{mailId}": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "parameters": [
           {
-            "name": "isRead",
+            "name": "mailId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "boolean"
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/mail/draft/full/{mailId}": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "parameters": [
+          {
+            "name": "mailId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -434,6 +728,20 @@
         },
         "additionalProperties": false
       },
+      "MailDeleteDto": {
+        "type": "object",
+        "properties": {
+          "mailId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mailAccountId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SaveUserTagsRequest": {
         "type": "object",
         "properties": {
@@ -465,6 +773,19 @@
           "password": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ToggleReadDto": {
+        "type": "object",
+        "properties": {
+          "mailId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isRead": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

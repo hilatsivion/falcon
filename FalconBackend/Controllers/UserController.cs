@@ -1,6 +1,7 @@
 ﻿using FalconBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using FalconBackend.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -85,15 +86,5 @@ namespace FalconBackend.Controllers
                 return StatusCode(500, $"Failed to retrieve tags. Error: {ex.Message}");
             }
         }
-    }
-
-    public class SaveUserTagsRequest
-    {
-        public List<string> Tags { get; set; }
-    }
-
-    public class CreateTagRequest
-    {
-        public string TagName { get; set; }
     }
 }

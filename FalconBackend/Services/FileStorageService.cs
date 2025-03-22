@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace FalconBackend.Services
 {
-    /// <summary>
     /// Handles storing email attachments in a structured file system.
-    /// </summary>
     public class FileStorageService
     {
         private readonly string _basePath;
@@ -29,9 +27,7 @@ namespace FalconBackend.Services
             }
         }
 
-        /// <summary>
         /// Saves an attachment in the correct folder for a user's email.
-        /// </summary>
         public async Task<string> SaveAttachmentAsync(IFormFile file, string userEmail, string mailAccountId, string emailType)
         {
             if (file == null || file.Length == 0)
@@ -81,6 +77,26 @@ namespace FalconBackend.Services
                 input = input.Replace(c, '_');
             }
             return input;
+        }
+
+        /// Deletes a previously saved attachment from the file system.
+        public async Task<bool> DeleteAttachmentAsync(string filePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filePath))
+                    throw new ArgumentException("File path is empty.");
+
+                if (!File.Exists(filePath))
+                    return false;
+
+                await Task.Run(() => File.Delete(filePath));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new IOException($"Failed to delete file at {filePath}", ex);
+            }
         }
     }
 }

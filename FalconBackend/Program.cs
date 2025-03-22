@@ -22,7 +22,13 @@ builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<FileStorageService>();
 
 // Add controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
+
 
 // Configure JWT authentication using JwtSettings from appsettings.json
 var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:Key"]);

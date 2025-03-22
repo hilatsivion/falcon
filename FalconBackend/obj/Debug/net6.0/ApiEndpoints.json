@@ -9,7 +9,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "FalconBackend.Controllers.LoginRequest",
+        "Type": "FalconBackend.Models.LoginRequest",
         "IsRequired": true
       }
     ],
@@ -45,7 +45,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "FalconBackend.Controllers.SignUpRequest",
+        "Type": "FalconBackend.Models.SignUpRequest",
         "IsRequired": true
       }
     ],
@@ -63,18 +63,40 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
-    "Method": "GetAllDraftEmailsByUserAsync",
-    "RelativePath": "api/mail/drafts",
-    "HttpMethod": "GET",
+    "Method": "DeleteMails",
+    "RelativePath": "api/mail/delete",
+    "HttpMethod": "DELETE",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "mailsToDelete",
+        "Type": "System.Collections.Generic.List\u00601[[FalconBackend.Models.MailDeleteDto, FalconBackend, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
-    "Method": "GetDraftEmailsByMailAccountAsync",
-    "RelativePath": "api/mail/drafts/byMailAccount/{mailAccountId}",
+    "Method": "GetDraftByIdAsync",
+    "RelativePath": "api/mail/draft/full/{mailId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetDraftByMailAccountPreview",
+    "RelativePath": "api/mail/drafts/byMailAccount/{mailAccountId}/preview",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -83,6 +105,37 @@
         "Name": "mailAccountId",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetDraftEmailPreviews",
+    "RelativePath": "api/mail/drafts/preview",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -110,9 +163,51 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
-    "Method": "ToggleRead",
-    "RelativePath": "api/mail/read/{mailId}/{isRead}",
+    "Method": "ToggleReadBatch",
+    "RelativePath": "api/mail/read",
     "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "readUpdates",
+        "Type": "System.Collections.Generic.List\u00601[[FalconBackend.Models.ToggleReadDto, FalconBackend, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetReceivedByMailAccountPreview",
+    "RelativePath": "api/mail/received/byMailAccount/{mailAccountId}/preview",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailAccountId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetReceivedMailByIdAsync",
+    "RelativePath": "api/mail/received/full/{mailId}",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
@@ -120,29 +215,71 @@
         "Name": "mailId",
         "Type": "System.Int32",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetReceivedEmailPreviews",
+    "RelativePath": "api/mail/received/preview",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
       },
       {
-        "Name": "isRead",
-        "Type": "System.Boolean",
-        "IsRequired": true
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
-    "Method": "GetAllReceivedEmailsByUserAsync",
-    "RelativePath": "api/mail/received",
-    "HttpMethod": "GET",
+    "Method": "SendMail",
+    "RelativePath": "api/mail/send",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "MailAccountId",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Subject",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Body",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Recipients",
+        "Type": "System.Collections.Generic.List\u00601[[System.String, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "attachments",
+        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
-    "Method": "GetReceivedEmailsByMailAccountAsync",
-    "RelativePath": "api/mail/received/byMailAccount/{mailAccountId}",
+    "Method": "GetSentByMailAccountPreview",
+    "RelativePath": "api/mail/sent/byMailAccount/{mailAccountId}/preview",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -151,32 +288,53 @@
         "Name": "mailAccountId",
         "Type": "System.String",
         "IsRequired": true
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
-    "Method": "GetAllSentEmailsByUserAsync",
-    "RelativePath": "api/mail/sent",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "FalconBackend.Controllers.MailController",
-    "Method": "GetSentEmailsByMailAccountAsync",
-    "RelativePath": "api/mail/sent/byMailAccount/{mailAccountId}",
+    "Method": "GetSentMailByIdAsync",
+    "RelativePath": "api/mail/sent/full/{mailId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "mailAccountId",
-        "Type": "System.String",
+        "Name": "mailId",
+        "Type": "System.Int32",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetSentEmailPreviews",
+    "RelativePath": "api/mail/sent/preview",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -239,7 +397,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "FalconBackend.Controllers.CreateTagRequest",
+        "Type": "FalconBackend.Models.CreateTagRequest",
         "IsRequired": true
       }
     ],
@@ -255,7 +413,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "FalconBackend.Controllers.SaveUserTagsRequest",
+        "Type": "FalconBackend.Models.SaveUserTagsRequest",
         "IsRequired": true
       }
     ],

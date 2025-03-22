@@ -1,6 +1,7 @@
 ﻿using FalconBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using FalconBackend.Models;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Threading.Tasks;
@@ -119,19 +120,5 @@ namespace FalconBackend.Controllers
                 return StatusCode(500, $"Failed to retrieve user profile. Error: {ex.Message}");
             }
         }
-    }
-
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-    }
-
-    public class SignUpRequest
-    {
-        public string FullName { get; set; }
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using FalconBackend.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -26,142 +27,136 @@ namespace FalconBackend.Controllers
         private string GetUserEmailFromToken()
         {
             var authorizationHeader = Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+
+            if (string.IsNullOrWhiteSpace(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
                 throw new UnauthorizedAccessException("Missing or invalid authentication token.");
 
-            var token = authorizationHeader.Replace("Bearer ", "").Trim();
+            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+
             var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
 
-            return jwtToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+            if (!handler.CanReadToken(token))
+                throw new UnauthorizedAccessException("Cannot read JWT token.");
+
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var email = jwtToken.Claims.FirstOrDefault(c =>
+                c.Type == ClaimTypes.Email || c.Type == JwtRegisteredClaimNames.Email)?.Value;
+
+            if (string.IsNullOrEmpty(email))
+                throw new UnauthorizedAccessException("Email claim not found in token.");
+
+            return email;
         }
 
-        // Fetch received emails for a specific mail account
-        [HttpGet("received/byMailAccount/{mailAccountId}")]
-        public async Task<IActionResult> GetReceivedEmailsByMailAccountAsync(string mailAccountId)
+        [HttpGet("received/preview")]
+        public async Task<IActionResult> GetReceivedEmailPreviews([FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
             try
             {
-                var emails = await _mailService.GetReceivedEmailsByMailAccountAsync(mailAccountId);
-                if (!emails.Any())
-                    return NotFound("No received emails found for this mail account.");
+                var userEmail = GetUserEmailFromToken();
+                var emails = await _mailService.GetAllReceivedEmailPreviewsAsync(userEmail, page, pageSize);
                 return Ok(emails);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Failed to retrieve received emails. Error: {ex.Message}");
+                return StatusCode(500, $"Error retrieving received emails: {ex.Message}");
             }
         }
 
-        // Fetch sent emails for a specific mail account
-        [HttpGet("sent/byMailAccount/{mailAccountId}")]
-        public async Task<IActionResult> GetSentEmailsByMailAccountAsync(string mailAccountId)
+        [HttpGet("sent/preview")]
+        public async Task<IActionResult> GetSentEmailPreviews([FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
             try
             {
-                var emails = await _mailService.GetSentEmailsByMailAccountAsync(mailAccountId);
-                if (!emails.Any())
-                    return NotFound("No sent emails found for this mail account.");
+                var userEmail = GetUserEmailFromToken();
+                var emails = await _mailService.GetAllSentEmailPreviewsAsync(userEmail, page, pageSize);
                 return Ok(emails);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Failed to retrieve sent emails. Error: {ex.Message}");
+                return StatusCode(500, $"Error retrieving sent emails: {ex.Message}");
             }
         }
 
-        // Fetch draft emails for a specific mail account
-        [HttpGet("drafts/byMailAccount/{mailAccountId}")]
-        public async Task<IActionResult> GetDraftEmailsByMailAccountAsync(string mailAccountId)
+        [HttpGet("drafts/preview")]
+        public async Task<IActionResult> GetDraftEmailPreviews([FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
             try
             {
-                var drafts = await _mailService.GetDraftEmailsByMailAccountAsync(mailAccountId);
-                if (!drafts.Any())
-                    return NotFound("No drafts found for this mail account.");
+                var userEmail = GetUserEmailFromToken();
+                var drafts = await _mailService.GetAllDraftEmailPreviewsAsync(userEmail, page, pageSize);
                 return Ok(drafts);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Failed to retrieve drafts. Error: {ex.Message}");
+                return StatusCode(500, $"Error retrieving drafts: {ex.Message}");
             }
         }
 
-        // Fetch all received emails across all mail accounts of the user
-        [HttpGet("received")]
-        public async Task<IActionResult> GetAllReceivedEmailsByUserAsync()
+        [HttpGet("received/byMailAccount/{mailAccountId}/preview")]
+        public async Task<IActionResult> GetReceivedByMailAccountPreview(string mailAccountId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
             try
             {
-                var userEmail = GetUserEmailFromToken();
-                var emails = await _mailService.GetAllReceivedEmailsByUserAsync(userEmail);
-                if (!emails.Any())
-                    return NotFound("No received emails found for this user.");
+                var emails = await _mailService.GetReceivedEmailPreviewsByMailAccountAsync(mailAccountId, page, pageSize);
                 return Ok(emails);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Failed to retrieve received emails. Error: {ex.Message}");
+                return StatusCode(500, $"Error: {ex.Message}");
             }
         }
 
-        // Fetch all sent emails across all mail accounts of the user
-        [HttpGet("sent")]
-        public async Task<IActionResult> GetAllSentEmailsByUserAsync()
+        [HttpGet("sent/byMailAccount/{mailAccountId}/preview")]
+        public async Task<IActionResult> GetSentByMailAccountPreview(string mailAccountId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
             try
             {
-                var userEmail = GetUserEmailFromToken();
-                var emails = await _mailService.GetAllSentEmailsByUserAsync(userEmail);
-                if (!emails.Any())
-                    return NotFound("No sent emails found for this user.");
+                var emails = await _mailService.GetSentEmailPreviewsByMailAccountAsync(mailAccountId, page, pageSize);
                 return Ok(emails);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Failed to retrieve sent emails. Error: {ex.Message}");
+                return StatusCode(500, $"Error: {ex.Message}");
             }
         }
 
-        // Fetch all draft emails across all mail accounts of the user
-        [HttpGet("drafts")]
-        public async Task<IActionResult> GetAllDraftEmailsByUserAsync()
+        [HttpGet("drafts/byMailAccount/{mailAccountId}/preview")]
+        public async Task<IActionResult> GetDraftByMailAccountPreview(string mailAccountId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
             try
             {
-                var userEmail = GetUserEmailFromToken();
-                var drafts = await _mailService.GetAllDraftEmailsByUserAsync(userEmail);
-                if (!drafts.Any())
-                    return NotFound("No drafts found for this user.");
+                var drafts = await _mailService.GetDraftEmailPreviewsByMailAccountAsync(mailAccountId, page, pageSize);
                 return Ok(drafts);
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Failed to retrieve drafts. Error: {ex.Message}");
+                return StatusCode(500, $"Error: {ex.Message}");
             }
         }
+
 
         [HttpPut("favorite/{mailId}/{isFavorite}")]
         public async Task<IActionResult> ToggleFavorite(int mailId, bool isFavorite)
         {
             try
             {
+                var userEmail = GetUserEmailFromToken();
+
+                var isOwner = await _mailService.IsUserOwnerOfMailAsync(mailId, userEmail);
+                if (!isOwner)
+                    return Forbid("You are not authorized to modify this mail.");
+
                 var result = await _mailService.ToggleFavoriteAsync(mailId, isFavorite);
                 if (!result)
                     return NotFound("Email not found.");
+
                 return Ok(isFavorite ? "Email marked as favorite." : "Email unmarked as favorite.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
@@ -169,19 +164,139 @@ namespace FalconBackend.Controllers
             }
         }
 
-        [HttpPut("read/{mailId}/{isRead}")]
-        public async Task<IActionResult> ToggleRead(int mailId, bool isRead)
+
+        [HttpPut("read")]
+        public async Task<IActionResult> ToggleReadBatch([FromBody] List<ToggleReadDto> readUpdates)
         {
             try
             {
-                var result = await _mailService.ToggleReadAsync(mailId, isRead);
+                var userEmail = GetUserEmailFromToken();
+                var result = await _mailService.ToggleReadBatchAsync(readUpdates, userEmail);
+
                 if (!result)
-                    return NotFound("Email not found.");
-                return Ok(isRead ? "Email marked as read." : "Email marked as unread.");
+                    return BadRequest("Some emails are not owned by this user or update failed.");
+
+                return Ok("Read status updated for selected emails.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Failed to update read status. Error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("send")]
+        public async Task<IActionResult> SendMail([FromForm] SendMailRequest request, [FromForm] List<IFormFile> attachments)
+        {
+            try
+            {
+                string userEmail = GetUserEmailFromToken();
+
+                // Validate user owns the mail account
+                if (!await _mailService.DoesUserOwnMailAccountAsync(userEmail, request.MailAccountId))
+                    return Unauthorized("User does not own this mail account.");
+
+                await _mailService.SendMailAsync(request, attachments);
+
+                return Ok("Mail sent successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to send mail. Error: {ex.Message}");
+            }
+        }
+
+
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteMails([FromBody] List<MailDeleteDto> mailsToDelete)
+        {
+            try
+            {
+                var userEmail = GetUserEmailFromToken();
+
+                var allOwned = await _mailService.AreAllMailsOwnedByUserAsync(mailsToDelete, userEmail);
+                if (!allOwned)
+                    return Forbid("One or more mails do not belong to your account.");
+
+                var result = await _mailService.DeleteMailsAsync(mailsToDelete);
+                if (!result)
+                    return NotFound("No matching emails found to delete.");
+
+                return Ok("Selected emails deleted successfully.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to delete emails. Error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("received/full/{mailId}")]
+        public async Task<IActionResult> GetReceivedMailByIdAsync(int mailId)
+        {
+            try
+            {
+                var userEmail = GetUserEmailFromToken();
+                var mail = await _mailService.GetReceivedMailByIdAsync(userEmail, mailId);
+                if (mail == null)
+                    return NotFound("Mail not found or you don't have access.");
+                return Ok(mail);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to get received mail. Error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("sent/full/{mailId}")]
+        public async Task<IActionResult> GetSentMailByIdAsync(int mailId)
+        {
+            try
+            {
+                var userEmail = GetUserEmailFromToken();
+                var mail = await _mailService.GetSentMailByIdAsync(userEmail, mailId);
+                if (mail == null)
+                    return NotFound("Mail not found or you don't have access.");
+                return Ok(mail);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to get sent mail. Error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("draft/full/{mailId}")]
+        public async Task<IActionResult> GetDraftByIdAsync(int mailId)
+        {
+            try
+            {
+                var userEmail = GetUserEmailFromToken();
+                var mail = await _mailService.GetDraftByIdAsync(userEmail, mailId);
+                if (mail == null)
+                    return NotFound("Draft not found or you don't have access.");
+                return Ok(mail);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to get draft. Error: {ex.Message}");
             }
         }
     }
