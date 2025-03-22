@@ -33,11 +33,9 @@ const EmailView = ({ email, onClose }) => {
                 >
                   {email.sender.charAt(0).toUpperCase()}
                 </div>
-                <div className="email-sender-info">
-                  <span className="email-sender">{email.sender}</span>
-                  <span className="email-time">{email.time}</span>
-                </div>
+                <span className="email-sender">{email.sender}</span>
               </div>
+              <span className="email-time">{email.time}</span>
             </div>
 
             <div className="email-header-view">
@@ -69,7 +67,7 @@ const EmailView = ({ email, onClose }) => {
               <span className="small-text">back</span>
             </button>
 
-            <div className="flex-row-gap-20">
+            <div className="flex-row-gap-30">
               <button className="email-toolbar-item">
                 <img src={unreadIcon} alt="Mark as Unread" />
               </button>
