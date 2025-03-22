@@ -50,3 +50,8 @@
   gap: 8px;
   display: flex;
 }
+
+.header-analytics {
+  height: 72px;
+  transition: all 0.6s ease;
+}
