@@ -30,30 +30,32 @@ const Compose = () => {
         </button>
       </div>
 
-      <div className="flex-col">
+      <div className="flex-col inputs-compose">
         {/* Subject Input */}
         <input
-          className="compose-input subject"
+          className="compose-input subject underline-grey"
           type="text"
           placeholder="Subject"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
         />
 
-        {/* To Input (simplified for now) */}
-        <input
-          className="compose-input"
-          type="text"
-          placeholder="To:"
-          value={to}
-          onChange={(e) => setTo([e.target.value])}
-        />
+        {/* To Input */}
+        <div className="input-with-label underline-grey">
+          <span className="fixed-label">To:</span>
+          <input
+            className="compose-input"
+            type="text"
+            value={to}
+            onChange={(e) => setTo([e.target.value])}
+          />
+        </div>
 
         {/* From Selector */}
-        <div className="from-container">
-          <label className="from-label">From:</label>
+        <div className="input-with-label underline-grey">
+          <label className="fixed-label">From:</label>
           <select
-            className="from-select"
+            className="from-select margin-left-10"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
           >

@@ -1,5 +1,12 @@
 .compose-page {
-  height: 100dvh;
+  height: calc(100vh - 64px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.compose-page.page-container {
+  padding-bottom: 0;
 }
 
 .ai-button {
@@ -35,26 +42,24 @@
 }
 
 .compose-input {
-  font-size: 16px;
+  font-size: 15px;
   border: none;
-  border-bottom: 1px solid #ddd;
   color: var(--dark-font-color);
   outline: none;
   font-weight: 400;
-}
-
-.from-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--dark-font-color);
+  padding: 4px 10px 10px 10px;
+  background-color: var(--background-white);
 }
 
 .from-select {
+  position: relative;
   border: none;
   background: transparent;
-  font-size: 16px;
-  color: var(--faded-grey);
+  color: var(--dark-font-color);
+  font-size: 15px;
+  bottom: 3px;
+  width: 100%;
+  margin-right: 10px;
 }
 
 .files-btn {
@@ -66,19 +71,20 @@
   font-weight: 400;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   color: #2b2b2b;
   width: fit-content;
   margin-left: 18px;
+  margin-bottom: 5px;
 }
 
 .flex-col {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
   width: 100%;
   justify-content: space-between;
-  padding: 18px;
+  padding: 0px 18px 10px 10px;
 }
 
 .flex-col input {
@@ -86,17 +92,41 @@
 }
 
 .compose-body {
-  height: 100%;
   width: 100%;
-  border: none;
+  flex: 1;
   font-size: 16px;
   outline: none;
   resize: none;
   color: var(--dark-font-color);
-  padding: 18px;
+  background-color: var(--background-white);
+  padding: 10px 22px;
+  padding-top: 0;
+  border: none;
 }
 
 input::placeholder,
 textarea::placeholder {
   color: var(--faded-grey);
+}
+
+.input-with-label {
+  display: flex;
+  width: 100%;
+  height: 30px;
+}
+
+.underline-grey {
+  border-bottom: 1px solid #a5b0bf70;
+}
+
+.fixed-label {
+  color: var(--faded-grey);
+  font-size: 15px;
+  padding-left: 10px;
+  position: relative;
+  top: 3px;
+}
+
+.margin-left-10 {
+  margin-left: 10px;
 }
