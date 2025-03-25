@@ -39,6 +39,8 @@
   align-items: center;
   gap: 6px;
   font-weight: 400;
+  position: sticky;
+  top: 1rem;
 }
 
 .compose-input {
@@ -129,4 +131,21 @@ textarea::placeholder {
 
 .margin-left-10 {
   margin-left: 10px;
+}
+
+.ai-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  animation: fadeIn 0.3s ease forwards;
+  z-index: 4;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

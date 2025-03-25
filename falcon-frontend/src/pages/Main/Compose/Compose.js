@@ -3,12 +3,14 @@ import "./Compose.css";
 import { ReactComponent as SendIcon } from "../../../assets/icons/black/send-white.svg";
 import { ReactComponent as Paperclip } from "../../../assets/icons/black/paperclip.svg";
 import { ReactComponent as GenerateIcon } from "../../../assets/icons/blue/magicpen-icon.svg";
+import AiComposePanel from "./AiComposePanel";
 
 const Compose = () => {
   const [from, setFrom] = useState("hilatsivion@gmail.com");
   const [subject, setSubject] = useState("");
   const [to, setTo] = useState([]);
   const [body, setBody] = useState("");
+  const [isAiOpen, setIsAiOpen] = useState(false);
 
   const availableFrom = [
     "hilatsivion@gmail.com",
@@ -20,10 +22,10 @@ const Compose = () => {
     <div className="compose-page page-container">
       {/* Compose Header */}
       <div className="compose-header space-between-full-wid">
-        <button className="ai-button">
+        <button className="ai-button" onClick={() => setIsAiOpen(true)}>
           <GenerateIcon />
           <span className="gradient-text">Compose with AI</span>
-        </button>{" "}
+        </button>
         <button className="send-btn">
           <SendIcon />
           Send
@@ -81,6 +83,16 @@ const Compose = () => {
         value={body}
         onChange={(e) => setBody(e.target.value)}
       />
+
+      {/* AI Compose Panel */}
+      {isAiOpen && <AiComposePanel onClose={() => setIsAiOpen(false)} />}
+
+      {isAiOpen && (
+        <>
+          <div className="ai-overlay" onClick={() => setIsAiOpen(false)} />
+          <AiComposePanel onClose={() => setIsAiOpen(false)} />
+        </>
+      )}
     </div>
   );
 };
