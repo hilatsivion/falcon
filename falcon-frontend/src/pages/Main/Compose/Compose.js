@@ -12,6 +12,12 @@ const Compose = () => {
   const [body, setBody] = useState("");
   const [isAiOpen, setIsAiOpen] = useState(false);
 
+  const detectDirection = (text) => {
+    const firstChar = text.trim().charAt(0);
+    const isHebrew = /^[\u0590-\u05FF]/.test(firstChar);
+    return isHebrew ? "rtl" : "ltr";
+  };
+
   const availableFrom = [
     "hilatsivion@gmail.com",
     "hila.t@outlook.com",
@@ -81,6 +87,7 @@ const Compose = () => {
         className="compose-body"
         placeholder="Write here..."
         value={body}
+        dir={detectDirection(body)}
         onChange={(e) => setBody(e.target.value)}
       />
 
