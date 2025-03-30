@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import "./Compose.css";
 import { ReactComponent as SendIcon } from "../../../assets/icons/black/send-white.svg";
 import { ReactComponent as Paperclip } from "../../../assets/icons/black/paperclip.svg";
@@ -12,6 +12,16 @@ const Compose = () => {
   const [body, setBody] = useState("");
   const [isAiOpen, setIsAiOpen] = useState(false);
 
+  const [files, setFiles] = useState([]);
+  const fileInputRef = useRef(null);
+
+  const handleSendClick = () => {
+    if (isSendEnabled) {
+      // TODO: send logic here
+      console.log("Sending email:", { to, from, subject, body });
+    }
+  };
+
   const detectDirection = (text) => {
     const firstChar = text.trim().charAt(0);
     const isHebrew = /^[\u0590-\u05FF]/.test(firstChar);
@@ -24,6 +34,31 @@ const Compose = () => {
     "hilatsivion222@gmail.com",
   ];
 
+  const handleAiDone = ({ subject, content }) => {
+    setSubject(subject);
+    setBody(content);
+  };
+
+  const isValidEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const isSendEnabled =
+    to.length > 0 &&
+    to.every((email) => isValidEmail(email)) &&
+    from &&
+    body.trim() !== "";
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles((prev) => [...prev, ...selectedFiles]);
+  };
+
   return (
     <div className="compose-page page-container">
       {/* Compose Header */}
@@ -32,7 +67,13 @@ const Compose = () => {
           <GenerateIcon />
           <span className="gradient-text">Compose with AI</span>
         </button>
-        <button className="send-btn">
+
+        <button
+          className="send-btn"
+          onClick={handleSendClick}
+          disabled={!isSendEnabled}
+          style={{ opacity: isSendEnabled ? 1 : 0.4 }}
+        >
           <SendIcon />
           Send
         </button>
@@ -77,10 +118,35 @@ const Compose = () => {
       </div>
 
       {/* File Attach */}
-      <button className="files-btn">
-        <Paperclip />
-        Add files
-      </button>
+      <div className="file-upload-row">
+        <button className="files-btn" onClick={triggerFileInput}>
+          <Paperclip />
+          Add files
+        </button>
+        <input
+          type="file"
+          multiple
+          style={{ display: "none" }}
+          ref={fileInputRef}
+          onChange={handleFileChange}
+        />
+
+        <div className="file-pills">
+          {files.map((file, index) => (
+            <div key={index} className="file-pill">
+              {file.name}
+              <span
+                className="remove-file"
+                onClick={() =>
+                  setFiles((prev) => prev.filter((_, i) => i !== index))
+                }
+              >
+                ×
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Body */}
       <textarea
@@ -97,7 +163,10 @@ const Compose = () => {
       {isAiOpen && (
         <>
           <div className="ai-overlay" onClick={() => setIsAiOpen(false)} />
-          <AiComposePanel onClose={() => setIsAiOpen(false)} />
+          <AiComposePanel
+            onClose={() => setIsAiOpen(false)}
+            onDone={handleAiDone}
+          />
         </>
       )}
     </div>
