@@ -1,0 +1,45 @@
+/* Overlay background */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(30, 30, 30, 0.4); /* dark opacity background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* Popup box */
+.popup-box {
+  background-color: white;
+  border-radius: 20px;
+  padding: 50px 20px 34px 20px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Close button */
+.popup-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* Link */
+.popup-link {
+  font-size: 14px;
+  color: var(--faded-grey);
+  text-decoration: underline;
+  cursor: pointer;
+}

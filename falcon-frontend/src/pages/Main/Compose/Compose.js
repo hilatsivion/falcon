@@ -4,6 +4,8 @@ import { ReactComponent as SendIcon } from "../../../assets/icons/black/send-whi
 import { ReactComponent as Paperclip } from "../../../assets/icons/black/paperclip.svg";
 import { ReactComponent as GenerateIcon } from "../../../assets/icons/blue/magicpen-icon.svg";
 import AiComposePanel from "./AiComposePanel";
+import SuccessPopup from "../../../components/Popup/oneSentence_link";
+import { useNavigate } from "react-router-dom";
 
 const Compose = () => {
   const [from, setFrom] = useState("hilatsivion@gmail.com");
@@ -11,6 +13,8 @@ const Compose = () => {
   const [to, setTo] = useState([]);
   const [body, setBody] = useState("");
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);
@@ -19,6 +23,7 @@ const Compose = () => {
     if (isSendEnabled) {
       // TODO: send logic here
       console.log("Sending email:", { to, from, subject, body });
+      setShowSuccess(true); // show popup after 'send'
     }
   };
 
@@ -168,6 +173,17 @@ const Compose = () => {
             onDone={handleAiDone}
           />
         </>
+      )}
+
+      {showSuccess && (
+        <SuccessPopup
+          message="Sent Successfully!"
+          linkText="Back to Inbox"
+          onLinkClick={() => {
+            setShowSuccess(false);
+            navigate("/inbox"); // ← adjust the route if needed
+          }}
+        />
       )}
     </div>
   );
