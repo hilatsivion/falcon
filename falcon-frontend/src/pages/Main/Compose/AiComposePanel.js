@@ -17,104 +17,125 @@ const AiComposePanel = ({ onClose, onDone }) => {
   const [error, setError] = useState(null);
 
   const handleGenerate = async () => {
-    if (
-      !idea.trim() ||
-      !HUGGING_FACE_API_TOKEN ||
-      HUGGING_FACE_API_TOKEN === "hf_YOUR_TOKEN_HERE"
-    ) {
+    // --- Initial Checks ---
+    if (!idea.trim()) {
+      setError("Please enter your email idea.");
+      return;
+    }
+    if (!HUGGING_FACE_API_TOKEN) {
       setError(
-        "Please enter your idea and ensure your Hugging Face API Token is set in AiComposePanel.js"
+        "API Token not found. Ensure REACT_APP_HUGGING_FACE_API_TOKEN is set in your .env file and you have restarted the server."
       );
       return;
     }
-    setError(null); // Clear previous errors
+    setError(null);
     setIsGenerating(true);
-    setResultReady(false); // Clear previous results visually
+    setResultReady(false);
 
-    // --- Construct the prompt ---
-    const fullPrompt = `Based on the following idea, generate an email subject and body.
-Output the result ONLY as a valid JSON object like this: {"subject": "Generated Subject", "body": "Generated Body Content"}
-
-Email Idea: ${idea}`;
+    let generatedBody = "Error: Failed to generate body."; // Default error state
+    let generatedSubject = "Error: Failed to generate subject."; // Default error state
 
     try {
-      const response = await fetch(API_URL, {
+      // --- Step 1: Generate Email Body ---
+      const bodyPrompt = `Write a complete email body based on the following idea. Only output the body content, do not include a subject line yet:\n\nEmail Idea: ${idea}`;
+
+      console.log("Requesting Body...");
+      const bodyResponse = await fetch(API_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${HUGGING_FACE_API_TOKEN}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          inputs: fullPrompt,
+          inputs: bodyPrompt,
           parameters: {
-            max_new_tokens: 512,
+            max_new_tokens: 450, // Allocate most tokens to body
             return_full_text: false,
           },
         }),
       });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`API Error (${response.status}): ${errorBody}`);
+      if (!bodyResponse.ok) {
+        const errorBodyText = await bodyResponse.text();
+        throw new Error(
+          `API Error (Body Gen - ${bodyResponse.status}): ${errorBodyText}`
+        );
       }
 
-      const result = await response.json();
+      const bodyResult = await bodyResponse.json();
+      console.log("Hugging Face Body Response:", bodyResult);
 
-      // --- Parse the result ---
-      console.log("Hugging Face API Response:", result);
-
-      let generatedSubject = "Error: Could not parse subject";
-      let generatedBody = "Error: Could not parse body";
-
-      if (result && result[0] && typeof result[0].generated_text === "string") {
-        const rawText = result[0].generated_text;
-
-        // --- Attempt to extract JSON from the raw text ---
-        try {
-          const jsonStart = rawText.indexOf("{"); // Find the first '{'
-          const jsonEnd = rawText.lastIndexOf("}") + 1; // Find the last '}'
-
-          if (jsonStart !== -1 && jsonEnd !== 0 && jsonEnd > jsonStart) {
-            const jsonString = rawText.substring(jsonStart, jsonEnd);
-            const generatedOutput = JSON.parse(jsonString);
-
-            if (generatedOutput.subject && generatedOutput.body) {
-              generatedSubject = generatedOutput.subject;
-              generatedBody = generatedOutput.body;
-            } else {
-              generatedSubject = "Parsing Error";
-              generatedBody =
-                "AI response JSON parsed, but missing subject or body keys.";
-            }
-          } else {
-            // Couldn't find '{' and '}' reliably
-            generatedSubject = "Parsing Error";
-            generatedBody =
-              "Could not find JSON structure within the AI response text.";
-          }
-        } catch (parseError) {
-          console.error("Failed to parse extracted JSON:", parseError);
-
-          generatedSubject = "Subject (AI Generated - Check Body)";
-          generatedBody = rawText;
-        }
+      if (
+        bodyResult &&
+        bodyResult[0] &&
+        typeof bodyResult[0].generated_text === "string"
+      ) {
+        generatedBody = bodyResult[0].generated_text.trim(); // Store the generated body
+        console.log("Generated Body:", generatedBody);
       } else {
-        generatedSubject = "Response Error";
-        generatedBody =
-          "Error: Unexpected response format from AI (expected array with generated_text string).";
+        throw new Error("Unexpected response format when generating body.");
       }
 
+      // --- Step 2: Generate Email Subject (using the generated body) ---
+      const subjectPrompt = `Based on the following email idea and the generated email body, suggest a concise and relevant subject line. Output ONLY the subject line text:\n\nEmail Idea: ${idea}\n\nEmail Body:\n${generatedBody}`;
+
+      console.log("Requesting Subject...");
+      const subjectResponse = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${HUGGING_FACE_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: subjectPrompt,
+          parameters: {
+            max_new_tokens: 60, // Subject lines are short
+            return_full_text: false,
+          },
+        }),
+      });
+
+      if (!subjectResponse.ok) {
+        // We still have the body, but log subject error
+        const errorSubjectText = await subjectResponse.text();
+        console.error(
+          `API Error (Subject Gen - ${subjectResponse.status}): ${errorSubjectText}`
+        );
+        generatedSubject = "Subject Error (Check Body)"; // Indicate subject gen failed
+      } else {
+        const subjectResult = await subjectResponse.json();
+        console.log("Hugging Face Subject Response:", subjectResult);
+
+        if (
+          subjectResult &&
+          subjectResult[0] &&
+          typeof subjectResult[0].generated_text === "string"
+        ) {
+          // Clean up subject line (remove potential quotes, extra spaces/newlines)
+          generatedSubject = subjectResult[0].generated_text
+            .trim()
+            .replace(/^["']|["']$/g, "");
+          console.log("Generated Subject:", generatedSubject);
+        } else {
+          generatedSubject = "Subject Error (Check Body)"; // Indicate parsing failed
+        }
+      }
+
+      // --- Update State with results (or errors from above) ---
       setSubject(generatedSubject);
       setContent(generatedBody);
     } catch (err) {
-      console.error("Error calling Hugging Face API:", err);
+      // This catches errors from the Body generation mostly, or network errors
+      console.error("Error during AI generation process:", err);
       setError(`Failed to generate: ${err.message}`);
+      // Set subject/content to reflect the error if needed, body might be default error message
+      setSubject("Generation Failed");
+      setContent(generatedBody); // Body might contain initial error or partial result if subject failed later
     } finally {
       setIsGenerating(false);
-      setResultReady(true);
+      setResultReady(true); // Show results/errors
     }
   };
-
   const handleTryAgain = () => {
     setResultReady(false);
     setSubject("");
