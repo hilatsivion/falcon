@@ -7,31 +7,59 @@
 
 .folder-card {
   background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 9px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0px 4px 8px 1px rgba(190, 190, 190, 0.25);
 }
 
 .folder-top-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-start-end-radius: 9px;
+  border-start-start-radius: 9px;
+  justify-content: end;
+  padding: 1px 10px;
 }
 
-.folder-title {
-  font-weight: bold;
+.color-folder-0 {
+  background: var(--folder-green-1);
+}
+.color-folder-1 {
+  background: var(--folder-green-2);
+}
+.color-folder-2 {
+  background: var(--folder-orange);
+}
+.color-folder-3 {
+  background: var(--folder-purple);
+}
+.color-folder-4 {
+  background: var(--folder-blue);
+}
+.color-folder-5 {
+  background: var(--folder-yellow);
+}
+
+.body-folder {
+  padding: 10px;
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 .folder-subtext {
   font-size: 12px;
-  color: #666;
+  color: var(--icons-grey);
   margin-top: 4px;
 }
 
 .folder-count-row {
-  margin-top: 10px;
-  font-size: 14px;
   color: var(--primary);
+  display: flex;
+  align-items: center;
+  width: fit-content;
 }
 
 .folder-dot {
@@ -45,7 +73,9 @@
   align-items: center;
   justify-content: center;
   border: 2px dashed var(--grey);
-  border-radius: 12px;
+  /* box-shadow: 0px 4px 8px 1px rgba(190, 190, 190, 0.25); */
+
+  border-radius: 9px;
   height: 100px;
   color: var(--grey);
 }
@@ -57,4 +87,12 @@
 .add-folder-text {
   font-size: 12px;
   margin-top: 4px;
+}
+
+.num-email-icon {
+  margin-right: 4px;
+}
+
+.count-num {
+  font-size: 11px;
 }

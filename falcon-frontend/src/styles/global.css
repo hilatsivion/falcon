@@ -31,6 +31,14 @@
 
   /* Font */
   --font-primary: "Roboto", sans-serif;
+
+  /* Folders colors */
+  --folder-green-1: linear-gradient(90deg, #d0fbe3 0%, #75f788 100%);
+  --folder-green-2: linear-gradient(90deg, #e9ffc7 0%, #aaff5f 100%);
+  --folder-orange: linear-gradient(90deg, #fddfc3 0%, #f7933f 100%);
+  --folder-purple: linear-gradient(90deg, #ebd2ff 0%, #c348ff 100%);
+  --folder-blue: linear-gradient(90deg, #d2eaff 0%, #5ba5ff 100%);
+  --folder-yellow: linear-gradient(90deg, #fffccf 0%, #f3ff4d 100%);
 }
 
 /* Import Roboto */

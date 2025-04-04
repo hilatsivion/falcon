@@ -1,20 +1,33 @@
 import React from "react";
 import "./FilterFolderPage.css";
+import { ReactComponent as NumberOfEmailIcon } from "../../../assets/icons/black/email-enter-icon.svg";
+import { ReactComponent as Dots } from "../../../assets/icons/black/more-dots.svg";
 
 const FilterFolderPage = () => {
   return (
     <div className="folder-grid">
       {/* Replace with real data when ready */}
       {[...Array(6)].map((_, i) => (
-        <div className={`folder-card color-${i % 6}`} key={i}>
-          <div className="folder-top-row">
-            <p className="folder-title">Filter Folder Name</p>
-            <div className="folder-dot">•••</div>
+        <div className={`folder-card`} key={i}>
+          <div className={`folder-top-row color-folder-${i % 6}`}>
+            <div>
+              <Dots className="folder-dot" />
+            </div>
           </div>
-          <p className="folder-subtext">5 new emails</p>
-          <div className="folder-count-row">
-            <span className="icon">📅</span>
-            <span className="count">{Math.floor(Math.random() * 200)}</span>
+
+          <div className="body-folder">
+            <div>
+              <p className="folder-title">Filter Folder Name</p>
+              <p className="folder-subtext">5 new emails</p>
+            </div>
+            <div className="folder-count-row">
+              <span className="num-email-icon">
+                <NumberOfEmailIcon />
+              </span>
+              <span className="count-num">
+                {Math.floor(Math.random() * 200)}
+              </span>
+            </div>
           </div>
         </div>
       ))}
