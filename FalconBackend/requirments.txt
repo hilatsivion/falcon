@@ -14,3 +14,6 @@ Project 'FalconBackend' has the following package references
    > Microsoft.Extensions.Primitives                      6.0.0       6.0.0
    > Swashbuckle.AspNetCore                               6.5.0       6.5.0
    > System.IdentityModel.Tokens.Jwt                      8.6.1       8.6.1
+
+
+command to install

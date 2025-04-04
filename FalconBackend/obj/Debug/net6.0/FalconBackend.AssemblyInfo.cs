@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FalconBackend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d55c0ab9d254385d48e15c20fde594bb7bb3fa8e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5054b80c808c74916f975510c40bbb7dea6547e8")]
 [assembly: System.Reflection.AssemblyProductAttribute("FalconBackend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FalconBackend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -65,7 +65,10 @@ namespace FalconBackend.Services
                     Subject = m.Subject,
                     Sender = m.Sender,
                     TimeReceived = m.TimeReceived,
-                    Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList()
+                    Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
+                    BodySnippet = GenerateBodySnippet(m.Body),
+                    IsRead = m.IsRead,
+                    IsFavorite = m.IsFavorite
                 })
                 .ToListAsync();
         }
@@ -85,7 +88,9 @@ namespace FalconBackend.Services
                     MailAccountId = m.MailAccountId,
                     Subject = m.Subject,
                     TimeSent = m.TimeSent,
-                    Recipients = m.Recipients.Select(r => r.Email).ToList()
+                    Recipients = m.Recipients.Select(r => r.Email).ToList(),
+                    BodySnippet = GenerateBodySnippet(m.Body), 
+                    IsFavorite = m.IsFavorite
                 })
                 .ToListAsync();
         }
@@ -125,7 +130,10 @@ namespace FalconBackend.Services
                     Subject = m.Subject,
                     Sender = m.Sender,
                     TimeReceived = m.TimeReceived,
-                    Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList()
+                    Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
+                    BodySnippet = GenerateBodySnippet(m.Body), 
+                    IsRead = m.IsRead,
+                    IsFavorite = m.IsFavorite
                 })
                 .ToListAsync();
         }
@@ -144,7 +152,9 @@ namespace FalconBackend.Services
                     MailAccountId = m.MailAccountId,
                     Subject = m.Subject,
                     TimeSent = m.TimeSent,
-                    Recipients = m.Recipients.Select(r => r.Email).ToList()
+                    Recipients = m.Recipients.Select(r => r.Email).ToList(),
+                    BodySnippet = GenerateBodySnippet(m.Body), 
+                    IsFavorite = m.IsFavorite
                 })
                 .ToListAsync();
         }
@@ -430,8 +440,20 @@ namespace FalconBackend.Services
                 Recipients = ToRecipientDtos(mail.Recipients)
             };
         }
-
-
+        private static string GenerateBodySnippet(string body)
+        {
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                return string.Empty;
+            }
+            var words = body.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            var snippet = string.Join(" ", words.Take(10));
+            if (words.Length > 10)
+            {
+                snippet += ".....";
+            }
+            return snippet;
+        }
     }
 
 }

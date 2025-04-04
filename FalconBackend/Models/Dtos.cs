@@ -103,6 +103,9 @@
         public DateTime TimeReceived { get; set; }
 
         public List<string> Tags { get; set; } = new();
+        public string BodySnippet { get; set; }
+        public bool IsRead { get; set; }
+        public bool IsFavorite { get; set; }
     }
 
     public class MailSentPreviewDto
@@ -115,6 +118,9 @@
         public List<string> Recipients { get; set; } = new();
 
         public DateTime TimeSent { get; set; }
+
+        public string BodySnippet { get; set; } 
+        public bool IsFavorite { get; set; }
     }
 
     public class DraftPreviewDto
