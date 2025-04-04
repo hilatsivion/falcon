@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import FilterFolderPage from "../FilterFolderPage/FilterFolderPage";
 import { EmailItem } from "../../../components/EmailItem/EmailItem";
 import EmailView from "../../../components/EmailView/EmailView";
 import listIcon from "../../../assets/icons/black/list.svg";
@@ -120,31 +121,39 @@ const Inbox = () => {
         </div>
       </div>
 
-      <div className="emails-container">
-        {emails.map((email, index) => (
-          <div
-            key={index}
-            onClick={(e) => {
-              if (!e.target.closest(".email-star")) {
-                setSelectedEmail(email);
-              }
-            }}
-          >
-            <EmailItem
-              {...email}
-              onClick={() => setSelectedEmail(email)} // Pass onClick correctly
-              onStarToggle={() => {
-                const updatedEmails = [...emails];
-                updatedEmails[index].isStarred =
-                  !updatedEmails[index].isStarred;
-                setEmails(updatedEmails);
-              }}
-            />
+      {isListView ? (
+        <>
+          <div className="emails-container">
+            {emails.map((email, index) => (
+              <div
+                key={index}
+                onClick={(e) => {
+                  if (!e.target.closest(".email-star")) {
+                    setSelectedEmail(email);
+                  }
+                }}
+              >
+                <EmailItem
+                  {...email}
+                  onClick={() => setSelectedEmail(email)}
+                  onStarToggle={() => {
+                    const updatedEmails = [...emails];
+                    updatedEmails[index].isStarred =
+                      !updatedEmails[index].isStarred;
+                    setEmails(updatedEmails);
+                  }}
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <EmailView email={selectedEmail} onClose={() => setSelectedEmail(null)} />
+          <EmailView
+            email={selectedEmail}
+            onClose={() => setSelectedEmail(null)}
+          />
+        </>
+      ) : (
+        <FilterFolderPage />
+      )}
     </div>
   );
 };
