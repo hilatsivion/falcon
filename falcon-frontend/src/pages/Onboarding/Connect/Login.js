@@ -58,11 +58,28 @@ const Login = () => {
   };
 
   // Handle Submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      // Simulate API Call (Replace with actual login logic)
-      navigate("/loadingData"); // Replace with your next page
+    if (!validateForm()) return;
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        showError("Invalid email or password");
+        return;
+      }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("isAuthenticated", "true");
+      navigate("/loadingData");
+    } catch (err) {
+      showError("Login failed. Try again later.");
     }
   };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import "./WelcomeScreen.css";
@@ -37,6 +37,15 @@ const buttonVariants = {
 
 const WelcomeScreen = () => {
   const navigate = useNavigate();
+
+  // check if the user is already connected. if yes - go to inbox.
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+    if (isAuthenticated) {
+      navigate("/inbox");
+    }
+  }, [navigate]);
+
   return (
     <div className="welcome-screen-container">
       <motion.div className="welcome-content">

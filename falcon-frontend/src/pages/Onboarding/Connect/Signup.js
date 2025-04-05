@@ -79,11 +79,40 @@ const SignUp = () => {
   };
 
   // Handle Submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      // API call to server, and then:
+    if (!validateForm()) return;
+
+    try {
+      const signUpRes = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName: username, username, email, password }),
+      });
+
+      if (!signUpRes.ok) {
+        showError("Sign up failed. Email might already be registered.");
+        return;
+      }
+
+      // Auto-login after signup
+      const loginRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!loginRes.ok) {
+        showError("Sign up succeeded, but login failed.");
+        return;
+      }
+
+      const data = await loginRes.json();
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("isAuthenticated", "true");
       navigate("/interests");
+    } catch (err) {
+      showError("Signup failed. Try again later.");
     }
   };
 

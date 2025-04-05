@@ -4,11 +4,14 @@ import OnboardingRoutes from "./OnboardingRoutes";
 import MainRoutes from "./MainRoutes";
 
 const AppRoutes = () => {
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+
   return (
     <Routes>
-      {/* אחרי פיתוח המסכים הראשיים צריך לשנות את הניתוב כך שזה יעבוד לפי לוקל סטורג שמגיע מהתוקן */}
-      {/* <Route path="/*" element={<OnboardingRoutes />} /> */}
-      <Route path="/*" element={<MainRoutes />} />
+      <Route
+        path="/*"
+        element={isAuthenticated ? <MainRoutes /> : <OnboardingRoutes />}
+      />
     </Routes>
   );
 };
