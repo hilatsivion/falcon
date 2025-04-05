@@ -1,5 +1,15 @@
 [
   {
+    "ContainingType": "FalconBackend.Controllers.AnalyticsController",
+    "Method": "GetMyAnalytics",
+    "RelativePath": "api/analytics",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "FalconBackend.Controllers.AuthController",
     "Method": "LogIn",
     "RelativePath": "api/auth/login",

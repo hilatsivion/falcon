@@ -28,13 +28,15 @@ public class Analytics
     public int EmailsReceivedWeekly { get; set; } = 0;
     public int EmailsSentWeekly { get; set; } = 0;
     public int SpamEmailsWeekly { get; set; } = 0; 
-    public int ReadEmailsWeekly { get; set; } = 0; 
+    public int ReadEmailsWeekly { get; set; } = 0;
+    public int DeletedEmailsWeekly { get; set; } = 0;
 
     // Previous Period Email Tracking 
     public int EmailsReceivedLastWeek { get; set; } = 0;
     public int EmailsSentLastWeek { get; set; } = 0;
     public int SpamEmailsLastWeek { get; set; } = 0;
     public int ReadEmailsLastWeek { get; set; } = 0;
+    public int DeletedEmailsLastWeek { get; set; } = 0;
 
     // Averages
     public float AvgEmailsPerDay { get; set; } = 0;

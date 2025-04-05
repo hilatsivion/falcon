@@ -5,6 +5,18 @@
     "version": "v1"
   },
   "paths": {
+    "/api/analytics": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": [

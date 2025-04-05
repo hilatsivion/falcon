@@ -16,6 +16,21 @@ namespace FalconBackend.Services
         }
 
         /// <summary>
+        /// Increments weekly deleted email count.
+        /// </summary>
+        public async Task IncrementDeletedEmailsWeeklyAsync(string userEmail)
+        {
+            await CheckAndResetStatsOnLoginAsync(userEmail); // Ensure stats are current
+            var analytics = await _context.Analytics.FirstOrDefaultAsync(a => a.AppUserEmail == userEmail);
+            if (analytics == null) return; // Should not happen if CreateAnalytics called properly
+
+            analytics.DeletedEmailsWeekly++;
+            if (!analytics.IsActiveToday) analytics.IsActiveToday = true; // Mark active
+            await SaveAnalyticsAsync(analytics);
+            Console.WriteLine($"Incremented deleted count for {userEmail}");
+        }
+
+        /// <summary>
         /// Creates an initial analytics record for a new user. Initializes reset dates.
         /// </summary>
         public async Task CreateAnalyticsForUserAsync(string userEmail)
@@ -145,6 +160,7 @@ namespace FalconBackend.Services
                 analytics.EmailsSentLastWeek = analytics.EmailsSentWeekly;
                 analytics.SpamEmailsLastWeek = analytics.SpamEmailsWeekly;
                 analytics.ReadEmailsLastWeek = analytics.ReadEmailsWeekly;
+                analytics.DeletedEmailsLastWeek = analytics.DeletedEmailsWeekly;
 
                 // Reset weekly counters for the NEW week
                 analytics.TimeSpentThisWeek = 0;
@@ -152,7 +168,8 @@ namespace FalconBackend.Services
                 analytics.EmailsSentWeekly = 0;
                 analytics.SpamEmailsWeekly = 0;
                 analytics.ReadEmailsWeekly = 0;
-                analytics.LastWeeklyReset = startOfWeek; 
+                analytics.LastWeeklyReset = startOfWeek;
+                analytics.DeletedEmailsWeekly = 0;
                 requiresSave = true;
             }
 

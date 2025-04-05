@@ -189,36 +189,86 @@ namespace FalconBackend.Services
             return true;
         }
 
-        public async Task<bool> DeleteMailsAsync(List<MailDeleteDto> mailsToDelete)
+        public async Task<bool> DeleteMailsAsync(List<MailDeleteDto> mailsToDelete, string userEmail)
         {
             bool anyDeleted = false;
+            int deleteCount = 0; // Count how many were actually deleted
 
-            foreach (var dto in mailsToDelete)
+            // --- Get user's accounts once ---
+            var userMailAccountIds = await _context.MailAccounts
+                                           .Where(ma => ma.AppUserEmail == userEmail)
+                                           .Select(ma => ma.MailAccountId)
+                                           .ToListAsync();
+
+            var mailIdsToDelete = mailsToDelete.Select(dto => dto.MailId).ToList();
+
+            // Fetch all potentially relevant mails at once
+            var mails = await _context.Mails
+                .Include(m => m.Attachments)
+                .Include(m => m.Recipients) 
+                .Include(m => (m as MailReceived).MailTags) 
+                .Where(m => mailIdsToDelete.Contains(m.MailId))
+                .ToListAsync();
+
+            var mailsOwnedByUser = mails.Where(m => userMailAccountIds.Contains(m.MailAccountId)).ToList();
+
+
+            if (mailsOwnedByUser.Count != mailsToDelete.Count)
             {
-                var mail = await _context.Mails
-                    .Include(m => m.Attachments)
-                    .Include(m => m.Recipients)
-                    .FirstOrDefaultAsync(m => m.MailId == dto.MailId && m.MailAccountId == dto.MailAccountId);
+                Console.WriteLine("Attempted to delete emails not owned by user or not found matching DTOs.");
+            }
 
-                if (mail == null) continue;
 
-                if (mail is MailReceived received)
+            foreach (var mail in mailsOwnedByUser) // Iterate only through owned mails found
+            {
+                // Remove associated MailTags if it's MailReceived
+                if (mail is MailReceived received && received.MailTags != null)
                 {
-                    var mailTags = _context.MailTags.Where(mt => mt.MailReceivedId == received.MailId);
-                    _context.MailTags.RemoveRange(mailTags);
+                    _context.MailTags.RemoveRange(received.MailTags);
                 }
 
-                foreach (var attachment in mail.Attachments)
+                if (mail.Attachments != null)
                 {
-                    try { if (File.Exists(attachment.FilePath)) File.Delete(attachment.FilePath); } catch { }
+                    foreach (var attachment in mail.Attachments.ToList()) // Use ToList() for safe removal during iteration
+                    {
+                        try
+                        {
+                            // Attempt file deletion (optional - depends on if you want physical delete)
+                            if (!string.IsNullOrEmpty(attachment.FilePath) && File.Exists(attachment.FilePath))
+                            {
+                                File.Delete(attachment.FilePath);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error deleting attachment file {attachment.FilePath}: {ex.Message}");
+                            // Decide if this error should stop the process
+                        }
+                        _context.Attachments.Remove(attachment); // Remove from DB regardless of file deletion success
+                    }
                 }
 
-                _context.Mails.Remove(mail);
+
+                _context.Mails.Remove(mail); // Remove the mail itself
+                deleteCount++;
                 anyDeleted = true;
             }
 
             if (anyDeleted)
+            {
                 await _context.SaveChangesAsync();
+
+                // --- ADD Analytics Call - Call ONCE for the total count deleted ---
+                if (_analyticsService != null && deleteCount > 0)
+                {
+                    // Call increment method 'deleteCount' times
+                    for (int i = 0; i < deleteCount; i++)
+                    {
+                        await _analyticsService.IncrementDeletedEmailsWeeklyAsync(userEmail);
+                    }
+                    Console.WriteLine($"Incremented deleted count by {deleteCount} for {userEmail}");
+                }
+            }
 
             return anyDeleted;
         }

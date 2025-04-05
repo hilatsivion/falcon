@@ -217,13 +217,10 @@ namespace FalconBackend.Controllers
             {
                 var userEmail = GetUserEmailFromToken();
 
-                var allOwned = await _mailService.AreAllMailsOwnedByUserAsync(mailsToDelete, userEmail);
-                if (!allOwned)
-                    return Forbid("One or more mails do not belong to your account.");
+                var result = await _mailService.DeleteMailsAsync(mailsToDelete, userEmail);
 
-                var result = await _mailService.DeleteMailsAsync(mailsToDelete);
                 if (!result)
-                    return NotFound("No matching emails found to delete.");
+                    return NotFound("No matching emails owned by the user found to delete.");
 
                 return Ok("Selected emails deleted successfully.");
             }
@@ -236,6 +233,7 @@ namespace FalconBackend.Controllers
                 return StatusCode(500, $"Failed to delete emails. Error: {ex.Message}");
             }
         }
+
 
         [HttpGet("received/full/{mailId}")]
         public async Task<IActionResult> GetReceivedMailByIdAsync(int mailId)
