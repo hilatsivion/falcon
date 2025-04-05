@@ -342,17 +342,11 @@
   {
     "ContainingType": "FalconBackend.Controllers.TestController",
     "Method": "CreateRandomMailAccount",
-    "RelativePath": "api/test/create-mailaccount/{userEmail}",
+    "RelativePath": "api/test/create-mailaccount",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [
-      {
-        "Name": "userEmail",
-        "Type": "System.String",
-        "IsRequired": true
-      }
-    ],
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
