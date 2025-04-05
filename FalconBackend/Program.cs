@@ -20,6 +20,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<FileStorageService>();
+builder.Services.AddScoped<UserService>();
+
 
 // Add controllers
 builder.Services.AddControllers()
@@ -28,6 +30,19 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.WriteIndented = true;
     });
+
+var myAllowSpecificOrigins = "_myAllowSpecificOrigins"; 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: myAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.AllowAnyOrigin()
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
 
 
 // Configure JWT authentication using JwtSettings from appsettings.json
@@ -91,6 +106,13 @@ app.UseSwaggerUI();
 
 // Enable middleware
 app.UseHttpsRedirection();
+
+
+app.UseRouting(); 
+
+app.UseCors(myAllowSpecificOrigins);
+
+
 app.UseAuthentication(); // Needed for JWT to work
 app.UseAuthorization();
 

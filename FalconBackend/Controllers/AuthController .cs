@@ -38,14 +38,16 @@ namespace FalconBackend.Controllers
         {
             try
             {
-                await _authService.SignUpAsync(request.FullName, request.Username, request.Email, request.Password);
-                return Ok("User registered successfully.");
+                var token = await _authService.SignUpAsync(request.FullName, request.Username, request.Email, request.Password);
+
+                return Ok(new { Token = token });
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
 
         [HttpPost("logout")]
         [Authorize]

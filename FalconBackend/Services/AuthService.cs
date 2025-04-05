@@ -66,7 +66,7 @@ namespace FalconBackend.Services
             return true;
         }
 
-        public async Task<bool> SignUpAsync(string fullName, string username, string email, string password)
+        public async Task<string> SignUpAsync(string fullName, string username, string email, string password)
         {
             if (await _context.AppUsers.AnyAsync(u => u.Email == email))
                 throw new Exception("Email is already registered");
@@ -83,13 +83,14 @@ namespace FalconBackend.Services
             };
 
             _context.AppUsers.Add(newUser);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); 
 
-            // Create analytics for the new user
             await _analyticsService.CreateAnalyticsForUserAsync(email);
 
-            return true;
+            string token = GenerateJwtToken(newUser);
+            return token; 
         }
+
 
         public async Task<AppUser> AuthenticateUserAsync(string token)
         {

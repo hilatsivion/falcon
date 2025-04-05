@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+
 import "./connect.css";
 import "../../../styles/global.css";
 
@@ -9,6 +10,9 @@ import eyeClosedIcon from "../../../assets/icons/black/eye-closed.svg";
 
 import logo from "../../../assets/images/falcon-white-full.svg";
 import errorSound from "../../../assets/sounds/error-message.mp3";
+
+import { API_BASE_URL } from "../../../config/constants";
+import Loader from "../../../components/Loader/Loader";
 
 // Animation Variants
 const fadeIn = {
@@ -33,6 +37,7 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // Validation Function
@@ -83,36 +88,59 @@ const SignUp = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    setIsLoading(true);
+    setError("");
+
     try {
-      const signUpRes = await fetch("/api/auth/signup", {
+      // --- Use API_BASE_URL and call the signup endpoint ---
+      const signUpRes = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fullName: username, username, email, password }),
       });
 
+      // --- Check if signup itself failed ---
       if (!signUpRes.ok) {
-        showError("Sign up failed. Email might already be registered.");
+        let backendError =
+          "Sign up failed. Email might already be registered or server error.";
+        try {
+          const errorData = await signUpRes.json();
+          if (errorData && errorData.message) {
+            backendError = errorData.message;
+          } else {
+            backendError = `Sign up failed (${
+              signUpRes.status
+            }): ${await signUpRes.text()}`;
+          }
+        } catch (parseErr) {
+          backendError = `Sign up failed (${
+            signUpRes.status
+          }): ${await signUpRes.text()}`;
+        }
+        showError(backendError);
         return;
       }
 
-      // Auto-login after signup
-      const loginRes = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      // --- Signup was successful ---
+      const data = await signUpRes.json();
 
-      if (!loginRes.ok) {
-        showError("Sign up succeeded, but login failed.");
-        return;
+      // --- Check if the token exists in the response ---
+      if (data && data.token) {
+        // Store token and set auth status
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("isAuthenticated", "true");
+        navigate("/interests");
+      } else {
+        console.error("Signup response OK but token missing:", data);
+        showError("Signup succeeded, but failed to retrieve session token.");
       }
-
-      const data = await loginRes.json();
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/interests");
     } catch (err) {
-      showError("Signup failed. Try again later.");
+      console.error("Signup Fetch Error:", err);
+      showError(
+        `Signup failed. Check network or try again later. Error: ${err.message}`
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -122,6 +150,7 @@ const SignUp = () => {
 
   return (
     <div className="welcome-screen-container signup-container">
+      {isLoading && <Loader />}
       {/* Error Popup */}
       <AnimatePresence>
         {error && (

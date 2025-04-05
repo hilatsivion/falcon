@@ -2611,25 +2611,31 @@
     ]
   },
   "packageFolders": {
-    "/Users/hilatsivion/.nuget/packages/": {}
+    "C:\\Users\\ranme\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/hilatsivion/Falcon-repository/FalconBackend/FalconBackend.csproj",
+      "projectUniqueName": "C:\\Users\\ranme\\OneDrive\\מסמכים\\GitHub\\falcon\\FalconBackend\\FalconBackend.csproj",
       "projectName": "FalconBackend",
-      "projectPath": "/Users/hilatsivion/Falcon-repository/FalconBackend/FalconBackend.csproj",
-      "packagesPath": "/Users/hilatsivion/.nuget/packages/",
-      "outputPath": "/Users/hilatsivion/Falcon-repository/FalconBackend/obj/",
+      "projectPath": "C:\\Users\\ranme\\OneDrive\\מסמכים\\GitHub\\falcon\\FalconBackend\\FalconBackend.csproj",
+      "packagesPath": "C:\\Users\\ranme\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\ranme\\OneDrive\\מסמכים\\GitHub\\falcon\\FalconBackend\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "/Users/hilatsivion/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\ranme\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net6.0"
       ],
       "sources": {
-        "/usr/local/share/dotnet/sdk/7.0.317/Sdks/Microsoft.NET.Sdk.Web/library-packs": {},
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -2642,7 +2648,13 @@
         "warnAsError": [
           "NU1605"
         ]
-      }
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net6.0": {
@@ -2716,20 +2728,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[6.0.31, 6.0.31]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Host.osx-arm64",
-            "version": "[6.0.31, 6.0.31]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[6.0.31, 6.0.31]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -2738,7 +2736,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.317/RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.101\\RuntimeIdentifierGraph.json"
       }
     }
   }
