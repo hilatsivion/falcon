@@ -217,9 +217,6 @@ C:/Users/ranme/OneDrive/מסמכים/GitHub/falcon/FalconBackend/obj/Debug/net6.
 C:/Users/ranme/OneDrive/מסמכים/GitHub/falcon/FalconBackend/obj/Debug/net6.0/FalconBackend.pdb
 C:/Users/ranme/OneDrive/מסמכים/GitHub/falcon/FalconBackend/obj/Debug/net6.0/FalconBackend.genruntimeconfig.cache
 C:/Users/ranme/OneDrive/מסמכים/GitHub/falcon/FalconBackend/obj/Debug/net6.0/ref/FalconBackend.dll
-/Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/FalconBackend.dll
-/Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/refint/FalconBackend.dll
-/Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/FalconBackend.pdb
 /Users/hilatsivion/Falcon-repository/FalconBackend/bin/Debug/net6.0/appsettings.Development.json
 /Users/hilatsivion/Falcon-repository/FalconBackend/bin/Debug/net6.0/appsettings.json
 /Users/hilatsivion/Falcon-repository/FalconBackend/bin/Debug/net6.0/FalconBackend
@@ -287,6 +284,9 @@ C:/Users/ranme/OneDrive/מסמכים/GitHub/falcon/FalconBackend/obj/Debug/net6.
 /Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/staticwebassets.development.json
 /Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/scopedcss/bundle/FalconBackend.styles.css
 /Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/FalconBackend.csproj.CopyComplete
+/Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/FalconBackend.dll
+/Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/refint/FalconBackend.dll
+/Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/FalconBackend.pdb
 /Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/FalconBackend.genruntimeconfig.cache
 /Users/hilatsivion/Falcon-repository/FalconBackend/obj/Debug/net6.0/ref/FalconBackend.dll
 C:\Users\ranme\OneDrive\מסמכים\GitHub\falcon\FalconBackend\bin\Debug\net6.0\appsettings.Development.json
