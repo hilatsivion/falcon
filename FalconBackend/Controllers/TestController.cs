@@ -1,10 +1,12 @@
 ﻿using FalconBackend.Data;
 using FalconBackend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace FalconBackend.Controllers
@@ -20,31 +22,39 @@ namespace FalconBackend.Controllers
             _context = context;
         }
 
-        // POST: /api/test/create-mailaccount/{userEmail}
-        [HttpPost("create-mailaccount/{userEmail}")]
-        public async Task<IActionResult> CreateRandomMailAccount(string userEmail)
+        [HttpPost("create-mailaccount")]
+        [Authorize] 
+        public async Task<IActionResult> CreateRandomMailAccount() 
         {
+            // --- Get user email from JWT token claims ---
+            var userEmail = User.FindFirstValue(ClaimTypes.Email); 
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return Unauthorized("User email not found in token.");
+            }
+
             var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Email == userEmail);
             if (user == null)
-                return NotFound("AppUser not found.");
+                return NotFound($"AppUser not found for email: {userEmail}"); // Use email from token
 
-            var randomEmail = $"test_{Guid.NewGuid():N}@example.com";
+            var randomEmail = $"test_{Guid.NewGuid().ToString("N").Substring(0, 8)}@example.com"; // Shorter GUID
 
             var newAccount = new MailAccount
             {
-                AppUserEmail = userEmail,
+                AppUserEmail = userEmail, // Link to the logged-in user
                 EmailAddress = randomEmail,
-                Token = Guid.NewGuid().ToString(),
-                Provider = MailAccount.MailProvider.Gmail,
+                Token = Guid.NewGuid().ToString(), // Placeholder token
+                Provider = MailAccount.MailProvider.Gmail, // Default to Gmail for test
                 LastMailSync = DateTime.UtcNow,
-                IsDefault = false
+                IsDefault = !_context.MailAccounts.Any(ma => ma.AppUserEmail == userEmail) // Make first account default
             };
 
             _context.MailAccounts.Add(newAccount);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "MailAccount created", mailAccountId = newAccount.MailAccountId });
+            return Ok(new { message = "Test MailAccount created successfully", mailAccountId = newAccount.MailAccountId, emailAddress = newAccount.EmailAddress });
         }
+
 
         // POST: /api/test/generate-mails/{mailAccountId}
         [HttpPost("generate-mails/{mailAccountId}")]

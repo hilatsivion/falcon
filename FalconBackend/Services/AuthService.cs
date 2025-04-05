@@ -28,6 +28,24 @@ namespace FalconBackend.Services
             _analyticsService = analyticsService;
         }
 
+        private async Task CreateTestMailAccountForUserAsync(AppUser user)
+        {
+            Console.WriteLine($"Creating test mail account for user {user.Email}...");
+            var randomEmail = $"test_{Guid.NewGuid().ToString("N").Substring(0, 8)}@example.com";
+
+            var newAccount = new MailAccount
+            {
+                AppUserEmail = user.Email, 
+                EmailAddress = randomEmail,
+                Token = Guid.NewGuid().ToString(), // Placeholder token
+                Provider = MailAccount.MailProvider.Gmail, // Default test provider
+                LastMailSync = DateTime.UtcNow,
+                IsDefault = true 
+            };
+
+            _context.MailAccounts.Add(newAccount);
+        }
+
 
         public async Task<string> LogInAsync(string email, string password)
         {
@@ -83,6 +101,9 @@ namespace FalconBackend.Services
             };
 
             _context.AppUsers.Add(newUser);
+
+            await CreateTestMailAccountForUserAsync(newUser);
+
             await _context.SaveChangesAsync(); 
 
             await _analyticsService.CreateAnalyticsForUserAsync(email);

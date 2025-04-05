@@ -10,6 +10,9 @@ import eyeClosedIcon from "../../../assets/icons/black/eye-closed.svg";
 import logo from "../../../assets/images/falcon-white-full.svg";
 import errorSound from "../../../assets/sounds/error-message.mp3";
 
+import Loader from "../../../components/Loader/Loader";
+import { API_BASE_URL } from "../../../config/constants";
+
 // Animation Variants
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -31,6 +34,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // Validation Function
@@ -62,24 +66,58 @@ const Login = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    setIsLoading(true);
+    setError("");
+
     try {
-      const response = await fetch("/api/auth/login", {
+      const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      if (!response.ok) {
-        showError("Invalid email or password");
-        return;
+      // --- Check if login failed ---
+      if (!loginRes.ok) {
+        let backendError = `Login failed (${loginRes.status})`;
+        const errorBodyText = await loginRes.text();
+        try {
+          const errorData = JSON.parse(errorBodyText);
+          backendError =
+            errorData?.message ||
+            backendError + ": Invalid credentials or server error.";
+        } catch (parseError) {
+          backendError =
+            backendError +
+            (errorBodyText
+              ? `: ${errorBodyText}`
+              : ": Server returned an error.");
+          console.warn(
+            "Could not parse error response as JSON:",
+            errorBodyText
+          );
+        }
+        throw new Error(backendError); // Throw error to be caught below
       }
 
-      const data = await response.json();
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/loadingData");
+      const data = await loginRes.json();
+
+      if (data && data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("isAuthenticated", "true");
+        navigate("/inbox");
+      } else {
+        console.error("Login response OK but token missing:", data);
+        throw new Error(
+          "Login succeeded, but failed to retrieve session token."
+        );
+      }
     } catch (err) {
-      showError("Login failed. Try again later.");
+      console.error("Login Process Error:", err);
+      showError(
+        err.message || "Login failed. Check network or try again later."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,6 +127,7 @@ const Login = () => {
 
   return (
     <div className="welcome-screen-container login-container">
+      {isLoading && <Loader />}
       {/* Error Popup */}
       <AnimatePresence>
         {error && (
