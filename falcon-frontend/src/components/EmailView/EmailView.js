@@ -9,7 +9,14 @@ import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-st
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
 import { Tag } from "../../pages/Main/Inbox/Inbox";
 
-const EmailView = ({ email, onClose }) => {
+const EmailView = ({
+  email,
+  onClose,
+  onDelete,
+  onMarkUnread,
+  onReply,
+  onForward,
+}) => {
   const [isStarred, setIsStarred] = useState(email?.isStarred || false);
 
   useEffect(() => {
@@ -53,11 +60,9 @@ const EmailView = ({ email, onClose }) => {
           </div>
           {/* Email Body */}
           <div className="email-body">
-            <p>Dear readers,</p>
-            <p>This is an example of a compose email.</p>
-            <p>More words can be here.</p>
-            <p>Thanks,</p>
-            <p>Hila Tsivion</p>
+            {email.body.split("\n").map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
           </div>
 
           {/* Toolbar */}
@@ -68,18 +73,32 @@ const EmailView = ({ email, onClose }) => {
             </button>
 
             <div className="flex-row-gap-30">
-              <button className="email-toolbar-item">
+              <button
+                className="email-toolbar-item"
+                onClick={() => onMarkUnread(email)}
+              >
                 <img src={unreadIcon} alt="Mark as Unread" />
               </button>
-              <button className="email-toolbar-item">
+
+              <button
+                className="email-toolbar-item"
+                onClick={() => onReply(email)}
+              >
                 <img src={replyIcon} alt="Reply" />
               </button>
-              <button className="email-toolbar-item">
+
+              <button
+                className="email-toolbar-item"
+                onClick={() => onForward(email)}
+              >
                 <img src={forwardingIcon} alt="Forward" />
               </button>
             </div>
 
-            <button className="email-toolbar-item trash-icon">
+            <button
+              className="email-toolbar-item trash-icon"
+              onClick={() => onDelete(email)}
+            >
               <img src={trashIcon} alt="Delete" />
             </button>
           </div>

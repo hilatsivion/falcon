@@ -1,20 +1,25 @@
 import React, { useState, useRef } from "react";
-import "./Compose.css";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ReactComponent as SendIcon } from "../../../assets/icons/black/send-white.svg";
 import { ReactComponent as Paperclip } from "../../../assets/icons/black/paperclip.svg";
 import { ReactComponent as GenerateIcon } from "../../../assets/icons/blue/magicpen-icon.svg";
-import AiComposePanel from "./AiComposePanel";
 import SuccessPopup from "../../../components/Popup/oneSentence_link";
-import { useNavigate } from "react-router-dom";
+import AiComposePanel from "./AiComposePanel";
+import "./Compose.css";
 
 const Compose = () => {
   const [from, setFrom] = useState("hilatsivion@gmail.com");
-  const [subject, setSubject] = useState("");
-  const [to, setTo] = useState([]);
-  const [body, setBody] = useState("");
+  const [subject, setSubject] = useState(initialSubject);
+  const [to, setTo] = useState(initialTo ? [initialTo] : []);
+  const [body, setBody] = useState(initialBody);
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
+
+  const location = useLocation();
+  const initialTo = location.state?.to || "";
+  const initialSubject = location.state?.subject || "";
+  const initialBody = location.state?.body || "";
 
   const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);

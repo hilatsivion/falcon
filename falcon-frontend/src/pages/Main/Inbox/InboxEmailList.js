@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { EmailItem } from "../../../components/EmailItem/EmailItem";
 import EmailView from "../../../components/EmailView/EmailView";
 import "./Inbox.css";
@@ -9,6 +10,8 @@ const InboxEmailList = ({
   selectedEmail,
   setSelectedEmail,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="emails-container">
       {emails.map((email, index) => (
@@ -16,7 +19,15 @@ const InboxEmailList = ({
           key={index}
           onClick={(e) => {
             if (!e.target.closest(".email-star")) {
-              setSelectedEmail(email);
+              const updatedEmails = [...emails];
+              const selected = updatedEmails[index];
+
+              if (!selected.isRead) {
+                selected.isRead = true;
+              }
+
+              setEmails(updatedEmails);
+              setSelectedEmail(selected);
             }
           }}
         >
@@ -32,7 +43,37 @@ const InboxEmailList = ({
         </div>
       ))}
 
-      <EmailView email={selectedEmail} onClose={() => setSelectedEmail(null)} />
+      <EmailView
+        email={selectedEmail}
+        onClose={() => setSelectedEmail(null)}
+        onDelete={(emailToDelete) => {
+          setEmails((prev) => prev.filter((e) => e !== emailToDelete));
+          setSelectedEmail(null);
+        }}
+        onMarkUnread={(emailToUpdate) => {
+          const updated = emails.map((e) =>
+            e === emailToUpdate ? { ...e, isRead: false } : e
+          );
+          setEmails(updated);
+          setSelectedEmail(null);
+        }}
+        onReply={(emailToReply) => {
+          navigate("/compose", {
+            state: {
+              to: emailToReply.senderEmail,
+              subject: `Re: ${emailToReply.subject}`,
+            },
+          });
+        }}
+        onForward={(emailToForward) => {
+          navigate("/compose", {
+            state: {
+              subject: `Fwd: ${emailToForward.subject}`,
+              body: emailToForward.body,
+            },
+          });
+        }}
+      />
     </div>
   );
 };

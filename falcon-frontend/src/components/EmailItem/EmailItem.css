@@ -25,6 +25,12 @@
   font-weight: 400;
 }
 
+/* Ensure starred emails keep their special background even when read */
+.email-item.starred.read {
+  background-color: var(--favorite-opacity) !important;
+  opacity: 0.7; /* keep the slightly faded look if you want */
+}
+
 /* Sender Name + Avatar */
 .email-item .email-sender-container {
   display: flex;
