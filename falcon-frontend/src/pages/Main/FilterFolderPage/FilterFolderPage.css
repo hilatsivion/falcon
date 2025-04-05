@@ -56,7 +56,7 @@
 }
 
 .folder-count-row {
-  color: var(--primary);
+  color: var(--primary-blue);
   display: flex;
   align-items: center;
   width: fit-content;
