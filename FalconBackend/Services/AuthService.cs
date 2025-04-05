@@ -35,12 +35,12 @@ namespace FalconBackend.Services
 
             var newAccount = new MailAccount
             {
-                AppUserEmail = user.Email, 
+                AppUserEmail = user.Email, // Use email from the passed user object
                 EmailAddress = randomEmail,
                 Token = Guid.NewGuid().ToString(), // Placeholder token
                 Provider = MailAccount.MailProvider.Gmail, // Default test provider
                 LastMailSync = DateTime.UtcNow,
-                IsDefault = true 
+                IsDefault = true // Make this first account the default
             };
 
             _context.MailAccounts.Add(newAccount);
@@ -62,7 +62,7 @@ namespace FalconBackend.Services
             // Update session time tracking
             if (user.LastLogin.HasValue)
             {
-                await _analyticsService.UpdateTimeSpentTodayAsync(email);
+                await _analyticsService.UpdateTimeSpentAsync(email);
             }
 
             // Update LastLogin time
@@ -79,7 +79,7 @@ namespace FalconBackend.Services
                 throw new Exception("User not found");
 
             // Update time spent in the app before logging out
-            await _analyticsService.UpdateTimeSpentTodayAsync(email);
+            await _analyticsService.UpdateTimeSpentAsync(email);
 
             return true;
         }
@@ -103,6 +103,7 @@ namespace FalconBackend.Services
             _context.AppUsers.Add(newUser);
 
             await CreateTestMailAccountForUserAsync(newUser);
+
 
             await _context.SaveChangesAsync(); 
 

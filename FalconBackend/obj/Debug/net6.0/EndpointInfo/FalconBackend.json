@@ -561,20 +561,10 @@
         }
       }
     },
-    "/api/test/create-mailaccount/{userEmail}": {
+    "/api/test/create-mailaccount": {
       "post": {
         "tags": [
           "Test"
-        ],
-        "parameters": [
-          {
-            "name": "userEmail",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "responses": {
           "200": {
