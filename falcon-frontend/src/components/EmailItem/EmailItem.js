@@ -7,6 +7,7 @@ import "../../styles/global.css";
 
 const EmailItem = ({
   sender,
+  senderEmail,
   subject,
   preview,
   tags,

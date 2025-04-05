@@ -8,6 +8,7 @@ import backIcon from "../../assets/icons/black/arrow-left-20.svg";
 import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-star.svg";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
 import { Tag } from "../../pages/Main/Inbox/Inbox";
+import { useNavigate } from "react-router-dom";
 
 const EmailView = ({
   email,
@@ -17,6 +18,7 @@ const EmailView = ({
   onReply,
   onForward,
 }) => {
+  const navigate = useNavigate();
   const [isStarred, setIsStarred] = useState(email?.isStarred || false);
 
   useEffect(() => {

@@ -36,6 +36,7 @@ const Inbox = () => {
   const [emails, setEmails] = useState([
     {
       sender: "John Doe",
+      senderEmail: "sender@gmail.com",
       subject: "Meeting Reminder",
       preview: "Don't forget about our meeting tomorrow at 10 AM...",
       tags: [
@@ -56,6 +57,7 @@ const Inbox = () => {
     },
     {
       sender: "Jane Smith",
+      senderEmail: "sender@gmail.com",
       subject: "New Social Event!",
       preview: "Join us this weekend for a fun gathering...",
       tags: ["Social"],
@@ -67,6 +69,7 @@ const Inbox = () => {
     },
     {
       sender: "Banking Services",
+      senderEmail: "sender@gmail.com",
       subject: "Your Monthly Statement",
       preview: "Your latest bank statement is now available...",
       tags: ["Finance"],
@@ -78,6 +81,7 @@ const Inbox = () => {
     },
     {
       sender: "Hila Tsivion",
+      senderEmail: "hila@gmail.com",
       subject: "Meeting Reminder",
       preview: "Don't forget about our meeting tomorrow at 10 AM...",
       tags: ["Work", "Social", "School"],
@@ -89,6 +93,7 @@ const Inbox = () => {
     },
     {
       sender: "Alon Haefes",
+      senderEmail: "sender@gmail.com",
       subject: "Meeting Reminder",
       preview: "Don't forget about our meeting tomorrow at 10 AM...",
       tags: ["Work", "Social", "School"],

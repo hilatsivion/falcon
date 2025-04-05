@@ -8,18 +8,18 @@ import AiComposePanel from "./AiComposePanel";
 import "./Compose.css";
 
 const Compose = () => {
-  const [from, setFrom] = useState("hilatsivion@gmail.com");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialTo = location.state?.to || "";
+  const initialSubject = location.state?.subject || "";
+  const initialBody = location.state?.body || "";
+
+  const [from, setFrom] = useState("hilatsivion@gmail.com"); //לשמור את כתובת המייל בלוקל סטורג ואז לשים פה את הערך הזה כדיפולט
   const [subject, setSubject] = useState(initialSubject);
   const [to, setTo] = useState(initialTo ? [initialTo] : []);
   const [body, setBody] = useState(initialBody);
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const navigate = useNavigate();
-
-  const location = useLocation();
-  const initialTo = location.state?.to || "";
-  const initialSubject = location.state?.subject || "";
-  const initialBody = location.state?.body || "";
 
   const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);
