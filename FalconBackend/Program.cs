@@ -31,18 +31,19 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
-var myAllowSpecificOrigins = "_myAllowSpecificOrigins"; 
+var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: myAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.AllowAnyOrigin()
+                          policy.WithOrigins("http://localhost:3000", "https://hilatsivion.github.io/falcon/")
                                 .AllowAnyHeader()
                                 .AllowAnyMethod();
                       });
 });
+
 
 
 // Configure JWT authentication using JwtSettings from appsettings.json

@@ -32,6 +32,7 @@ const errorAnimation = {
 
 const SignUp = () => {
   const [username, setUsername] = useState("");
+  const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -43,9 +44,11 @@ const SignUp = () => {
   // Validation Function
   const validateForm = () => {
     const usernameRegex = /^[a-zA-Z0-9]{3,}$/; // At least 3 letters, no special characters
+    const fullnameRegex = /^[A-Za-z]+(?: [A-Za-z]+)+$/; // no numbers, not empty, at least 2 words
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Valid email format
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/; // At least 1 uppercase, 1 lowercase, and 1 number
 
+    // user name validation
     if (!usernameRegex.test(username)) {
       showError(
         "Username must be at least 3 letters in English and contain no special characters."
@@ -53,11 +56,19 @@ const SignUp = () => {
       return false;
     }
 
+    // full name validation
+    if (!fullnameRegex.test(fullname.trim())) {
+      showError("Full name must contain at least two alphabetic words.");
+      return false;
+    }
+
+    // email validation
     if (!emailRegex.test(email)) {
       showError("Please enter a valid email address.");
       return false;
     }
 
+    // password validation
     if (!passwordRegex.test(password)) {
       showError(
         "Password must contain at least one uppercase letter, one lowercase letter, and a number."
@@ -65,6 +76,7 @@ const SignUp = () => {
       return false;
     }
 
+    // password confirmation
     if (password !== confirmPassword) {
       showError("Passwords do not match.");
       return false;
@@ -96,7 +108,7 @@ const SignUp = () => {
       const signUpRes = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: username, username, email, password }),
+        body: JSON.stringify({ fullname, username, email, password }),
       });
 
       // --- Check if signup itself failed ---
@@ -203,6 +215,15 @@ const SignUp = () => {
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          variants={fadeIn}
+          initial="hidden"
+          animate="visible"
+        />
+        <motion.input
+          type="text"
+          placeholder="Full name"
+          value={fullname}
+          onChange={(e) => setFullname(e.target.value)}
           variants={fadeIn}
           initial="hidden"
           animate="visible"
