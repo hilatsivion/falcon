@@ -14,8 +14,8 @@ import { ReactComponent as SentIcon } from "../../../assets/icons/black/mail-sen
 import { ReactComponent as ReceivedIcon } from "../../../assets/icons/black/mail-received.svg";
 import { ReactComponent as SpamIcon } from "../../../assets/icons/black/spam.svg";
 import { ReactComponent as TrashIcon } from "../../../assets/icons/black/trash-black.svg";
-// import { ReactComponent as ReadIcon } from "../../../assets/icons/black/book-saved.svg"; // Needs to be added if uncommenting Read card
-// import { ReactComponent as StreakIcon } from "../../../assets/icons/black/medal-star.svg"; // Needs to be added if uncommenting Streak card
+import { ReactComponent as ReadEmailIcon } from "../../../assets/icons/black/glasses.svg";
+import { ReactComponent as StreakIcon } from "../../../assets/icons/black/streak.svg";
 
 // --- Helper function to calculate percentage change ---
 const calculatePercentageChange = (current, previous) => {
@@ -171,7 +171,16 @@ const Analytics = () => {
             analyticsData.emailsReceivedLastWeek
           ),
         },
-        // { id: "emailsReadWeekly", title: "Emails Read Weekly", value: analyticsData.readEmailsWeekly?.toString() ?? "0", icon: ReadIcon, ...calculatePercentageChange( analyticsData.readEmailsWeekly, analyticsData.readEmailsLastWeek ) }, // Still commented
+        {
+          id: "emailsReadWeekly",
+          title: "Emails Read Weekly",
+          value: analyticsData.readEmailsWeekly?.toString() ?? "0",
+          icon: ReadEmailIcon,
+          ...calculatePercentageChange(
+            analyticsData.readEmailsWeekly,
+            analyticsData.readEmailsLastWeek
+          ),
+        },
         {
           id: "spamEmailsWeekly",
           title: "Spam Emails Weekly",
@@ -200,7 +209,16 @@ const Analytics = () => {
             analyticsData.deletedEmailsLastWeek
           ),
         }, // Shows placeholder "0" / "N/A"
-        // { id: "currentStreak", title: "Current Daily Streak", value: `${analyticsData.currentStreak ?? 0} ${analyticsData.currentStreak === 1 ? "day" : "days"}`, icon: StreakIcon, change: `Longest: ${analyticsData.longestStreak ?? 0}`, isPositive: null }, // Still commented
+        {
+          id: "currentStreak",
+          title: "Current Daily Streak",
+          value: `${analyticsData.currentStreak ?? 0} ${
+            analyticsData.currentStreak === 1 ? "day" : "days"
+          }`,
+          icon: StreakIcon,
+          change: `Longest: ${analyticsData.longestStreak ?? 0}`,
+          isPositive: null,
+        },
       ]
     : [];
 
