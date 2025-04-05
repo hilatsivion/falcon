@@ -1,17 +1,54 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Inbox from "../pages/Main/Inbox/Inbox";
+import Analytics from "../pages/Main/Analytics/Analytics";
+import Compose from "../pages/Main/Compose/Compose";
+import MainLayout from "../layouts/MainLayout";
 import OnboardingRoutes from "./OnboardingRoutes";
-import MainRoutes from "./MainRoutes";
 
 const AppRoutes = () => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
 
   return (
     <Routes>
-      <Route
-        path="/*"
-        element={isAuthenticated ? <MainRoutes /> : <OnboardingRoutes />}
-      />
+      {/* Onboarding Routes */}
+      {!isAuthenticated && (
+        <>
+          <Route path="/*" element={<OnboardingRoutes />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </>
+      )}
+
+      {/* Main Routes */}
+      {isAuthenticated && (
+        <>
+          <Route
+            path="/inbox"
+            element={
+              <MainLayout>
+                <Inbox />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <MainLayout>
+                <Analytics />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/compose"
+            element={
+              <MainLayout>
+                <Compose />
+              </MainLayout>
+            }
+          />
+          <Route path="*" element={<Navigate to="/inbox" />} />
+        </>
+      )}
     </Routes>
   );
 };
