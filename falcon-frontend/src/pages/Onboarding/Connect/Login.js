@@ -13,6 +13,10 @@ import errorSound from "../../../assets/sounds/error-message.mp3";
 import Loader from "../../../components/Loader/Loader";
 import { API_BASE_URL } from "../../../config/constants";
 
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../../../styles/toastify-custom.css";
+
 // Animation Variants
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -53,12 +57,15 @@ const Login = () => {
 
   // Show Error for 3 seconds
   const showError = (message) => {
-    setError(message);
     const audio = new Audio(errorSound);
     audio.play();
-    setTimeout(() => {
-      setError("");
-    }, 3000);
+    toast.error(message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      pauseOnHover: true,
+      draggable: true,
+    });
   };
 
   // Handle Submit
@@ -128,6 +135,7 @@ const Login = () => {
   return (
     <div className="welcome-screen-container login-container">
       {isLoading && <Loader />}
+      <ToastContainer />
       {/* Error Popup */}
       <AnimatePresence>
         {error && (

@@ -1,0 +1,10 @@
+/* styles/toastify-custom.css */
+.Toastify__toast {
+  font-family: "Rubik", sans-serif;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+  padding: 20px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin: 10px 20px 0px 0;
+  width: 90%;
+}
