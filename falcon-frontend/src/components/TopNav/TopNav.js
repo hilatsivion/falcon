@@ -1,11 +1,17 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ReactComponent as HamburgerIcon } from "../../assets/icons/black/hamburger.svg";
 import { ReactComponent as SearchIcon } from "../../assets/icons/black/search.svg";
 import Sidebar from "../Sidebar/Sidebar";
+import { ReactComponent as ArrowRightIcon } from "../../assets/icons/black/arrow-right-nav.svg";
+
 import "./TopNav.css";
 
 const TopNav = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isSearchPage = location.pathname === "/search";
 
   return (
     <>
@@ -15,8 +21,17 @@ const TopNav = () => {
           <HamburgerIcon />
         </button>
 
-        <button className="icon-button">
-          <SearchIcon />
+        <button
+          className="icon-button"
+          onClick={() => {
+            if (isSearchPage) {
+              navigate(-1); // חזרה אחורה
+            } else {
+              navigate("/search"); // כניסה לעמוד החיפוש
+            }
+          }}
+        >
+          {isSearchPage ? <ArrowRightIcon /> : <SearchIcon />}
         </button>
       </div>
 
