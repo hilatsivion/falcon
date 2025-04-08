@@ -27,16 +27,9 @@ const fadeInEye = {
   visible: { opacity: 1, transition: { duration: 0.4, delay: 0.7 } },
 };
 
-const errorAnimation = {
-  hidden: { opacity: 0, y: -50 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  exit: { opacity: 0, transition: { duration: 0.5 } },
-};
-
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -74,7 +67,6 @@ const Login = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    setError("");
 
     try {
       const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -135,21 +127,6 @@ const Login = () => {
   return (
     <div className="welcome-screen-container login-container">
       {isLoading && <Loader />}
-      <ToastContainer />
-      {/* Error Popup */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            className="error-popup"
-            variants={errorAnimation}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-          >
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Logo */}
       <motion.img
@@ -232,6 +209,7 @@ const Login = () => {
       <button className="btn-white btn-login" onClick={handleSubmit}>
         Log in
       </button>
+      <ToastContainer />
     </div>
   );
 };

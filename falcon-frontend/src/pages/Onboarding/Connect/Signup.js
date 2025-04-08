@@ -14,6 +14,9 @@ import errorSound from "../../../assets/sounds/error-message.mp3";
 import { API_BASE_URL } from "../../../config/constants";
 import Loader from "../../../components/Loader/Loader";
 
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 // Animation Variants
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -36,7 +39,6 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -87,12 +89,15 @@ const SignUp = () => {
 
   // Show Error for 5 seconds
   const showError = (message) => {
-    setError(message);
     const audio = new Audio(errorSound);
     audio.play();
-    setTimeout(() => {
-      setError("");
-    }, 5000);
+    toast.error(message, {
+      position: "top-right",
+      autoClose: 4000,
+      hideProgressBar: false,
+      pauseOnHover: true,
+      draggable: true,
+    });
   };
 
   // Handle Submit
@@ -101,7 +106,6 @@ const SignUp = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    setError("");
 
     try {
       // --- Use API_BASE_URL and call the signup endpoint ---
@@ -113,22 +117,21 @@ const SignUp = () => {
 
       // --- Check if signup itself failed ---
       if (!signUpRes.ok) {
-        let backendError =
-          "Sign up failed. Email might already be registered or server error.";
+        let backendError = "Sign up failed. Please try again later.";
+
         try {
-          const errorData = await signUpRes.json();
-          if (errorData && errorData.message) {
-            backendError = errorData.message;
-          } else {
-            backendError = `Sign up failed (${
-              signUpRes.status
-            }): ${await signUpRes.text()}`;
+          const errorText = await signUpRes.text(); // Only read once!
+          try {
+            const errorData = JSON.parse(errorText);
+            backendError = errorData.message || backendError;
+          } catch {
+            // Not JSON, just raw text
+            backendError = `Signup failed: ${errorText}`;
           }
-        } catch (parseErr) {
-          backendError = `Sign up failed (${
-            signUpRes.status
-          }): ${await signUpRes.text()}`;
+        } catch (finalErr) {
+          console.error("Error parsing server response:", finalErr);
         }
+
         showError(backendError);
         return;
       }
@@ -163,20 +166,6 @@ const SignUp = () => {
   return (
     <div className="welcome-screen-container signup-container">
       {isLoading && <Loader />}
-      {/* Error Popup */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            className="error-popup"
-            variants={errorAnimation}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-          >
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Logo */}
       <motion.img
@@ -287,6 +276,7 @@ const SignUp = () => {
       <button className="btn-white btn-create" onClick={handleSubmit}>
         Create
       </button>
+      <ToastContainer />
     </div>
   );
 };

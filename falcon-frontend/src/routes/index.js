@@ -5,6 +5,7 @@ import Analytics from "../pages/Main/Analytics/Analytics";
 import Compose from "../pages/Main/Compose/Compose";
 import MainLayout from "../layouts/MainLayout";
 import OnboardingRoutes from "./OnboardingRoutes";
+import AdvancedSearch from "../components/AdvancedSearch/AdvancedSearch";
 
 const AppRoutes = () => {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -46,6 +47,15 @@ const AppRoutes = () => {
               </MainLayout>
             }
           />
+          <Route
+            path="/search"
+            element={
+              <MainLayout>
+                <AdvancedSearch />
+              </MainLayout>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/inbox" />} />
         </>
       )}

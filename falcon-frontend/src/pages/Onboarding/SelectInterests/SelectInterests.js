@@ -20,6 +20,9 @@ import personalIcon from "../../../assets/icons/blue/personal.svg";
 import travelIcon from "../../../assets/icons/blue/travel.svg";
 import healthIcon from "../../../assets/icons/blue/health.svg";
 
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 const interestOptions = [
   { name: "Work", icon: workIcon },
   { name: "School", icon: schoolIcon },
@@ -33,15 +36,8 @@ const interestOptions = [
   { name: "Health", icon: healthIcon },
 ];
 
-const errorAnimation = {
-  hidden: { opacity: 0, y: -50 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  exit: { opacity: 0, transition: { duration: 0.5 } },
-};
-
 const SelectInterests = () => {
   const [selectedTags, setSelectedTags] = useState([]);
-  const [error, setError] = useState("");
   const [animatedTags, setAnimatedTags] = useState([]);
 
   const navigate = useNavigate();
@@ -81,14 +77,18 @@ const SelectInterests = () => {
     }
   };
 
-  // Show Error for 5 seconds
+  // Show Error for 4 seconds
   const showError = (message) => {
-    setError(message);
     const audio = new Audio(errorSound);
     audio.play();
-    setTimeout(() => {
-      setError("");
-    }, 5000);
+    toast.error(message, {
+      position: "top-right",
+      autoClose: 4000,
+      hideProgressBar: false,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored", // או dark / light לפי הסגנון הכללי
+    });
   };
 
   // Handle Done Button Click
@@ -105,21 +105,6 @@ const SelectInterests = () => {
 
   return (
     <div className="welcome-screen-container interests-container">
-      {/* Error Popup */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            className="error-popup"
-            variants={errorAnimation}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-          >
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <motion.img
         className="logo-full-white-small"
         src={logo}
@@ -158,6 +143,7 @@ const SelectInterests = () => {
       <button className="btn-white btn-done" onClick={handleDone}>
         Done
       </button>
+      <ToastContainer />
     </div>
   );
 };
