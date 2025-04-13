@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../../config/constants";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { toast } from "react-toastify";
 
 import { ReactComponent as XIcon } from "../../assets/icons/black/x.svg";
 import { ReactComponent as FalconLogo } from "../../assets/images/Falcon-sidebar.svg";
