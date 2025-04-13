@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/hilatsivion/Falcon-repository/FalconBackend/FalconBackend.csproj": {}
+    "/Users/hilatsivion/falcon-repo/FalconBackend/FalconBackend.csproj": {}
   },
   "projects": {
-    "/Users/hilatsivion/Falcon-repository/FalconBackend/FalconBackend.csproj": {
+    "/Users/hilatsivion/falcon-repo/FalconBackend/FalconBackend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/hilatsivion/Falcon-repository/FalconBackend/FalconBackend.csproj",
+        "projectUniqueName": "/Users/hilatsivion/falcon-repo/FalconBackend/FalconBackend.csproj",
         "projectName": "FalconBackend",
-        "projectPath": "/Users/hilatsivion/Falcon-repository/FalconBackend/FalconBackend.csproj",
+        "projectPath": "/Users/hilatsivion/falcon-repo/FalconBackend/FalconBackend.csproj",
         "packagesPath": "/Users/hilatsivion/.nuget/packages/",
-        "outputPath": "/Users/hilatsivion/Falcon-repository/FalconBackend/obj/",
+        "outputPath": "/Users/hilatsivion/falcon-repo/FalconBackend/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/hilatsivion/.nuget/NuGet/NuGet.Config"

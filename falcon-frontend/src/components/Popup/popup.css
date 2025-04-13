@@ -1,14 +1,27 @@
-/* Popup box */
+/* Popup overlay */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Generic popup box */
 .popup-box {
   background-color: white;
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 50px 20px 34px 20px;
   width: 90%;
+  max-width: 360px;
   text-align: center;
   position: relative;
-  gap: 16px;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* Close button */
@@ -20,12 +33,52 @@
   border: none;
   cursor: pointer;
   padding: 4px;
+  font-size: 20px;
 }
 
-/* Link */
+/* Message */
+.popup-message {
+  font-size: 16px;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+/* Link inside popup */
 .popup-link {
   font-size: 14px;
   color: var(--faded-grey);
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Button group */
+.popup-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 10px;
+}
+
+/* Cancel button */
+.cancel-btn {
+  background: var(--white);
+  border: 2px solid var(--icons-grey);
+  color: var(--icons-grey);
+  font-size: 16px;
+  padding: 8px 26px;
+  border-radius: 8px;
+  font-weight: 400;
+  width: 100%;
+}
+
+/* Confirm button (red) */
+.confirm-btn {
+  font-size: 16px;
+  width: 100%;
+  background: var(--notifications);
+  color: var(--white);
+  border: none;
+  padding: 8px 26px;
+  border-radius: 8px;
+  font-weight: 400;
 }
