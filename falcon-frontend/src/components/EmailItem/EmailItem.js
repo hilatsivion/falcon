@@ -2,11 +2,11 @@ import React from "react";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
 import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-star.svg";
 import { Tag } from "../../pages/Main/Inbox/Inbox";
-import { formatEmailTime } from "../../utils/formatters";
 import "./EmailItem.css";
 import "../../styles/global.css";
+import { formatEmailTime } from "../../utils/formatters";
 
-const EmailItem = ({
+export const EmailItem = ({
   mailId,
   sender,
   subject,
@@ -101,5 +101,3 @@ const EmailItem = ({
     </div>
   );
 };
-
-export { EmailItem };

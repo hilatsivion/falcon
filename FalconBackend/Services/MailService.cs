@@ -334,8 +334,6 @@ namespace FalconBackend.Services
 
                     if (isRead)
                     {
-                        // Update analytics once per account
-                        // Group updates by account to prevent multiple updates
                         var email = userEmail;
                         await _analyticsService.UpdateReadEmailsWeeklyAsync(email);
                     }
@@ -374,24 +372,33 @@ namespace FalconBackend.Services
 
         public async Task SendMailAsync(SendMailRequest request, List<IFormFile> attachments)
         {
-
+            // --- Recipient Validation (Keep from previous implementation) ---
             if (request.Recipients == null || !request.Recipients.Any())
             {
                 throw new ArgumentException("Recipient list cannot be empty.");
             }
-
             foreach (var recipientEmail in request.Recipients)
             {
-                var recipientAccountExists = await _context.MailAccounts 
-                                                   .AnyAsync(ma => ma.EmailAddress == recipientEmail); 
-
+                // Check if the recipient email exists in any MailAccount record
+                var recipientAccountExists = await _context.MailAccounts
+                                                   .AnyAsync(ma => ma.EmailAddress == recipientEmail);
                 if (!recipientAccountExists)
                 {
                     throw new KeyNotFoundException($"Recipient email not registered in any mail account: {recipientEmail}");
                 }
             }
 
-            var mail = new MailSent
+            var senderAccount = await _context.MailAccounts
+                                         .AsNoTracking()
+                                         .FirstOrDefaultAsync(ma => ma.MailAccountId == request.MailAccountId);
+
+            if (senderAccount == null)
+            {
+                throw new InvalidOperationException("Sender mail account not found.");
+            }
+            string senderDisplayAddress = senderAccount.EmailAddress;
+
+            var mailSent = new MailSent
             {
                 MailAccountId = request.MailAccountId,
                 Subject = request.Subject,
@@ -404,28 +411,65 @@ namespace FalconBackend.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                _context.MailSent.Add(mail);
+                _context.MailSent.Add(mailSent);
                 await _context.SaveChangesAsync();
 
-                await SaveAttachments(attachments, mail.MailId, mail.MailAccountId, "Sent", mail.Attachments);
+                await SaveAttachments(attachments, mailSent.MailId, mailSent.MailAccountId, "Sent", mailSent.Attachments);
+
+                List<MailReceived> receivedCopies = new List<MailReceived>();
+                foreach (var recipientEmail in request.Recipients)
+                {
+                    var recipientMailAccount = await _context.MailAccounts
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(ma => ma.EmailAddress == recipientEmail);
+
+                    if (recipientMailAccount != null)
+                    {
+                        var mailReceived = new MailReceived
+                        {
+                            MailAccountId = recipientMailAccount.MailAccountId,
+                            Sender = senderDisplayAddress,
+                            Subject = request.Subject,
+                            Body = request.Body,
+                            TimeReceived = mailSent.TimeSent,
+                            IsRead = false,
+                            IsFavorite = false,
+                            Attachments = new List<Attachments>(),
+                            Recipients = new List<Recipient> { new Recipient { Email = recipientEmail } },
+                            MailTags = new List<MailTag>()
+                        };
+                        receivedCopies.Add(mailReceived);
+
+                        // --- Update Recipient's Analytics --
+                        if (_analyticsService != null)
+                        {
+                            await _analyticsService.UpdateEmailsReceivedWeeklyAsync(recipientMailAccount.AppUserEmail);
+                        }
+                    }
+                }
+
+                // 3. Add all generated MailReceived records 
+                if (receivedCopies.Any())
+                {
+                    _context.MailReceived.AddRange(receivedCopies);
+                }
+
+                await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 
-                var userEmail = await _context.MailAccounts
-                    .Where(ma => ma.MailAccountId == request.MailAccountId)
-                    .Select(ma => ma.AppUserEmail)
-                    .FirstOrDefaultAsync();
-
-                if (!string.IsNullOrEmpty(userEmail))
-                    await _analyticsService.UpdateEmailsSentWeeklyAsync(userEmail);
+                var senderUserEmail = senderAccount.AppUserEmail;
+                if (!string.IsNullOrEmpty(senderUserEmail) && _analyticsService != null)
+                {
+                    await _analyticsService.UpdateEmailsSentWeeklyAsync(senderUserEmail);
+                }
             }
             catch
             {
                 await transaction.RollbackAsync();
-                throw;
+                throw; 
             }
         }
-
         public async Task<MailReceivedDto?> GetReceivedMailByIdAsync(string userEmail, int mailId)
         {
             var mail = await _context.MailReceived

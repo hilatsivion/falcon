@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import "./EmailView.css";
 import forwardingIcon from "../../assets/icons/black/forward-icon.svg";
 import replyIcon from "../../assets/icons/black/reply-icon.svg";
@@ -7,15 +8,16 @@ import backIcon from "../../assets/icons/black/arrow-left-20.svg";
 import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-star.svg";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
 import { Tag } from "../../pages/Main/Inbox/Inbox";
+import { useNavigate } from "react-router-dom";
 
 const EmailView = ({
   email,
   onClose,
   onDelete,
   onMarkUnread,
+  onToggleFavorite,
   onReply,
   onForward,
-  onToggleFavorite,
 }) => {
   if (!email) {
     return null;
@@ -25,8 +27,6 @@ const EmailView = ({
     e.stopPropagation();
     if (onToggleFavorite) {
       onToggleFavorite();
-    } else {
-      console.warn("EmailView: onToggleFavorite handler is missing");
     }
   };
 
@@ -50,7 +50,8 @@ const EmailView = ({
 
   const formatRecipients = (recipients) => {
     if (!Array.isArray(recipients)) return "";
-    return recipients.map((r) => r.email || r).join(", ");
+    // Assuming the main recipient is the first one for display simplicity here
+    return recipients.map((r) => r.email || r)[0] || "";
   };
 
   const formattedTime = email?.timeReceived
@@ -72,28 +73,33 @@ const EmailView = ({
         {email && (
           <>
             <div className="email-detail">
-              <div className="email-detail-header">
-                <div className="email-sender-container">
-                  <div
-                    className="email-avatar"
-                    style={{ backgroundColor: avatarColorCalculated }}
-                  >
-                    {senderInitial}
+              <div className="email-view-top-section">
+                <div className="email-view-sender-recipient">
+                  <div className="email-view-time-action">
+                    <span className="email-time">{formattedTime}</span>
                   </div>
-                  <div className="sender-recipient-details">
+                  <div className="email-sender-container">
+                    <div
+                      className="email-avatar"
+                      style={{ backgroundColor: avatarColorCalculated }}
+                    >
+                      {senderInitial}
+                    </div>
                     <span className="email-sender">{email.sender}</span>
+                  </div>
+                  <div className="email-recipient-line">
                     <span className="email-recipients">
                       To: {formatRecipients(email.recipients)}
                     </span>
                   </div>
                 </div>
-                <span className="email-time">{formattedTime}</span>
               </div>
 
-              <div className="email-header-view">
+              <div className="email-subject-line">
                 <h3 className="email-subject">
                   {email.subject || "(No Subject)"}
                 </h3>
+
                 <div className="email-star" onClick={handleStarClick}>
                   {email.isFavorite ? <StarIconFull /> : <StarIconEmpty />}
                 </div>
@@ -112,9 +118,7 @@ const EmailView = ({
             </div>
 
             <div className="email-body">
-              {(email.body || "").split("\n").map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
+              <div dangerouslySetInnerHTML={{ __html: email.body || "" }} />
             </div>
 
             {hasAttachments && (
