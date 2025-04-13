@@ -146,6 +146,14 @@
         public List<string> Recipients { get; set; } = new();
     }
 
+    public class UserMailAccountDto
+    {
+        public string MailAccountId { get; set; }
+        public string EmailAddress { get; set; } 
+        public bool IsDefault { get; set; }
+    }
+
+
 
 
 

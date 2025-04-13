@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion"; // Removed AnimatePresence if not used
 import "./interests.css";
 import "../../../styles/global.css";
 
+// Import necessary hooks and constants
+import { useAuth } from "../../../context/AuthContext"; // <<< Import useAuth
+import { API_BASE_URL } from "../../../config/constants"; // <<< Import API Base URL
+import Loader from "../../../components/Loader/Loader"; // <<< Import Loader if needed
+
+// ... (keep existing imports for icons, sounds, toast) ...
 import selectSound from "../../../assets/sounds/select-tag.mp3";
 import errorSound from "../../../assets/sounds/error-message.mp3";
 import logo from "../../../assets/images/falcon-white-full.svg";
-
-// Import icons from assets
 import workIcon from "../../../assets/icons/blue/work.svg";
 import schoolIcon from "../../../assets/icons/blue/school.svg";
 import socialIcon from "../../../assets/icons/blue/social.svg";
@@ -19,10 +23,10 @@ import familyIcon from "../../../assets/icons/blue/family.svg";
 import personalIcon from "../../../assets/icons/blue/personal.svg";
 import travelIcon from "../../../assets/icons/blue/travel.svg";
 import healthIcon from "../../../assets/icons/blue/health.svg";
-
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Keep interestOptions array as is
 const interestOptions = [
   { name: "Work", icon: workIcon },
   { name: "School", icon: schoolIcon },
@@ -39,72 +43,101 @@ const interestOptions = [
 const SelectInterests = () => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [animatedTags, setAnimatedTags] = useState([]);
-
+  const [isLoading, setIsLoading] = useState(false); // <<< Add loading state
+  const { authToken } = useAuth(); // <<< Get auth token from context
   const navigate = useNavigate();
 
+  // Keep useEffect for animation as is
   useEffect(() => {
     setTimeout(() => {
-      setAnimatedTags(interestOptions.map((item) => item.name)); // Apply class to all tags
-    }, 2000);
+      setAnimatedTags(interestOptions.map((item) => item.name));
+    }, 100); // Shortened delay for quicker visual feedback maybe
   }, []);
 
+  // Keep toggleTag, selectAll, showError functions as is
   let isPlaying = false;
-  // Toggle a single tag selection
   const toggleTag = (tag) => {
     setSelectedTags((prev) => {
       const isSelected = prev.includes(tag);
-
       if (!isSelected && !isPlaying) {
-        isPlaying = true; // Set flag to prevent multiple triggers
+        isPlaying = true;
         const audio = new Audio(selectSound);
-        audio.play();
-
+        audio.play().catch((e) => console.error("Audio play failed:", e)); // Add catch for safety
         setTimeout(() => {
-          isPlaying = false; // Reset after sound finishes
-        }, 500); // Adjust timeout if needed
+          isPlaying = false;
+        }, 500);
       }
-
       return isSelected ? prev.filter((t) => t !== tag) : [...prev, tag];
     });
   };
 
-  // Select All Tags
   const selectAll = () => {
     if (selectedTags.length === interestOptions.length) {
-      setSelectedTags([]); // Deselect all if all are selected
+      setSelectedTags([]);
     } else {
-      setSelectedTags(interestOptions.map((item) => item.name)); // Select all
+      setSelectedTags(interestOptions.map((item) => item.name));
     }
   };
 
-  // Show Error for 4 seconds
   const showError = (message) => {
     const audio = new Audio(errorSound);
-    audio.play();
+    audio.play().catch((e) => console.error("Audio play failed:", e)); // Add catch for safety
     toast.error(message, {
-      position: "top-right",
-      autoClose: 4000,
-      hideProgressBar: false,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "colored", // או dark / light לפי הסגנון הכללי
+      /* ... toast options ... */
     });
   };
 
-  // Handle Done Button Click
-  const handleDone = () => {
+  // --- Modify handleDone ---
+  const handleDone = async () => {
+    // Make async
     if (selectedTags.length === 0) {
-      console.log(selectedTags);
       showError("Please select at least one interest.");
       return;
     }
-    console.log("Selected Interests:", selectedTags);
-    // Here you could send `selectedTags` to an API or store it
-    navigate("/loadingData"); // Replace with the actual next page
+
+    if (!authToken) {
+      // Check if token exists
+      showError("Authentication error. Please log in again.");
+      navigate("/login");
+      return;
+    }
+
+    setIsLoading(true); // Start loading
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/user/save-tags`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ Tags: selectedTags }),
+      });
+
+      if (!response.ok) {
+        let errorMsg = "Failed to save interests.";
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (e) {}
+        throw new Error(errorMsg);
+      }
+
+      // Success!
+      console.log("Selected Interests saved:", selectedTags);
+      navigate("/loadingData");
+    } catch (err) {
+      console.error("Save Interests Error:", err);
+      showError(err.message || "An error occurred while saving interests.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  // --- Keep JSX Return as is, potentially add Loader ---
   return (
     <div className="welcome-screen-container interests-container">
+      {isLoading && <Loader />}
       <motion.img
         className="logo-full-white-small"
         src={logo}
@@ -126,7 +159,7 @@ const SelectInterests = () => {
                   : "animated"
               } ${selectedTags.includes(item.name) ? "selected" : ""}`}
               style={{ animationDelay: `${Math.random() * 0.9}s` }}
-              onPointerDown={(event) => toggleTag(item.name, event)}
+              onClick={(event) => toggleTag(item.name, event)} // Changed from onPointerDown if click is better
             >
               <img src={item.icon} alt={item.name} />
               <span>{item.name}</span>
@@ -140,10 +173,14 @@ const SelectInterests = () => {
             : "Select All"}
         </motion.button>
       </div>
-      <button className="btn-white btn-done" onClick={handleDone}>
-        Done
+      <button
+        className="btn-white btn-done"
+        onClick={handleDone}
+        disabled={isLoading}
+      >
+        {" "}
+        {isLoading ? "Saving..." : "Done"}
       </button>
-      <ToastContainer />
     </div>
   );
 };

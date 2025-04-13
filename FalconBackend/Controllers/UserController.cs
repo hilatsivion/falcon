@@ -5,6 +5,7 @@ using FalconBackend.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace FalconBackend.Controllers
 {
@@ -25,7 +26,8 @@ namespace FalconBackend.Controllers
         {
             try
             {
-                var userEmail = User.Identity.Name;
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+
                 if (string.IsNullOrEmpty(userEmail))
                     return Unauthorized("Invalid user token");
 
@@ -48,7 +50,7 @@ namespace FalconBackend.Controllers
                 if (User.Identity == null || string.IsNullOrEmpty(User.Identity.Name))
                     return Unauthorized("Invalid user token");
 
-                var userEmail = User.Identity.Name;
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
 
                 if (string.IsNullOrWhiteSpace(request.TagName))
                     return BadRequest("Tag name cannot be empty.");
@@ -74,7 +76,8 @@ namespace FalconBackend.Controllers
         {
             try
             {
-                var userEmail = User.Identity.Name;
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+
                 if (string.IsNullOrEmpty(userEmail))
                     return Unauthorized("Invalid user token");
 
@@ -84,6 +87,57 @@ namespace FalconBackend.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Failed to retrieve tags. Error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("mailaccounts")] 
+        public async Task<IActionResult> GetUserMailAccounts()
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                var mailAccounts = await _userService.GetUserMailAccountsAsync(userEmail);
+                return Ok(mailAccounts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Failed to retrieve user mail accounts.");
+            }
+        }
+
+
+        //remove later
+
+        [HttpPost("initialize-account")]
+        [Authorize]
+        public async Task<IActionResult> InitializeAccountData()
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email); 
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                Console.WriteLine($"--- Endpoint /initialize-account called for user: {userEmail} ---");
+
+                await _userService.InitializeDummyUserDataAsync(userEmail);
+
+                Console.WriteLine($"--- Endpoint /initialize-account finished for user: {userEmail} ---");
+                return Ok(new { message = "Account initialization process completed." }); 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Error in /initialize-account for user {User.FindFirstValue(ClaimTypes.Email)}: {ex.Message} ---");
+                // Log the exception ex
+                return StatusCode(500, $"Failed to initialize account data. Error: {ex.Message}");
             }
         }
     }

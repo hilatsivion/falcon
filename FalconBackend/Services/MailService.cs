@@ -374,6 +374,23 @@ namespace FalconBackend.Services
 
         public async Task SendMailAsync(SendMailRequest request, List<IFormFile> attachments)
         {
+
+            if (request.Recipients == null || !request.Recipients.Any())
+            {
+                throw new ArgumentException("Recipient list cannot be empty.");
+            }
+
+            foreach (var recipientEmail in request.Recipients)
+            {
+                var recipientAccountExists = await _context.MailAccounts 
+                                                   .AnyAsync(ma => ma.EmailAddress == recipientEmail); 
+
+                if (!recipientAccountExists)
+                {
+                    throw new KeyNotFoundException($"Recipient email not registered in any mail account: {recipientEmail}");
+                }
+            }
+
             var mail = new MailSent
             {
                 MailAccountId = request.MailAccountId,
@@ -504,6 +521,8 @@ namespace FalconBackend.Services
             }
             return snippet;
         }
+
+
     }
 
 }

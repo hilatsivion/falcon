@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { ReactComponent as ArrowDownIcon } from "../../../assets/icons/black/arrow-down.svg";
 import "./Analytics.css";
 
-// --- Import Components & Constants ---
+// --- Import Components, Constants & Context ---
 import InsightCard from "../../../components/InsightCard/InsightCard";
 import Loader from "../../../components/Loader/Loader";
 import { API_BASE_URL } from "../../../config/constants";
+import { useAuth } from "../../../context/AuthContext"; // Use Auth context
 
-// --- Import AVAILABLE Icons ---
+// --- Import Icons ---
 import { ReactComponent as ClockIcon } from "../../../assets/icons/black/clock-icon.svg";
 import { ReactComponent as SentIcon } from "../../../assets/icons/black/mail-sent.svg";
 import { ReactComponent as ReceivedIcon } from "../../../assets/icons/black/mail-received.svg";
@@ -17,102 +17,112 @@ import { ReactComponent as TrashIcon } from "../../../assets/icons/black/trash-b
 import { ReactComponent as ReadEmailIcon } from "../../../assets/icons/black/glasses.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/icons/black/streak.svg";
 
-// --- Helper function to calculate percentage change ---
-const calculatePercentageChange = (current, previous) => {
-  if (previous === null || previous === undefined)
-    return { change: "N/A", isPositive: null };
-  if (previous === 0) {
-    return {
-      change: current > 0 ? "+100%" : "0%",
-      isPositive: current > 0 ? true : null,
-    };
-  }
-  const changeValue = ((current - previous) / previous) * 100;
-  const isPositive = changeValue > 0;
-  const changeString = `${changeValue >= 0 ? "+" : ""}${changeValue.toFixed(
-    1
-  )}%`;
-  return {
-    change: changeString,
-    isPositive: changeValue === 0 ? null : isPositive,
-  };
-};
-
-// --- Helper function to format minutes into hours/minutes string ---
+// --- Helper function to format minutes ---
 const formatMinutes = (totalMinutes) => {
-  if (totalMinutes === null || totalMinutes === undefined || totalMinutes < 0)
+  if (
+    totalMinutes === null ||
+    totalMinutes === undefined ||
+    isNaN(totalMinutes) ||
+    totalMinutes === 0
+  )
     return "0m";
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = Math.floor(totalMinutes % 60);
-  let result = "";
+  const isNegative = totalMinutes < 0;
+  const absMinutes = Math.abs(totalMinutes);
+  const hours = Math.floor(absMinutes / 60);
+  const minutes = Math.floor(absMinutes % 60);
+  let result = isNegative ? "-" : "";
   if (hours > 0) {
     result += `${hours}h `;
   }
-  result += `${minutes}m`;
-  return result.trim() || "0m";
+  if (hours === 0 || minutes > 0) {
+    result += `${minutes}m`;
+  }
+  if (result === "-" || result === "") return "0m";
+  return result.trim();
+};
+
+// --- Helper function for Absolute Change ---
+const calculateAbsoluteChange = (current, previous) => {
+  if (
+    previous === null ||
+    previous === undefined ||
+    current === null ||
+    current === undefined ||
+    isNaN(current) ||
+    isNaN(previous)
+  ) {
+    return { difference: null, isPositive: null }; // Cannot calculate
+  }
+  // Round difference for whole numbers like emails, keep float for time
+  const difference =
+    typeof current === "number" &&
+    typeof previous === "number" &&
+    (Number.isInteger(current) || Number.isInteger(previous))
+      ? Math.round(current - previous)
+      : current - previous;
+
+  let isPositive = null;
+  if (difference > 0) isPositive = true;
+  else if (difference < 0) isPositive = false;
+
+  return { difference, isPositive };
 };
 
 const Analytics = () => {
-  // Edit mode state (functionality needs review)
+  // --- State ---
   const [isEditMode, setIsEditMode] = useState(false);
-
-  // Accordion expansion state
   const [isActivityExpanded, setIsActivityExpanded] = useState(true);
   const [isGraphExpanded, setIsGraphExpanded] = useState(true);
-
-  // State for loading, fetched data, and errors
   const [isLoading, setIsLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const { authToken, isAuthenticated, logout } = useAuth(); // Get auth state
 
-  // --- State for user's visibility preferences, loaded from localStorage ---
+  // Load hidden IDs from localStorage
   const [hiddenInsightIds, setHiddenInsightIds] = useState(() => {
     const savedHiddenIds = localStorage.getItem("hiddenAnalyticsIds");
     try {
       return savedHiddenIds ? new Set(JSON.parse(savedHiddenIds)) : new Set();
     } catch (e) {
       console.error("Failed to parse hiddenAnalyticsIds from localStorage", e);
-      return new Set(); // Fallback to empty set on parse error
+      return new Set();
     }
   });
 
-  // Fetch data on component mount
+  // --- Fetch Data Effect ---
   useEffect(() => {
     const fetchAnalytics = async () => {
-      setIsLoading(true);
-      setError(null);
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setError("Authentication token not found. Please log in.");
+      if (!isAuthenticated || !authToken) {
+        setError("Authentication required to view analytics.");
         setIsLoading(false);
+        setAnalyticsData(null);
         return;
       }
 
+      setIsLoading(true);
+      setError(null);
       try {
         const response = await fetch(`${API_BASE_URL}/api/analytics`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authToken}`, // Use token from context
           },
         });
 
         if (!response.ok) {
           if (response.status === 401) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("isAuthenticated");
             setError("Session expired or invalid. Please log in again.");
-            navigate("/login");
+            logout(); // Use logout from context
             return;
           }
-          const errorText = await response.text();
-          throw new Error(
-            `Failed to fetch analytics (${response.status}): ${errorText}`
-          );
+          let errorText = `Failed to fetch analytics (${response.status})`;
+          try {
+            const errData = await response.json();
+            errorText = errData.message || errorText;
+          } catch (e) {}
+          throw new Error(errorText);
         }
-
         const data = await response.json();
         setAnalyticsData(data);
       } catch (err) {
@@ -120,95 +130,159 @@ const Analytics = () => {
         setError(
           err.message || "An error occurred while fetching analytics data."
         );
+        setAnalyticsData(null);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchAnalytics();
-  }, [navigate]);
+  }, [authToken, isAuthenticated, logout]); // Dependency array includes context values
 
-  // Prepare FULL insight data array based on fetched analyticsData
+  // --- Prepare Insight Data ---
   const allAvailableInsights = analyticsData
     ? [
-        {
-          id: "timeToday",
-          title: "Time Spent Today",
-          value: formatMinutes(analyticsData.timeSpentToday),
-          icon: ClockIcon,
-          ...calculatePercentageChange(
+        // Time Spent Today
+        (() => {
+          const { difference, isPositive } = calculateAbsoluteChange(
             analyticsData.timeSpentToday,
             analyticsData.timeSpentYesterday
-          ),
-        },
-        {
-          id: "timeWeekly",
-          title: "Time Spent This Week",
-          value: formatMinutes(analyticsData.timeSpentThisWeek),
-          icon: ClockIcon,
-          ...calculatePercentageChange(
+          );
+          let changeString = "N/A";
+          if (difference !== null) {
+            const sign = difference > 0 ? "+" : "";
+            changeString = `${sign}${formatMinutes(difference)}`;
+          }
+          return {
+            id: "timeToday",
+            title: "Time Spent Today",
+            value: formatMinutes(analyticsData.timeSpentToday),
+            icon: ClockIcon,
+            change: changeString,
+            isPositive: isPositive,
+          };
+        })(),
+        // Time Spent This Week
+        (() => {
+          const { difference, isPositive } = calculateAbsoluteChange(
             analyticsData.timeSpentThisWeek,
             analyticsData.timeSpentLastWeek
-          ),
-        },
-        {
-          id: "emailsSentWeekly",
-          title: "Emails Sent Weekly",
-          value: analyticsData.emailsSentWeekly?.toString() ?? "0",
-          icon: SentIcon,
-          ...calculatePercentageChange(
+          );
+          let changeString = "N/A";
+          if (difference !== null) {
+            const sign = difference > 0 ? "+" : "";
+            changeString = `${sign}${formatMinutes(difference)}`;
+          }
+          return {
+            id: "timeWeekly",
+            title: "Time Spent This Week",
+            value: formatMinutes(analyticsData.timeSpentThisWeek),
+            icon: ClockIcon,
+            change: changeString,
+            isPositive: isPositive,
+          };
+        })(),
+        // Emails Sent Weekly
+        (() => {
+          const { difference, isPositive } = calculateAbsoluteChange(
             analyticsData.emailsSentWeekly,
             analyticsData.emailsSentLastWeek
-          ),
-        },
-        {
-          id: "emailsReceivedWeekly",
-          title: "Emails Received Weekly",
-          value: analyticsData.emailsReceivedWeekly?.toString() ?? "0",
-          icon: ReceivedIcon,
-          ...calculatePercentageChange(
+          );
+          let changeString = "N/A";
+          if (difference !== null) {
+            const sign = difference > 0 ? "+" : "";
+            changeString = `${sign}${difference}`;
+          }
+          return {
+            id: "emailsSentWeekly",
+            title: "Emails Sent Weekly",
+            value: analyticsData.emailsSentWeekly?.toString() ?? "0",
+            icon: SentIcon,
+            change: changeString,
+            isPositive: isPositive,
+          };
+        })(),
+        // Emails Received Weekly
+        (() => {
+          const { difference, isPositive } = calculateAbsoluteChange(
             analyticsData.emailsReceivedWeekly,
             analyticsData.emailsReceivedLastWeek
-          ),
-        },
-        {
-          id: "emailsReadWeekly",
-          title: "Emails Read Weekly",
-          value: analyticsData.readEmailsWeekly?.toString() ?? "0",
-          icon: ReadEmailIcon,
-          ...calculatePercentageChange(
+          );
+          let changeString = "N/A";
+          if (difference !== null) {
+            const sign = difference > 0 ? "+" : "";
+            changeString = `${sign}${difference}`;
+          }
+          return {
+            id: "emailsReceivedWeekly",
+            title: "Emails Received Weekly",
+            value: analyticsData.emailsReceivedWeekly?.toString() ?? "0",
+            icon: ReceivedIcon,
+            change: changeString,
+            isPositive: isPositive,
+          };
+        })(),
+        // Emails Read Weekly
+        (() => {
+          const { difference, isPositive } = calculateAbsoluteChange(
             analyticsData.readEmailsWeekly,
             analyticsData.readEmailsLastWeek
-          ),
-        },
-        {
-          id: "spamEmailsWeekly",
-          title: "Spam Emails Weekly",
-          value: analyticsData.spamEmailsWeekly?.toString() ?? "0",
-          icon: SpamIcon,
-          ...calculatePercentageChange(
+          );
+          let changeString = "N/A";
+          if (difference !== null) {
+            const sign = difference > 0 ? "+" : "";
+            changeString = `${sign}${difference}`;
+          }
+          return {
+            id: "emailsReadWeekly",
+            title: "Emails Read Weekly",
+            value: analyticsData.readEmailsWeekly?.toString() ?? "0",
+            icon: ReadEmailIcon,
+            change: changeString,
+            isPositive: isPositive,
+          };
+        })(),
+        // Spam Emails Weekly
+        (() => {
+          const { difference, isPositive } = calculateAbsoluteChange(
             analyticsData.spamEmailsWeekly,
             analyticsData.spamEmailsLastWeek
-          ),
-          isPositive:
-            calculatePercentageChange(
-              analyticsData.spamEmailsWeekly,
-              analyticsData.spamEmailsLastWeek
-            ).change !== "N/A"
-              ? analyticsData.spamEmailsWeekly <
-                analyticsData.spamEmailsLastWeek
-              : null,
-        },
-        {
-          id: "deletedEmailsWeekly",
-          title: "Deleted Emails Weekly",
-          value: analyticsData.deletedEmailsWeekly?.toString() ?? "0",
-          icon: TrashIcon,
-          ...calculatePercentageChange(
+          );
+          let changeString = "N/A";
+          if (difference !== null) {
+            const sign = difference > 0 ? "+" : "";
+            changeString = `${sign}${difference}`;
+          }
+          return {
+            id: "spamEmailsWeekly",
+            title: "Spam Emails Weekly",
+            value: analyticsData.spamEmailsWeekly?.toString() ?? "0",
+            icon: SpamIcon,
+            change: changeString,
+            isPositive: isPositive,
+          };
+        })(),
+        // Deleted Emails Weekly
+        (() => {
+          const { difference, isPositive } = calculateAbsoluteChange(
             analyticsData.deletedEmailsWeekly,
             analyticsData.deletedEmailsLastWeek
-          ),
-        }, // Shows placeholder "0" / "N/A"
+          );
+          let changeString = "N/A";
+          if (difference !== null) {
+            const sign = difference > 0 ? "+" : "";
+            changeString = `${sign}${difference}`;
+          }
+          return {
+            id: "deletedEmailsWeekly",
+            title: "Deleted Emails Weekly",
+            value: analyticsData.deletedEmailsWeekly?.toString() ?? "0",
+            icon: TrashIcon,
+            change: changeString,
+            isPositive: isPositive,
+          };
+        })(),
+        // Current Streak
         {
           id: "currentStreak",
           title: "Current Daily Streak",
@@ -216,32 +290,27 @@ const Analytics = () => {
             analyticsData.currentStreak === 1 ? "day" : "days"
           }`,
           icon: StreakIcon,
-          change: `Longest: ${analyticsData.longestStreak ?? 0}`,
+          change: `Longest: ${analyticsData.longestStreak ?? 0} days`,
           isPositive: null,
         },
       ]
     : [];
 
+  // Filter insights based on edit mode and hidden IDs
   const insightsToDisplay = isEditMode
     ? allAvailableInsights
     : allAvailableInsights.filter(
         (insight) => !hiddenInsightIds.has(insight.id)
       );
+
   // --- Edit Mode Handlers ---
-  const handleEditToggle = () => {
-    setIsEditMode(true);
-  };
-
-  const handleCancel = () => {
-    setIsEditMode(false);
-  };
-
+  const handleEditToggle = () => setIsEditMode(true);
+  const handleCancel = () => setIsEditMode(false);
   const handleSave = () => {
     setIsEditMode(false);
     console.log("Visibility preferences saved.");
+    // Persisting changes to backend is not implemented here
   };
-
-  // Toggle Visibility Handler (updates state and localStorage)
   const handleSelectToggle = (id) => {
     const newHiddenIds = new Set(hiddenInsightIds);
     if (newHiddenIds.has(id)) {
@@ -250,17 +319,17 @@ const Analytics = () => {
       newHiddenIds.add(id);
     }
     setHiddenInsightIds(newHiddenIds);
-
     try {
       localStorage.setItem(
         "hiddenAnalyticsIds",
         JSON.stringify(Array.from(newHiddenIds))
       );
     } catch (e) {
-      console.error("Failed to save hiddenAnalyticsIds to localStorage", e);
+      console.error("Failed to save hiddenAnalyticsIds", e);
     }
   };
 
+  // --- Render ---
   return (
     <div className="page-container">
       {/* Header */}
@@ -282,16 +351,18 @@ const Analytics = () => {
         )}
       </div>
 
-      {/* Display Loading or Error */}
+      {/* Loading / Error State */}
       {isLoading && <Loader />}
-      {!isLoading && error && (
-        <p className="error-message padding-sides">{error}</p>
-      )}
+      {!isLoading &&
+        error &&
+        !analyticsData && ( // Show error only if not loading and no data
+          <p className="error-message padding-sides">{error}</p>
+        )}
 
-      {/* Activity Insights Section */}
-      {!isLoading && !error && analyticsData && (
+      {/* Content Area (only if not loading and no critical error preventing data load) */}
+      {!isLoading && analyticsData && (
         <>
-          {/* Activity Insights Header */}
+          {/* Activity Insights Section */}
           <div className="padding-sides">
             <div
               className="space-between-full-wid activity-header bottom-line-grey"
@@ -305,54 +376,57 @@ const Analytics = () => {
               />
             </div>
           </div>
-
-          {/* Activity Content */}
           <div
             className={`activity-content ${
               isActivityExpanded ? "expanded" : "collapsed"
             }`}
           >
             <div className="insight-grid">
-              {/* Map over the correct array based on edit mode */}
-              {(isEditMode ? allAvailableInsights : insightsToDisplay).map(
-                (insight) => (
-                  <InsightCard
-                    key={insight.id}
-                    title={insight.title}
-                    value={insight.value}
-                    icon={insight.icon}
-                    change={insight.change}
-                    isPositive={insight.isPositive}
-                    isEditMode={isEditMode}
-                    isActive={!hiddenInsightIds.has(insight.id)}
-                    onToggle={() => handleSelectToggle(insight.id)}
-                  />
-                )
-              )}
+              {insightsToDisplay.map((insight) => (
+                <InsightCard
+                  key={insight.id}
+                  title={insight.title}
+                  value={insight.value}
+                  icon={insight.icon}
+                  change={insight.change} // Absolute difference string
+                  isPositive={insight.isPositive} // Sign indicator
+                  isEditMode={isEditMode}
+                  isActive={!hiddenInsightIds.has(insight.id)}
+                  onToggle={() => handleSelectToggle(insight.id)}
+                />
+              ))}
             </div>
+          </div>
+
+          {/* Graph Overview Section */}
+          <div className="padding-sides">
+            <div
+              className="space-between-full-wid activity-header bottom-line-grey"
+              onClick={() => setIsGraphExpanded((prev) => !prev)}
+            >
+              <p className="bold">Graphical Overview</p>
+              <ArrowDownIcon
+                className={`toggle-arrow ${isGraphExpanded ? "" : "rotated"}`}
+              />
+            </div>
+          </div>
+          <div
+            className={`activity-content ${
+              isGraphExpanded ? "expanded" : "collapsed"
+            }`}
+          >
+            <p className="space-between-full-wid">Coming soon...</p>
           </div>
         </>
       )}
-
-      {/* Graph Overview Section */}
-      <div className="padding-sides">
-        <div
-          className="space-between-full-wid activity-header bottom-line-grey"
-          onClick={() => setIsGraphExpanded((prev) => !prev)}
-        >
-          <p className="bold">Graphical Overview</p>
-          <ArrowDownIcon
-            className={`toggle-arrow ${isGraphExpanded ? "" : "rotated"}`}
-          />
-        </div>
-      </div>
-      <div
-        className={`activity-content ${
-          isGraphExpanded ? "expanded" : "collapsed"
-        }`}
-      >
-        <p className="space-between-full-wid">Coming soon...</p>
-      </div>
+      {/* Render error message even if data load failed but wasn't an auth error */}
+      {!isLoading &&
+        error &&
+        analyticsData === null &&
+        !error.toLowerCase().includes("authentication") &&
+        !error.toLowerCase().includes("session") && (
+          <p className="error-message padding-sides">{error}</p>
+        )}
     </div>
   );
 };

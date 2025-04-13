@@ -117,11 +117,25 @@ namespace FalconBackend.Data
                 .HasValue<Tag>("SystemTag")
                 .HasValue<UserCreatedTag>("UserTag");
 
+            modelBuilder.Entity<Tag>().HasData(
+                new Tag { Id = -1, TagName = "Work" },
+                new Tag { Id = -2, TagName = "School" },
+                new Tag { Id = -3, TagName = "Social" },
+                new Tag { Id = -4, TagName = "News" },
+                new Tag { Id = -5, TagName = "Promotions" },
+                new Tag { Id = -6, TagName = "Finance" },
+                new Tag { Id = -7, TagName = "Family & Friends" },
+                new Tag { Id = -8, TagName = "Personal" },
+                new Tag { Id = -9, TagName = "Travel" },
+                new Tag { Id = -10, TagName = "Health" }
+            );
+
             modelBuilder.Entity<UserCreatedTag>()
                 .HasOne(uct => uct.CreatedByUser)
                 .WithMany()
                 .HasForeignKey(uct => uct.CreatedByUserEmail)
                 .OnDelete(DeleteBehavior.NoAction);
+
 
             base.OnModelCreating(modelBuilder);
         }

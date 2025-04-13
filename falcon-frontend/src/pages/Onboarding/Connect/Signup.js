@@ -17,6 +17,8 @@ import Loader from "../../../components/Loader/Loader";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { useAuth } from "../../../context/AuthContext";
+
 // Animation Variants
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -42,6 +44,7 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // Validation Function
   const validateForm = () => {
@@ -108,24 +111,21 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
-      // --- Use API_BASE_URL and call the signup endpoint ---
       const signUpRes = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fullname, username, email, password }),
       });
 
-      // --- Check if signup itself failed ---
       if (!signUpRes.ok) {
         let backendError = "Sign up failed. Please try again later.";
 
         try {
-          const errorText = await signUpRes.text(); // Only read once!
+          const errorText = await signUpRes.text();
           try {
             const errorData = JSON.parse(errorText);
             backendError = errorData.message || backendError;
           } catch {
-            // Not JSON, just raw text
             backendError = `Signup failed: ${errorText}`;
           }
         } catch (finalErr) {
@@ -142,8 +142,7 @@ const SignUp = () => {
       // --- Check if the token exists in the response ---
       if (data && data.token) {
         // Store token and set auth status
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("isAuthenticated", "true");
+        login(data.token);
         navigate("/interests");
       } else {
         console.error("Signup response OK but token missing:", data);
@@ -276,7 +275,19 @@ const SignUp = () => {
       <button className="btn-white btn-create" onClick={handleSubmit}>
         Create
       </button>
-      <ToastContainer />
+      <AnimatePresence>
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+      </AnimatePresence>
     </div>
   );
 };

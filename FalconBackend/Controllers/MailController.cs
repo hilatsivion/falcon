@@ -193,17 +193,30 @@ namespace FalconBackend.Controllers
         {
             try
             {
-                string userEmail = GetUserEmailFromToken();
+                string userEmail = GetUserEmailFromToken(); 
 
-                // Validate user owns the mail account
                 if (!await _mailService.DoesUserOwnMailAccountAsync(userEmail, request.MailAccountId))
+                {
                     return Unauthorized("User does not own this mail account.");
+                }
 
                 await _mailService.SendMailAsync(request, attachments);
 
                 return Ok("Mail sent successfully.");
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex) 
+            {
+                return NotFound(new { message = ex.Message }); 
+            }
+            catch (ArgumentException ex) 
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex) 
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex) 
             {
                 return StatusCode(500, $"Failed to send mail. Error: {ex.Message}");
             }

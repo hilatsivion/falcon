@@ -409,6 +409,26 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.UserController",
+    "Method": "InitializeAccountData",
+    "RelativePath": "api/user/initialize-account",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.UserController",
+    "Method": "GetUserMailAccounts",
+    "RelativePath": "api/user/mailaccounts",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.UserController",
     "Method": "SaveUserTags",
     "RelativePath": "api/user/save-tags",
     "HttpMethod": "POST",
