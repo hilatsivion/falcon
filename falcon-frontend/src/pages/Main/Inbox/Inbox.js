@@ -1,136 +1,371 @@
-import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify"; // Keep for success messages
-import { useLocation } from "react-router-dom"; // Keep for success messages
+import React, { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
+import { useLocation, useNavigate } from "react-router-dom";
 import FilterFolderPage from "../FilterFolderPage/FilterFolderPage";
 import InboxEmailList from "./InboxEmailList";
+import EmailView from "../../../components/EmailView/EmailView";
+import Loader from "../../../components/Loader/Loader";
 import listIcon from "../../../assets/icons/black/list.svg";
 import folderIcon from "../../../assets/icons/black/folder.svg";
 import "./Inbox.css";
-// Remove: import { getAuthToken } from "../../../utils/auth"; // No longer needed directly here
 import { API_BASE_URL } from "../../../config/constants";
 import { useAuth } from "../../../context/AuthContext";
 
-// Centralized tag colors
-const tagColors = {
-  Inbox: "#cbd5ff",
-  Social: "#c8facc",
-  School: "#f6d6b8",
-  Work: "#b8ebf6",
-  Personal: "#ffb3c6",
-  Finance: "#ffd700",
-  Promotions: "#ff9f43",
-  Updates: "#6c757d",
-  Forums: "#28a745",
-  Travel: "#007bff",
+export const Tag = ({ name }) => {
+  const tagColors = {
+    Inbox: "#cbd5ff",
+    Social: "#c8facc",
+    School: "#f6d6b8",
+    Work: "#b8ebf6",
+    Personal: "#ffb3c6",
+    Finance: "#ffd700",
+    Promotions: "#ff9f43",
+    Updates: "#6c757d",
+    Forums: "#28a745",
+    Travel: "#007bff",
+  };
+  return (
+    <span
+      className="email-tag"
+      style={{ backgroundColor: tagColors[name] || "#ddd" }}
+    >
+      {name}
+    </span>
+  );
 };
 
-// Reusable Tag component
-export const Tag = ({ name }) => (
-  <span
-    className="email-tag"
-    style={{ backgroundColor: tagColors[name] || "#ddd" }}
-  >
-    {name}
-  </span>
-);
-
 const Inbox = () => {
-  const { authToken, isAuthenticated } = useAuth(); // Get state from context
+  const { authToken, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [isListView, setIsListView] = useState(true);
-  const [selectedEmail, setSelectedEmail] = useState(null);
-  const location = useLocation(); // For success message after redirect
-  const [emails, setEmails] = useState([]); // Start with empty array for fetched data
+  const [emails, setEmails] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedMailId, setSelectedMailId] = useState(null);
+  const [fullEmailData, setFullEmailData] = useState(null);
+  const [isEmailViewOpen, setIsEmailViewOpen] = useState(false);
+  const [isFetchingFullEmail, setIsFetchingFullEmail] = useState(false);
 
-  // --- Effect for Fetching Inbox Data ---
-  useEffect(() => {
-    // Define the async function to fetch data
-    const fetchInboxData = async () => {
-      // No need to check authToken here again if effect depends on it,
-      // but it's safe to double-check or rely on isAuthenticated.
-      if (!authToken) {
-        console.log("Inbox fetch: No auth token available.");
-        // Set loading false if it was true, clear emails
-        setIsLoading(false);
-        setEmails([]);
-        return;
-      }
-
-      console.log("Inbox fetch: Auth token found, attempting fetch.");
-      setIsLoading(true);
+  const fetchFullEmail = useCallback(
+    async (mailId) => {
+      if (!authToken || !mailId) return null;
+      setIsFetchingFullEmail(true);
       setError(null);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/mail/received/preview`, // Correct endpoint for inbox preview
+          `${API_BASE_URL}/api/mail/received/full/${mailId}`,
           {
-            headers: {
-              Authorization: `Bearer ${authToken}`, // Use token from context
-            },
+            headers: { Authorization: `Bearer ${authToken}` },
           }
         );
         if (!response.ok) {
-          let errorMsg = `Failed to fetch inbox data: ${response.statusText} (${response.status})`;
+          let errorMsg = `Failed to fetch email details (${response.status})`;
           try {
             const errData = await response.json();
             errorMsg = errData.message || errorMsg;
-          } catch (e) {
-            /* Ignore if body isn't JSON */
-          }
+          } catch (e) {}
           throw new Error(errorMsg);
         }
         const data = await response.json();
-        console.log("Inbox fetch: Data received", data);
-        setEmails(data); // Update state with fetched emails
+        return data;
       } catch (err) {
-        console.error("Inbox fetch error:", err);
-        setError(err.message || "Failed to load inbox.");
-        setEmails([]); // Clear emails on error
+        console.error("Fetch Full Email Error:", err);
+        toast.error(`Could not load email details: ${err.message}`);
+        return null;
       } finally {
-        setIsLoading(false);
+        setIsFetchingFullEmail(false);
       }
-    };
+    },
+    [authToken]
+  );
 
-    // --- Call fetchInboxData ONLY if authenticated ---
+  const updateReadStatusAPI = useCallback(
+    async (mailIds, isRead) => {
+      if (!authToken || !mailIds || mailIds.length === 0) return false;
+      const body = mailIds.map((id) => ({ mailId: id, isRead }));
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/mail/read`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to update read status (${response.status})`);
+        }
+        return true;
+      } catch (err) {
+        console.error("Update Read Status Error:", err);
+        toast.error("Failed to update read status.");
+        return false;
+      }
+    },
+    [authToken]
+  );
+
+  const toggleFavoriteAPI = useCallback(
+    async (mailId, newFavoriteStatus) => {
+      if (!authToken || mailId === undefined) return false;
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/mail/favorite/${mailId}/${newFavoriteStatus}`,
+          {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${authToken}` },
+          }
+        );
+        if (!response.ok) {
+          throw new Error(
+            `Failed to update favorite status (${response.status})`
+          );
+        }
+        return true;
+      } catch (err) {
+        console.error("Toggle Favorite Error:", err);
+        return false;
+      }
+    },
+    [authToken]
+  );
+
+  const deleteEmailAPI = useCallback(
+    async (mailId, mailAccountId) => {
+      if (!authToken || !mailId || !mailAccountId) return false;
+      const body = [{ mailId, mailAccountId }];
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/mail/delete`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok && response.status !== 204) {
+          throw new Error(`Failed to delete email (${response.status})`);
+        }
+        toast.success("Email deleted.");
+        return true;
+      } catch (err) {
+        console.error("Delete Email Error:", err);
+        toast.error("Failed to delete email.");
+        return false;
+      }
+    },
+    [authToken]
+  );
+
+  const fetchInboxPreviews = useCallback(async () => {
+    if (!authToken) {
+      setIsLoading(false);
+      setEmails([]);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/mail/received/preview`,
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      if (!response.ok) {
+        let errorMsg = `Failed to fetch inbox (${response.status})`;
+        try {
+          const errData = await response.json();
+          errorMsg = errData.message || errorMsg;
+        } catch (e) {}
+        throw new Error(errorMsg);
+      }
+      const data = await response.json();
+      setEmails(data || []);
+    } catch (err) {
+      console.error("Inbox preview fetch error:", err);
+      setError(err.message || "Failed to load inbox.");
+      setEmails([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [authToken]);
+
+  useEffect(() => {
     if (isAuthenticated) {
-      fetchInboxData();
+      fetchInboxPreviews();
     } else {
-      // Clear data if user logs out or isn't authenticated
-      console.log("Inbox: Not authenticated, clearing data.");
       setEmails([]);
       setIsLoading(false);
       setError(null);
+      setIsEmailViewOpen(false);
+      setFullEmailData(null);
+      setSelectedMailId(null);
     }
+  }, [isAuthenticated, fetchInboxPreviews]);
 
-    // Dependency array: Re-fetch if authentication status or token changes
-  }, [authToken, isAuthenticated]);
-
-  // --- Effect for Showing Toast Message on Navigation ---
   useEffect(() => {
     if (location.state?.message) {
       const message = location.state.message;
-      // Clear location state immediately to prevent re-triggering toast
       window.history.replaceState({}, document.title);
-      // Show the toast
       toast.success(message);
     }
-  }, [location.state]); // Depend only on location.state
+  }, [location.state]);
 
-  // --- Render Logic ---
-  let content;
+  const handleEmailSelect = useCallback(
+    async (mailId) => {
+      const previewEmail = emails.find((e) => e.mailId === mailId);
+      if (!previewEmail || isFetchingFullEmail) return;
+
+      setSelectedMailId(mailId);
+      setIsEmailViewOpen(false);
+      setFullEmailData(null);
+
+      let markedReadLocally = false;
+      if (!previewEmail.isRead) {
+        setEmails((prevEmails) =>
+          prevEmails.map((e) =>
+            e.mailId === mailId ? { ...e, isRead: true } : e
+          )
+        );
+        markedReadLocally = true;
+      }
+
+      const fetchedData = await fetchFullEmail(mailId);
+
+      if (fetchedData) {
+        setFullEmailData(fetchedData);
+        setIsEmailViewOpen(true);
+        if (markedReadLocally) {
+          updateReadStatusAPI([mailId], true);
+        }
+      } else {
+        if (markedReadLocally) {
+          setEmails((prevEmails) =>
+            prevEmails.map((e) =>
+              e.mailId === mailId ? { ...e, isRead: false } : e
+            )
+          );
+        }
+        setSelectedMailId(null);
+      }
+    },
+    [emails, isFetchingFullEmail, fetchFullEmail, updateReadStatusAPI]
+  );
+
+  const handleToggleFavorite = useCallback(
+    async (mailId, newFavoriteStatus) => {
+      setEmails((prevEmails) =>
+        prevEmails.map((e) =>
+          e.mailId === mailId ? { ...e, isFavorite: newFavoriteStatus } : e
+        )
+      );
+      if (isEmailViewOpen && fullEmailData?.mailId === mailId) {
+        setFullEmailData((prev) =>
+          prev ? { ...prev, isFavorite: newFavoriteStatus } : null
+        );
+      }
+
+      const success = await toggleFavoriteAPI(mailId, newFavoriteStatus);
+
+      if (!success) {
+        toast.error("Failed to update favorite status");
+        setEmails((prevEmails) =>
+          prevEmails.map((e) =>
+            e.mailId === mailId ? { ...e, isFavorite: !newFavoriteStatus } : e
+          )
+        );
+        if (isEmailViewOpen && fullEmailData?.mailId === mailId) {
+          setFullEmailData((prev) =>
+            prev ? { ...prev, isFavorite: !newFavoriteStatus } : null
+          );
+        }
+      }
+    },
+    [isEmailViewOpen, fullEmailData, toggleFavoriteAPI]
+  );
+
+  const handleDeleteEmail = useCallback(async () => {
+    if (!fullEmailData) return;
+    const { mailId, mailAccountId } = fullEmailData;
+    const success = await deleteEmailAPI(mailId, mailAccountId);
+    if (success) {
+      setEmails((prevEmails) => prevEmails.filter((e) => e.mailId !== mailId));
+      setIsEmailViewOpen(false);
+      setFullEmailData(null);
+      setSelectedMailId(null);
+    }
+  }, [fullEmailData, deleteEmailAPI]);
+
+  const handleMarkUnread = useCallback(async () => {
+    if (!fullEmailData) return;
+    const { mailId } = fullEmailData;
+    const success = await updateReadStatusAPI([mailId], false);
+    if (success) {
+      setEmails((prevEmails) =>
+        prevEmails.map((e) =>
+          e.mailId === mailId ? { ...e, isRead: false } : e
+        )
+      );
+      setIsEmailViewOpen(false);
+      setFullEmailData(null);
+      setSelectedMailId(null);
+    }
+  }, [fullEmailData, updateReadStatusAPI]);
+
+  const handleCloseEmailView = useCallback(() => {
+    setIsEmailViewOpen(false);
+    setFullEmailData(null);
+    setSelectedMailId(null);
+  }, []);
+
+  const handleReply = useCallback(() => {
+    if (!fullEmailData) return;
+    let replyToAddress = fullEmailData.sender;
+    const match = fullEmailData.sender?.match(/<(.+)>/);
+    if (match && match[1]) replyToAddress = match[1];
+    else if (fullEmailData.sender?.includes("@"))
+      replyToAddress = fullEmailData.sender;
+    navigate("/compose", {
+      state: { to: replyToAddress, subject: `Re: ${fullEmailData.subject}` },
+    });
+  }, [navigate, fullEmailData]);
+
+  const handleForward = useCallback(() => {
+    if (!fullEmailData) return;
+    const forwardBody = `\n\n---------- Forwarded message ----------\nFrom: ${
+      fullEmailData.sender
+    }\nDate: ${new Date(
+      fullEmailData.timeReceived
+    ).toLocaleString()}\nSubject: ${fullEmailData.subject}\n\n${
+      fullEmailData.body || ""
+    }`;
+    navigate("/compose", {
+      state: { subject: `Fwd: ${fullEmailData.subject}`, body: forwardBody },
+    });
+  }, [navigate, fullEmailData]);
+
+  let listContent;
   if (isLoading) {
-    content = <p>Loading emails...</p>; // Replace with your Loader component if desired
+    listContent = (
+      <div className="centered-loader">
+        <Loader />
+      </div>
+    );
   } else if (error) {
-    content = <p style={{ color: "red" }}>Error: {error}</p>;
+    listContent = <p className="error-message padding-sides">{error}</p>;
+  } else if (!isAuthenticated) {
+    listContent = (
+      <p className="padding-sides">Please log in to view your inbox.</p>
+    );
   } else if (emails.length === 0) {
-    content = <p>Your inbox is empty.</p>;
+    listContent = <p className="padding-sides">Your inbox is empty.</p>;
   } else {
-    content = (
+    listContent = (
       <InboxEmailList
         emails={emails}
-        setEmails={setEmails} // Pass if needed for updates like delete/read
-        selectedEmail={selectedEmail}
-        setSelectedEmail={setSelectedEmail}
+        onEmailSelect={handleEmailSelect}
+        onToggleFavorite={handleToggleFavorite}
       />
     );
   }
@@ -139,7 +374,6 @@ const Inbox = () => {
     <div className="page-container">
       <div className="space-between-full-wid bottom-line-grey">
         <h1>Inbox</h1>
-        {/* View Switch Button */}
         <div
           className="switch-button"
           onClick={() => setIsListView(!isListView)}
@@ -149,19 +383,41 @@ const Inbox = () => {
           ></div>
           <img
             src={listIcon}
-            alt="List View"
+            alt="List"
             className={`switch-icon ${isListView ? "active" : "inactive"}`}
           />
           <img
             src={folderIcon}
-            alt="Folder View"
+            alt="Folder"
             className={`switch-icon ${isListView ? "inactive" : "active"}`}
           />
         </div>
       </div>
 
-      {/* Render Content based on View */}
-      {isListView ? content : <FilterFolderPage />}
+      {isListView ? listContent : <FilterFolderPage />}
+
+      {isFetchingFullEmail && (
+        <div className="fullscreen-loader">
+          <Loader />
+        </div>
+      )}
+
+      {!isFetchingFullEmail && isEmailViewOpen && fullEmailData && (
+        <EmailView
+          email={fullEmailData}
+          onClose={handleCloseEmailView}
+          onDelete={handleDeleteEmail}
+          onMarkUnread={handleMarkUnread}
+          onToggleFavorite={() =>
+            handleToggleFavorite(
+              fullEmailData.mailId,
+              !fullEmailData.isFavorite
+            )
+          }
+          onReply={handleReply}
+          onForward={handleForward}
+        />
+      )}
     </div>
   );
 };

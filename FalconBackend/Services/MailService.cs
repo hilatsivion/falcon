@@ -522,6 +522,96 @@ namespace FalconBackend.Services
             return snippet;
         }
 
+        public async Task<List<MailSearchResultDto>> SearchEmailsAsync(string userEmail, string keywords, string fromSender, string toRecipient)
+        {
+            Console.WriteLine($"--- Searching emails for user: {userEmail}, keywords: '{keywords}', from: '{fromSender}', to: '{toRecipient}' ---");
+
+            // Get the mail account IDs for the current user
+            var userMailAccountIds = await _context.MailAccounts
+                                              .Where(ma => ma.AppUserEmail == userEmail)
+                                              .Select(ma => ma.MailAccountId)
+                                              .ToListAsync();
+
+            if (!userMailAccountIds.Any())
+            {
+                Console.WriteLine($"--- No mail accounts found for user {userEmail}, returning empty search results. ---");
+                return new List<MailSearchResultDto>(); // No accounts, no emails
+            }
+
+            // Base queries for received and sent mails for this user
+            var receivedQuery = _context.MailReceived
+                                        .Include(m => m.MailTags).ThenInclude(mt => mt.Tag) // Include tags for received
+                                        .Where(m => userMailAccountIds.Contains(m.MailAccountId));
+
+            var sentQuery = _context.MailSent
+                                    .Include(m => m.Recipients) // Include recipients for sent
+                                    .Where(m => userMailAccountIds.Contains(m.MailAccountId));
+
+            // Apply filters conditionally
+            if (!string.IsNullOrWhiteSpace(keywords))
+            {
+                receivedQuery = receivedQuery.Where(m => (m.Subject != null && m.Subject.Contains(keywords)) || (m.Body != null && m.Body.Contains(keywords)) || (m.Sender != null && m.Sender.Contains(keywords)));
+                sentQuery = sentQuery.Where(m => (m.Subject != null && m.Subject.Contains(keywords)) || (m.Body != null && m.Body.Contains(keywords)) || m.Recipients.Any(r => r.Email.Contains(keywords))); // Search recipients too for keywords in sent mail
+            }
+
+            if (!string.IsNullOrWhiteSpace(fromSender))
+            {
+                // Primarily filter received emails by sender
+                receivedQuery = receivedQuery.Where(m => m.Sender != null && m.Sender.Contains(fromSender));
+
+                sentQuery = sentQuery.Where(m => 1 == 0);
+            }
+
+            if (!string.IsNullOrWhiteSpace(toRecipient))
+            {
+                sentQuery = sentQuery.Where(m => m.Recipients.Any(r => r.Email.Contains(toRecipient)));
+                
+                receivedQuery = receivedQuery.Where(m => 1 == 0);
+            }
+
+            var receivedResults = await receivedQuery
+                .OrderByDescending(m => m.TimeReceived)
+                .Take(100) 
+                .Select(m => new MailSearchResultDto
+                {
+                    MailId = m.MailId,
+                    MailAccountId = m.MailAccountId,
+                    Subject = m.Subject,
+                    BodySnippet = GenerateBodySnippet(m.Body), 
+                    Date = m.TimeReceived,
+                    IsFavorite = m.IsFavorite,
+                    Type = "received",
+                    IsRead = m.IsRead,
+                    Sender = m.Sender,
+                    Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList()
+                })
+                .ToListAsync();
+
+            var sentResults = await sentQuery
+               .OrderByDescending(m => m.TimeSent)
+               .Take(100) 
+               .Select(m => new MailSearchResultDto
+               {
+                   MailId = m.MailId,
+                   MailAccountId = m.MailAccountId,
+                   Subject = m.Subject,
+                   BodySnippet = GenerateBodySnippet(m.Body),
+                   Date = m.TimeSent,
+                   IsFavorite = m.IsFavorite,
+                   Type = "sent",
+                   IsRead = true, 
+                   Recipients = m.Recipients.Select(r => r.Email).ToList()
+               })
+               .ToListAsync();
+
+            var combinedResults = receivedResults.Concat(sentResults)
+                                                .OrderByDescending(r => r.Date)
+                                                .Take(150) 
+                                                .ToList();
+
+            Console.WriteLine($"--- Search found {combinedResults.Count} combined results. ---");
+            return combinedResults;
+        }
 
     }
 

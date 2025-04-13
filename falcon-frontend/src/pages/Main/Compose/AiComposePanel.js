@@ -3,7 +3,7 @@ import "./AiComposePanel.css";
 import { ReactComponent as CloseIcon } from "../../../assets/icons/black/x.svg";
 import Loader from "../../../components/Loader/Loader";
 
-const HUGGING_FACE_API_TOKEN = process.env.REACT_APP_HUGGING_FACE_API_TOKEN;
+const HUGGING_FACE_API_TOKEN = "?";
 
 const API_URL =
   "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct";

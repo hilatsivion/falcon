@@ -252,6 +252,32 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "SearchEmails",
+    "RelativePath": "api/mail/search",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "keywords",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "sender",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "recipient",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
     "Method": "SendMail",
     "RelativePath": "api/mail/send",
     "HttpMethod": "POST",

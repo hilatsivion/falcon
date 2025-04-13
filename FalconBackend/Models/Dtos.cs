@@ -153,8 +153,19 @@
         public bool IsDefault { get; set; }
     }
 
-
-
-
+    public class MailSearchResultDto
+    {
+        public int MailId { get; set; }
+        public string MailAccountId { get; set; }
+        public string Subject { get; set; }
+        public string BodySnippet { get; set; }
+        public DateTime Date { get; set; } 
+        public bool IsFavorite { get; set; }
+        public string Type { get; set; } 
+        public bool IsRead { get; set; } 
+        public string Sender { get; set; } 
+        public List<string> Recipients { get; set; } = new();
+        public List<string> Tags { get; set; } = new(); 
+    }
 
 }

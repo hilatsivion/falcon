@@ -310,5 +310,35 @@ namespace FalconBackend.Controllers
                 return StatusCode(500, $"Failed to get draft. Error: {ex.Message}");
             }
         }
+
+        [HttpGet("search")] 
+        public async Task<IActionResult> SearchEmails([FromQuery] string keywords = null, [FromQuery] string sender = null, [FromQuery] string recipient = null)
+        {
+            if (string.IsNullOrWhiteSpace(keywords) && string.IsNullOrWhiteSpace(sender) && string.IsNullOrWhiteSpace(recipient))
+            {
+                return BadRequest(new { message = "Please provide at least one search criterion (keywords, sender, or recipient)." });
+            }
+
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                var searchResults = await _mailService.SearchEmailsAsync(userEmail, keywords, sender, recipient);
+
+                return Ok(searchResults);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Error during email search for user {User.FindFirstValue(ClaimTypes.Email)}: {ex.Message} ---");
+
+                return StatusCode(500, "An error occurred while searching emails.");
+            }
+        }
+
+
     }
 }
