@@ -254,24 +254,14 @@
     "ContainingType": "FalconBackend.Controllers.MailController",
     "Method": "SearchEmails",
     "RelativePath": "api/mail/search",
-    "HttpMethod": "GET",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "keywords",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "sender",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "recipient",
-        "Type": "System.String",
-        "IsRequired": false
+        "Name": "request",
+        "Type": "FalconBackend.Models.MailSearchRequestDto",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []
