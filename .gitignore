@@ -153,3 +153,5 @@ FalconBackend/obj/Debug/net6.0/staticwebassets/msbuild.build.FalconBackend.props
 *.cache
 *.props
 *.props
+FalconBackend/bin/Debug/net6.0/FalconBackend.pdb
+FalconBackend/obj/Debug/net6.0/FalconBackend.pdb
