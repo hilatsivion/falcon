@@ -311,10 +311,22 @@ namespace FalconBackend.Controllers
             }
         }
 
-        [HttpGet("search")] 
-        public async Task<IActionResult> SearchEmails([FromQuery] string keywords = null, [FromQuery] string sender = null, [FromQuery] string recipient = null)
+        [HttpPost("search")]
+        [Authorize]
+        public async Task<IActionResult> SearchEmails([FromBody] MailSearchRequestDto request)
         {
-            if (string.IsNullOrWhiteSpace(keywords) && string.IsNullOrWhiteSpace(sender) && string.IsNullOrWhiteSpace(recipient))
+            const string PLACEHOLDER = "-";
+
+            if (request == null)
+            {
+                return BadRequest(new { message = "Invalid search request." });
+            }
+
+            string effectiveKeywords = request.Keywords == PLACEHOLDER ? null : request.Keywords;
+            string effectiveSender = request.Sender == PLACEHOLDER ? null : request.Sender;
+            string effectiveRecipient = request.Recipient == PLACEHOLDER ? null : request.Recipient;
+
+            if (string.IsNullOrWhiteSpace(effectiveKeywords) && string.IsNullOrWhiteSpace(effectiveSender) && string.IsNullOrWhiteSpace(effectiveRecipient))
             {
                 return BadRequest(new { message = "Please provide at least one search criterion (keywords, sender, or recipient)." });
             }
@@ -327,14 +339,18 @@ namespace FalconBackend.Controllers
                     return Unauthorized("User email claim not found in token.");
                 }
 
-                var searchResults = await _mailService.SearchEmailsAsync(userEmail, keywords, sender, recipient);
+                var searchResults = await _mailService.SearchEmailsAsync(
+                    userEmail,
+                    effectiveKeywords,
+                    effectiveSender,
+                    effectiveRecipient
+                );
 
                 return Ok(searchResults);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"--- Error during email search for user {User.FindFirstValue(ClaimTypes.Email)}: {ex.Message} ---");
-
                 return StatusCode(500, "An error occurred while searching emails.");
             }
         }

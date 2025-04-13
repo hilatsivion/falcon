@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config/constants";
-import Loader from "../Loader/Loader"; // Assuming Loader is in ../Loader/Loader path
+import Loader from "../Loader/Loader";
 import "./AdvancedSearch.css";
 
 const SEARCH_HISTORY_KEY = "falconSearchHistory";
@@ -23,10 +23,12 @@ const AdvancedSearch = () => {
       const storedHistory = localStorage.getItem(SEARCH_HISTORY_KEY);
       if (storedHistory) {
         setLastSearches(JSON.parse(storedHistory));
+      } else {
+        setLastSearches(["Files", "Movie tickets", "Hand over by"]);
       }
     } catch (error) {
       console.error("Failed to load search history:", error);
-      setLastSearches([]);
+      setLastSearches(["Files", "Movie tickets", "Hand over by"]);
     }
   }, []);
 
@@ -44,10 +46,14 @@ const AdvancedSearch = () => {
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
 
-    if (isSearchDisabled && !isLoading) {
+    // Keep validation for disabling button (at least one field must have *real* content)
+    const isActuallyEmpty =
+      !keyword.trim() && !sender.trim() && !receiver.trim();
+    if (isActuallyEmpty && !isLoading) {
       toast.error("Please enter at least one search criterion.");
-      return;
+      return; // Still prevent search if truly all empty
     }
+
     if (!authToken) {
       toast.error("Authentication error. Please log in again.");
       return;
@@ -55,24 +61,29 @@ const AdvancedSearch = () => {
 
     setIsLoading(true);
 
-    const params = new URLSearchParams();
-    if (keyword.trim()) params.append("keywords", keyword.trim());
-    if (sender.trim()) params.append("sender", sender.trim());
-    if (receiver.trim()) params.append("recipient", receiver.trim());
-    const queryString = params.toString();
+    const PLACEHOLDER = "-";
+    const requestBody = {
+      Keywords: keyword.trim() || PLACEHOLDER,
+      Sender: sender.trim() || PLACEHOLDER,
+      Recipient: receiver.trim() || PLACEHOLDER,
+    };
 
     let currentSearchTerm = [keyword.trim(), sender.trim(), receiver.trim()]
       .filter(Boolean)
       .join("; ");
+    const searchUrl = `${API_BASE_URL}/api/mail/search`;
+
+    console.log("Sending POST search request with body:", requestBody); // Check the body
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/mail/search?${queryString}`,
-        {
-          method: "GET",
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+      const response = await fetch(searchUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         let errorMsg = `Search failed (${response.status})`;
@@ -82,9 +93,8 @@ const AdvancedSearch = () => {
         } catch (errParsing) {}
         throw new Error(errorMsg);
       }
-
       const results = await response.json();
-
+      // Add to history...
       if (
         currentSearchTerm &&
         (!lastSearches.length || lastSearches[0] !== currentSearchTerm)
@@ -96,12 +106,9 @@ const AdvancedSearch = () => {
         setLastSearches(updatedHistory);
         saveSearchHistory(updatedHistory);
       }
-
+      // Navigate...
       navigate("/search/results", {
-        state: {
-          results: results,
-          query: { keyword, sender, receiver },
-        },
+        state: { results: results, query: { keyword, sender, receiver } },
       });
     } catch (error) {
       console.error("Search API error:", error);
@@ -135,7 +142,6 @@ const AdvancedSearch = () => {
             className="form-input"
             disabled={isLoading}
           />
-
           <div className="last-searched">
             <div className="space-between-full-wid no-padding">
               <p className="sub-title">Last searched</p>
@@ -167,11 +173,10 @@ const AdvancedSearch = () => {
                 style={{ marginTop: "5px", fontSize: "11px" }}
               >
                 No recent searches.
-              </p> // Adjusted style
+              </p>
             )}
           </div>
         </div>
-
         <div className="search-section">
           <div>
             <p className="sub-title">Sender address</p>
@@ -184,7 +189,6 @@ const AdvancedSearch = () => {
               disabled={isLoading}
             />
           </div>
-
           <div>
             <p className="sub-title">Receiver address</p>
             <input
@@ -196,7 +200,6 @@ const AdvancedSearch = () => {
               disabled={isLoading}
             />
           </div>
-
           <button
             className="search-btn"
             onClick={handleSearch}

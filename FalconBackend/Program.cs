@@ -113,7 +113,7 @@ app.UseRouting();
 
 app.UseCors(myAllowSpecificOrigins);
 
-
+app.UseCors("AllowMyFrontend");
 app.UseAuthentication(); // Needed for JWT to work
 app.UseAuthorization();
 

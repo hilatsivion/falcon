@@ -574,33 +574,29 @@
       }
     },
     "/api/mail/search": {
-      "get": {
+      "post": {
         "tags": [
           "Mail"
         ],
-        "parameters": [
-          {
-            "name": "keywords",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "sender",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "recipient",
-            "in": "query",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailSearchRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailSearchRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailSearchRequestDto"
+              }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
             "description": "Success"
@@ -797,6 +793,24 @@
             "format": "int32"
           },
           "mailAccountId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MailSearchRequestDto": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "nullable": true
+          },
+          "sender": {
+            "type": "string",
+            "nullable": true
+          },
+          "recipient": {
             "type": "string",
             "nullable": true
           }
