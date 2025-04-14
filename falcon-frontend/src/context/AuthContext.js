@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     navigate("/login");
   };
 
-  // ✅ Validate token once on app load
+  // Validate token once on app load
   useEffect(() => {
     const token = getAuthToken();
     if (!token) {

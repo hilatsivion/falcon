@@ -11,6 +11,7 @@ import { ReactComponent as CopyIcon } from "../../assets/icons/black/copy_to_cli
 import { Tag } from "../Tag/Tag";
 import "./EmailView.css";
 import { parseSender } from "../../utils/emailUtils";
+import { formatEmailTime } from "../../utils/formatters";
 
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { toast } from "react-toastify";
@@ -70,9 +71,7 @@ const EmailView = ({
     return recipients.map((r) => r.email || r)[0] || "";
   };
 
-  const formattedTime = email?.timeReceived
-    ? new Date(email.timeReceived).toLocaleString()
-    : "N/A";
+  const formattedTime = formatEmailTime(email?.timeReceived);
 
   const hasAttachments =
     Array.isArray(email.attachments) && email.attachments.length > 0;
@@ -104,19 +103,21 @@ const EmailView = ({
               <div className="email-detail">
                 <div className="email-view-top-section">
                   <div className="email-view-sender-recipient">
-                    <div className="email-view-time-action">
-                      <span className="email-time">{formattedTime}</span>
-                    </div>
                     <div className="email-sender-container">
-                      <div
-                        className="email-avatar"
-                        style={{ backgroundColor: avatarColorCalculated }}
-                      >
-                        {senderInitial}
+                      <div className="flex">
+                        <div
+                          className="email-avatar"
+                          style={{ backgroundColor: avatarColorCalculated }}
+                        >
+                          {senderInitial}
+                        </div>
+                        <span className="email-sender">
+                          {displayName || senderEmail}
+                        </span>{" "}
                       </div>
-                      <span className="email-sender">
-                        {displayName || senderEmail}
-                      </span>{" "}
+                      <div className="email-view-time-action">
+                        <span className="email-time">{formattedTime}</span>
+                      </div>
                     </div>
                     <div className="email-recipient-line">
                       <span className="email-recipients">
