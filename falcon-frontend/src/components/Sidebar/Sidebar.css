@@ -87,6 +87,8 @@
   flex-direction: column;
   gap: 12px;
   margin-top: 20px;
+  position: relative;
+  left: -6px;
 }
 
 .sidebar-item {
@@ -99,6 +101,7 @@
   color: #2f3c4d;
   font-size: 16px;
   transition: background 0.2s ease;
+  padding-left: 14px;
 }
 
 .badge {
@@ -138,4 +141,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.sidebar-item.active {
+  background-color: var(--selected-blue);
+  color: var(--primary-blue);
+  font-weight: 500;
 }

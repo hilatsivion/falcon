@@ -1,25 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config/constants";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 import { ReactComponent as XIcon } from "../../assets/icons/black/x.svg";
 import { ReactComponent as FalconLogo } from "../../assets/images/Falcon-sidebar.svg";
 import { ReactComponent as AnalyticsIcon } from "../../assets/icons/black/analytics-icon-sidebar.svg";
+import { ReactComponent as AnalyticsIconBlue } from "../../assets/icons/blue/analytics-icon-sidebar-blue.svg";
 import { ReactComponent as InboxIcon } from "../../assets/icons/black/inbox-icon-sidebar.svg";
+import { ReactComponent as InboxIconBlue } from "../../assets/icons/blue/inbox-icon-sidebar-blue.svg";
 import { ReactComponent as SentIcon } from "../../assets/icons/black/sent-icon-sidebar.svg";
+import { ReactComponent as SentIconBlue } from "../../assets/icons/blue/sent-icon-sidebar-blue.svg";
 import { ReactComponent as LogoutIcon } from "../../assets/icons/black/sign-out-icon.svg";
 import { ReactComponent as StaredIcon } from "../../assets/icons/black/stared-icon-sidebar.svg";
+import { ReactComponent as StaredIconBlue } from "../../assets/icons/blue/stared-icon-sidebar-blue.svg";
 import { ReactComponent as UnreadIcon } from "../../assets/icons/black/unread-icon-sidebar.svg";
+import { ReactComponent as UnreadIconBlue } from "../../assets/icons/blue/unread-icon-sidebar-blue.svg";
+
 import "./Sidebar.css";
 import ConfirmPopup from "../Popup/ConfirmPopup";
 
 const Sidebar = ({ isOpen, closeSidebar }) => {
+  const { logout } = useAuth();
   const [isClosing, setIsClosing] = useState(false);
   const [userData, setUserData] = useState({ fullName: "", email: "" });
-  const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
   const confirmLogout = () => {
@@ -31,7 +38,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Or however you store your token
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
 
@@ -97,28 +104,61 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
           </div>
 
           <div className="sidebar-menu">
-            <Link to="/inbox" className="sidebar-item">
-              <InboxIcon className="sidebar-icon" />
+            <Link
+              to="/inbox"
+              className={`sidebar-item ${
+                currentPath === "/inbox" ? "active" : ""
+              }`}
+            >
+              {currentPath === "/inbox" ? <InboxIconBlue /> : <InboxIcon />}
               <span>Inbox</span>
             </Link>
 
-            <Link to="/unread" className="sidebar-item">
-              <UnreadIcon className="sidebar-icon" />
+            <Link
+              to="/unread"
+              className={`sidebar-item ${
+                currentPath === "/unread" ? "active" : ""
+              }`}
+            >
+              {currentPath === "/unread" ? <UnreadIconBlue /> : <UnreadIcon />}
               <span>Unread Emails</span>
             </Link>
 
-            <Link to="/important" className="sidebar-item">
-              <StaredIcon className="sidebar-icon" />
-              <span>Important Emails</span>
+            <Link
+              to="/favorite"
+              className={`sidebar-item ${
+                currentPath === "/favorite" ? "active" : ""
+              }`}
+            >
+              {currentPath === "/favorite" ? (
+                <StaredIconBlue />
+              ) : (
+                <StaredIcon />
+              )}
+              <span>Favorite Emails</span>
             </Link>
 
-            <Link to="/sent" className="sidebar-item">
-              <SentIcon className="sidebar-icon" />
+            <Link
+              to="/sent"
+              className={`sidebar-item ${
+                currentPath === "/sent" ? "active" : ""
+              }`}
+            >
+              {currentPath === "/sent" ? <SentIconBlue /> : <SentIcon />}
               <span>Sent</span>
             </Link>
 
-            <Link to="/analytics" className="sidebar-item">
-              <AnalyticsIcon className="sidebar-icon" />
+            <Link
+              to="/analytics"
+              className={`sidebar-item ${
+                currentPath === "/analytics" ? "active" : ""
+              }`}
+            >
+              {currentPath === "/analytics" ? (
+                <AnalyticsIconBlue />
+              ) : (
+                <AnalyticsIcon />
+              )}
               <span>Analytics</span>
             </Link>
           </div>
