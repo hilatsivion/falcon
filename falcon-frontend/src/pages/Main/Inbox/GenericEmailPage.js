@@ -11,9 +11,19 @@ import { toast } from "react-toastify";
 
 const pageMap = {
   "/inbox": { title: "Inbox", api: "/api/mail/received/preview" },
-  "/unread": { title: "Unread", api: "/api/mail/unread" },
-  "/favorite": { title: "Favorite", api: "/api/mail/favorite" },
-  "/sent": { title: "Sent", api: "/api/mail/sent" },
+  "/unread": {
+    title: "Unread",
+    api: "/api/mail/unread/preview?page=1&pageSize=100",
+  },
+  "/favorite": {
+    title: "Favorite",
+    api: "/api/mail/favorites/preview?page=1&pageSize=50",
+    expectsCombinedFavorites: true,
+  },
+  "/sent": {
+    title: "Sent",
+    api: "/api/mail/sent/preview?page=1&pageSize=100",
+  },
   "/search-results": { title: "Results", api: null },
   "/filter-results": {
     title: "Filtered Results",
@@ -136,20 +146,30 @@ const GenericEmailPage = () => {
 
   const fetchEmails = useCallback(async () => {
     if (!authToken || !apiPath) return;
+
     setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}${apiPath}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       if (!response.ok) throw new Error("Failed to fetch emails");
-      setEmails(await response.json());
+
+      const data = await response.json();
+
+      // 👇 Handle the special case of Favorite page
+      if (pageMap[pathname]?.expectsCombinedFavorites) {
+        const { receivedFavorites = [], sentFavorites = [] } = data;
+        setEmails([...receivedFavorites, ...sentFavorites]);
+      } else {
+        setEmails(data);
+      }
     } catch (err) {
       setError(err.message);
       toast.error(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, [authToken, apiPath]);
+  }, [authToken, apiPath, pathname]);
 
   useEffect(() => {
     if (isAuthenticated) fetchEmails();
@@ -311,7 +331,7 @@ const GenericEmailPage = () => {
   } else if (!isAuthenticated) {
     listContent = <p>Please log in to view emails.</p>;
   } else if (emails.length === 0) {
-    listContent = <p>No emails to show.</p>;
+    listContent = <p className="error-message">No emails to show.</p>;
   } else {
     listContent = (
       <InboxEmailList
