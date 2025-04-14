@@ -8,7 +8,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [authToken, setAuthToken] = useState(getAuthToken());
   const [isAuthenticated, setIsAuthenticated] = useState(!!getAuthToken());
-  const navigate = useNavigate(); // ✅ needed to redirect
+  const navigate = useNavigate();
 
   const login = (token) => {
     loginUser(token);
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     logoutUser();
     setAuthToken(null);
     setIsAuthenticated(false);
-    navigate("/login"); // ✅ redirect on logout
+    navigate("/login");
   };
 
   // ✅ validate token once on app load

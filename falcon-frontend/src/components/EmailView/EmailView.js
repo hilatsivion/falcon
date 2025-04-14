@@ -7,8 +7,12 @@ import trashIcon from "../../assets/icons/black/trash-red-icon.svg";
 import backIcon from "../../assets/icons/black/arrow-left-20.svg";
 import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-star.svg";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
+import { ReactComponent as CopyIcon } from "../../assets/icons/black/copy_to_clipboard.svg";
 import { Tag } from "../../pages/Main/Inbox/Inbox";
 import "./EmailView.css";
+
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import { toast } from "react-toastify";
 
 const EmailView = ({
   email,
@@ -133,6 +137,15 @@ const EmailView = ({
               </div>
 
               <div className="email-body">
+                <CopyToClipboard
+                  text={email.body || ""}
+                  onCopy={() => toast.success("Copied to clipboard!")}
+                >
+                  <div className="email-copy-btn">
+                    <CopyIcon />
+                  </div>
+                </CopyToClipboard>
+
                 <div dangerouslySetInnerHTML={{ __html: email.body || "" }} />
               </div>
 
