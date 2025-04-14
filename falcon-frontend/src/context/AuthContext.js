@@ -6,9 +6,12 @@ import { API_BASE_URL } from "../config/constants";
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [authToken, setAuthToken] = useState(getAuthToken());
-  const [isAuthenticated, setIsAuthenticated] = useState(!!getAuthToken());
   const navigate = useNavigate();
+
+  const [authToken, setAuthToken] = useState(() => getAuthToken());
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => !!getAuthToken()
+  );
 
   const login = (token) => {
     loginUser(token);
@@ -23,12 +26,15 @@ export const AuthProvider = ({ children }) => {
     navigate("/login");
   };
 
-  // ✅ validate token once on app load
+  // ✅ Validate token once on app load
   useEffect(() => {
-    const validateToken = async () => {
-      const token = getAuthToken();
-      if (!token) return;
+    const token = getAuthToken();
+    if (!token) {
+      logout(); // just to ensure state is clean
+      return;
+    }
 
+    const validateToken = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
           headers: {
@@ -37,17 +43,16 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (!res.ok) {
-          // token invalid or expired
-          logout(); // will redirect
+          logout(); // invalid token or expired
         }
       } catch (err) {
         console.error("Token validation failed:", err);
-        logout(); // fallback
+        logout(); // network error fallback
       }
     };
 
     validateToken();
-  }, []);
+  }, []); // run once on mount
 
   const value = {
     authToken,

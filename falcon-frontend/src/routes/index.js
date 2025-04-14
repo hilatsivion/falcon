@@ -5,9 +5,10 @@ import Compose from "../pages/Main/Compose/Compose";
 import MainLayout from "../layouts/MainLayout";
 import OnboardingRoutes from "./OnboardingRoutes";
 import AdvancedSearch from "../components/AdvancedSearch/AdvancedSearch";
-import SelectInterests from "../pages/Onboarding/SelectInterests/SelectInterests"; // <<< Import Interests
-import LoadingDataScreen from "../pages/Onboarding/LoadingDataScreen/LoadingDataScreen"; // <<< Import Loading
+import SelectInterests from "../pages/Onboarding/SelectInterests/SelectInterests";
+import LoadingDataScreen from "../pages/Onboarding/LoadingDataScreen/LoadingDataScreen";
 import GenericEmailPage from "../pages/Main/Inbox/GenericEmailPage";
+import NotFound from "../pages/NotFound/NotFound";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -16,16 +17,13 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* Onboarding Routes */}
-      {!isAuthenticated && (
+      {!isAuthenticated ? (
         <>
           <Route path="/*" element={<OnboardingRoutes />} />
+          {/* Redirect anything else to login (/) */}
           <Route path="*" element={<Navigate to="/" />} />
         </>
-      )}
-
-      {/* Main Routes */}
-      {isAuthenticated && (
+      ) : (
         <>
           <Route path="/interests" element={<SelectInterests />} />
           <Route path="/loadingData" element={<LoadingDataScreen />} />
@@ -102,7 +100,15 @@ const AppRoutes = () => {
             }
           />
 
-          <Route path="*" element={<Navigate to="/inbox" />} />
+          {/* 👇 404 route for logged-in users */}
+          <Route
+            path="*"
+            element={
+              <MainLayout>
+                <NotFound />
+              </MainLayout>
+            }
+          />
         </>
       )}
     </Routes>
