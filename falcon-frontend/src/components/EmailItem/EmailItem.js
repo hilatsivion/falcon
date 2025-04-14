@@ -22,8 +22,6 @@ export const EmailItem = ({
   onStarToggle,
 }) => {
   const senderInitial = sender ? sender.charAt(0).toUpperCase() : "?";
-  const { name: displayName, email: senderEmail } = parseSender(email?.sender);
-
   const hashCode = (str) => {
     let hash = 0;
     if (!str) return hash;
@@ -76,7 +74,9 @@ export const EmailItem = ({
           >
             {senderInitial}
           </div>
-          <span className="email-sender">{displayName || senderEmail}</span>
+          <span className="email-sender" style={unreadTextStyle}>
+            {sender}
+          </span>
         </div>
         <span className="email-time">{formatEmailTime(timeReceived)}</span>
       </div>

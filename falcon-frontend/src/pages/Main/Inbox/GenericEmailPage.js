@@ -14,10 +14,7 @@ const pageMap = {
   "/unread": { title: "Unread", api: "/api/mail/unread" },
   "/favorite": { title: "Favorite", api: "/api/mail/favorite" },
   "/sent": { title: "Sent", api: "/api/mail/sent" },
-  "/search-results": {
-    title: "Results",
-    api: null,
-  },
+  "/search-results": { title: "Results", api: null },
   "/filter-results": {
     title: "Filtered Results",
     api: "/api/mail/filter/results",
@@ -53,7 +50,9 @@ const GenericEmailPage = () => {
       try {
         const response = await fetch(
           `${API_BASE_URL}/api/mail/received/full/${mailId}`,
-          { headers: { Authorization: `Bearer ${authToken}` } }
+          {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }
         );
         if (!response.ok) throw new Error("Failed to fetch full email");
         return await response.json();
@@ -67,10 +66,76 @@ const GenericEmailPage = () => {
     [authToken]
   );
 
+  const updateReadStatusAPI = useCallback(
+    async (mailIds, isRead) => {
+      if (!authToken || !mailIds || mailIds.length === 0) return false;
+      const body = mailIds.map((id) => ({ mailId: id, isRead }));
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/mail/read`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok) throw new Error("Failed to update read status");
+        return true;
+      } catch (err) {
+        toast.error("Failed to update read status.");
+        return false;
+      }
+    },
+    [authToken]
+  );
+
+  const toggleFavoriteAPI = useCallback(
+    async (mailId, newFavoriteStatus) => {
+      if (!authToken || mailId === undefined) return false;
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/mail/favorite/${mailId}/${newFavoriteStatus}`,
+          {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${authToken}` },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to update favorite status");
+        return true;
+      } catch (err) {
+        return false;
+      }
+    },
+    [authToken]
+  );
+
+  const deleteEmailAPI = useCallback(
+    async (mailId, mailAccountId) => {
+      if (!authToken || !mailId || !mailAccountId) return false;
+      const body = [{ mailId, mailAccountId }];
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/mail/delete`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok && response.status !== 204)
+          throw new Error("Failed to delete email");
+        toast.success("Email deleted.");
+        return true;
+      } catch (err) {
+        toast.error("Failed to delete email.");
+        return false;
+      }
+    },
+    [authToken]
+  );
+
   const fetchEmails = useCallback(async () => {
     if (!authToken || !apiPath) return;
-
-    if (!authToken) return;
     setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}${apiPath}`, {
@@ -101,11 +166,8 @@ const GenericEmailPage = () => {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-
     if (pathname === "/search-results") {
       const resultsFromSearch = location.state?.results;
-      console.log("🧪 Search results from location.state:", resultsFromSearch);
-
       if (resultsFromSearch && Array.isArray(resultsFromSearch)) {
         setEmails(resultsFromSearch);
       } else {
@@ -118,21 +180,124 @@ const GenericEmailPage = () => {
 
   const handleEmailSelect = useCallback(
     async (mailId) => {
-      const preview = emails.find((e) => e.mailId === mailId);
-      if (!preview || isFetchingFullEmail) return;
-
+      const previewEmail = emails.find((e) => e.mailId === mailId);
+      if (!previewEmail || isFetchingFullEmail) return;
       setSelectedMailId(mailId);
-      setFullEmailData(null);
       setIsEmailViewOpen(false);
+      setFullEmailData(null);
 
-      const data = await fetchFullEmail(mailId);
-      if (data) {
-        setFullEmailData(data);
+      let markedReadLocally = false;
+      if (!previewEmail.isRead) {
+        setEmails((prev) =>
+          prev.map((e) => (e.mailId === mailId ? { ...e, isRead: true } : e))
+        );
+        markedReadLocally = true;
+      }
+
+      const fetchedData = await fetchFullEmail(mailId);
+      if (fetchedData) {
+        setFullEmailData(fetchedData);
         setIsEmailViewOpen(true);
+        if (markedReadLocally) updateReadStatusAPI([mailId], true);
+      } else {
+        if (markedReadLocally) {
+          setEmails((prev) =>
+            prev.map((e) => (e.mailId === mailId ? { ...e, isRead: false } : e))
+          );
+        }
+        setSelectedMailId(null);
       }
     },
-    [emails, isFetchingFullEmail, fetchFullEmail]
+    [emails, isFetchingFullEmail, fetchFullEmail, updateReadStatusAPI]
   );
+
+  const handleToggleFavorite = useCallback(
+    async (mailId, newFavoriteStatus) => {
+      setEmails((prev) =>
+        prev.map((e) =>
+          e.mailId === mailId ? { ...e, isFavorite: newFavoriteStatus } : e
+        )
+      );
+      if (isEmailViewOpen && fullEmailData?.mailId === mailId) {
+        setFullEmailData((prev) =>
+          prev ? { ...prev, isFavorite: newFavoriteStatus } : null
+        );
+      }
+      const success = await toggleFavoriteAPI(mailId, newFavoriteStatus);
+      if (!success) {
+        toast.error("Failed to update favorite status");
+        setEmails((prev) =>
+          prev.map((e) =>
+            e.mailId === mailId ? { ...e, isFavorite: !newFavoriteStatus } : e
+          )
+        );
+        if (isEmailViewOpen && fullEmailData?.mailId === mailId) {
+          setFullEmailData((prev) =>
+            prev ? { ...prev, isFavorite: !newFavoriteStatus } : null
+          );
+        }
+      }
+    },
+    [isEmailViewOpen, fullEmailData, toggleFavoriteAPI]
+  );
+
+  const handleDeleteEmail = useCallback(async () => {
+    if (!fullEmailData) return;
+    const { mailId, mailAccountId } = fullEmailData;
+    const success = await deleteEmailAPI(mailId, mailAccountId);
+    if (success) {
+      setEmails((prev) => prev.filter((e) => e.mailId !== mailId));
+      setIsEmailViewOpen(false);
+      setFullEmailData(null);
+      setSelectedMailId(null);
+    }
+  }, [fullEmailData, deleteEmailAPI]);
+
+  const handleMarkUnread = useCallback(async () => {
+    if (!fullEmailData) return;
+    const { mailId } = fullEmailData;
+    const success = await updateReadStatusAPI([mailId], false);
+    if (success) {
+      setEmails((prev) =>
+        prev.map((e) => (e.mailId === mailId ? { ...e, isRead: false } : e))
+      );
+      setIsEmailViewOpen(false);
+      setFullEmailData(null);
+      setSelectedMailId(null);
+    }
+  }, [fullEmailData, updateReadStatusAPI]);
+
+  const handleCloseEmailView = useCallback(() => {
+    setIsEmailViewOpen(false);
+    setFullEmailData(null);
+    setSelectedMailId(null);
+  }, []);
+
+  const handleReply = useCallback(() => {
+    if (!fullEmailData) return;
+    let replyToAddress = fullEmailData.sender;
+    const match = fullEmailData.sender?.match(/<(.+)>/);
+    if (match && match[1]) replyToAddress = match[1];
+    else if (fullEmailData.sender?.includes("@"))
+      replyToAddress = fullEmailData.sender;
+    navigate("/compose", {
+      state: { to: replyToAddress, subject: `Re: ${fullEmailData.subject}` },
+    });
+  }, [navigate, fullEmailData]);
+
+  const handleForward = useCallback(() => {
+    if (!fullEmailData) return;
+    const forwardBody = `\n\n---------- Forwarded message ----------\nFrom: ${
+      fullEmailData.sender
+    }\nDate: ${new Date(
+      fullEmailData.timeReceived
+    ).toLocaleString()}\nSubject: ${fullEmailData.subject}\n\n${
+      fullEmailData.body || ""
+    }`;
+    navigate("/compose", {
+      state: { subject: `Fwd: ${fullEmailData.subject}`, body: forwardBody },
+    });
+  }, [navigate, fullEmailData]);
 
   let listContent;
   if (isLoading) {
@@ -152,7 +317,7 @@ const GenericEmailPage = () => {
       <InboxEmailList
         emails={emails}
         onEmailSelect={handleEmailSelect}
-        onToggleFavorite={() => {}}
+        onToggleFavorite={handleToggleFavorite}
       />
     );
   }
@@ -164,22 +329,28 @@ const GenericEmailPage = () => {
         isListView={isListView}
         onToggleView={() => setIsListView(!isListView)}
         showBackButton={pathname === "/search-results"}
-        onBack={() => navigate("/search")} // 👈 Back to the search page
+        onBack={() => navigate("/search")}
       />
       {isListView ? listContent : <FilterFolderPage />}
-      {isEmailViewOpen && fullEmailData && (
+      {isFetchingFullEmail && (
+        <div className="fullscreen-loader">
+          <Loader />
+        </div>
+      )}
+      {!isFetchingFullEmail && isEmailViewOpen && fullEmailData && (
         <EmailView
           email={fullEmailData}
-          onClose={() => {
-            setIsEmailViewOpen(false);
-            setFullEmailData(null);
-            setSelectedMailId(null);
-          }}
-          onDelete={() => {}}
-          onMarkUnread={() => {}}
-          onToggleFavorite={() => {}}
-          onReply={() => {}}
-          onForward={() => {}}
+          onClose={handleCloseEmailView}
+          onDelete={handleDeleteEmail}
+          onMarkUnread={handleMarkUnread}
+          onToggleFavorite={() =>
+            handleToggleFavorite(
+              fullEmailData.mailId,
+              !fullEmailData.isFavorite
+            )
+          }
+          onReply={handleReply}
+          onForward={handleForward}
         />
       )}
     </div>
