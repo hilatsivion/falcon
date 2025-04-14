@@ -69,6 +69,13 @@
   margin-top: 4px;
 }
 
+.email-subject-line {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 /* More Options */
 .email-view .email-more-icon {
   width: 20px;
