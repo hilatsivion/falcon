@@ -176,4 +176,9 @@
         public List<string> Tags { get; set; } = new(); 
     }
 
+    public class FavoriteEmailsDto
+    {
+        public List<MailReceivedPreviewDto> ReceivedFavorites { get; set; } = new List<MailReceivedPreviewDto>();
+        public List<MailSentPreviewDto> SentFavorites { get; set; } = new List<MailSentPreviewDto>();
+    }
 }
