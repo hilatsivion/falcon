@@ -113,4 +113,5 @@
 .email-item .email-time {
   font-size: 12px;
   color: var(--icons-grey);
+  text-wrap-mode: nowrap;
 }
