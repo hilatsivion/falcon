@@ -30,17 +30,14 @@ namespace FalconBackend.Services
 
         private async Task CreateTestMailAccountForUserAsync(AppUser user)
         {
-            Console.WriteLine($"Creating test mail account for user {user.Email}...");
-            var randomEmail = $"test_{Guid.NewGuid().ToString("N").Substring(0, 8)}@example.com";
-
             var newAccount = new MailAccount
             {
-                AppUserEmail = user.Email, // Use email from the passed user object
-                EmailAddress = randomEmail,
-                Token = Guid.NewGuid().ToString(), // Placeholder token
-                Provider = MailAccount.MailProvider.Gmail, // Default test provider
+                AppUserEmail = user.Email, 
+                EmailAddress = user.Email,
+                Token = Guid.NewGuid().ToString(),
+                Provider = MailAccount.MailProvider.Gmail, 
                 LastMailSync = DateTime.UtcNow,
-                IsDefault = true // Make this first account the default
+                IsDefault = true 
             };
 
             _context.MailAccounts.Add(newAccount);
