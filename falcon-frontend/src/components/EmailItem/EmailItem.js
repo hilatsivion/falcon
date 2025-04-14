@@ -1,10 +1,11 @@
 import React from "react";
+import { Tag } from "../Tag/Tag";
+import "./EmailItem.css";
+import { formatEmailTime } from "../../utils/formatters";
+
+import "../../styles/global.css";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
 import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-star.svg";
-import { Tag } from "../../pages/Main/Inbox/Inbox";
-import "./EmailItem.css";
-import "../../styles/global.css";
-import { formatEmailTime } from "../../utils/formatters";
 
 export const EmailItem = ({
   mailId,

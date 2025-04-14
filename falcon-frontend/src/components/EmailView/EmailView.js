@@ -8,7 +8,7 @@ import backIcon from "../../assets/icons/black/arrow-left-20.svg";
 import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-star.svg";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
 import { ReactComponent as CopyIcon } from "../../assets/icons/black/copy_to_clipboard.svg";
-import { Tag } from "../../pages/Main/Inbox/Inbox";
+import { Tag } from "../Tag/Tag";
 import "./EmailView.css";
 
 import { CopyToClipboard } from "react-copy-to-clipboard";
