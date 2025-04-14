@@ -10,6 +10,7 @@ import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-
 import { ReactComponent as CopyIcon } from "../../assets/icons/black/copy_to_clipboard.svg";
 import { Tag } from "../Tag/Tag";
 import "./EmailView.css";
+import { parseSender } from "../../utils/emailUtils";
 
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { toast } from "react-toastify";
@@ -24,6 +25,7 @@ const EmailView = ({
   onForward,
 }) => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const { name: displayName, email: senderEmail } = parseSender(email?.sender);
 
   if (!email) {
     return null;
@@ -104,7 +106,9 @@ const EmailView = ({
                       >
                         {senderInitial}
                       </div>
-                      <span className="email-sender">{email.sender}</span>
+                      <span className="email-sender">
+                        {displayName || senderEmail}
+                      </span>{" "}
                     </div>
                     <div className="email-recipient-line">
                       <span className="email-recipients">
