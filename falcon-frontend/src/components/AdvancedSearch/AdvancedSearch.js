@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
@@ -17,6 +17,7 @@ const AdvancedSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { authToken } = useAuth();
   const navigate = useNavigate();
+  const trimmedKeyword = keyword.trim();
 
   useEffect(() => {
     try {
@@ -24,11 +25,11 @@ const AdvancedSearch = () => {
       if (storedHistory) {
         setLastSearches(JSON.parse(storedHistory));
       } else {
-        setLastSearches(["Files", "Movie tickets", "Hand over by"]);
+        setLastSearches([]);
       }
     } catch (error) {
       console.error("Failed to load search history:", error);
-      setLastSearches(["Files", "Movie tickets", "Hand over by"]);
+      setLastSearches([]);
     }
   }, []);
 
@@ -68,13 +69,8 @@ const AdvancedSearch = () => {
       Recipient: receiver.trim() || PLACEHOLDER,
     };
 
-    let currentSearchTerm = [keyword.trim(), sender.trim(), receiver.trim()]
-      .filter(Boolean)
-      .join("; ");
     const searchUrl = `${API_BASE_URL}/api/mail/search`;
-
     console.log("Sending POST search request with body:", requestBody); // Check the body
-
     try {
       const response = await fetch(searchUrl, {
         method: "POST",
@@ -86,28 +82,29 @@ const AdvancedSearch = () => {
       });
 
       if (!response.ok) {
-        let errorMsg = `Search failed (${response.status})`;
-        try {
-          const errData = await response.json();
-          errorMsg = errData.message || errorMsg;
-        } catch (errParsing) {}
+        const errData = await response.json().catch(() => null);
+        const errorMsg =
+          errData?.message || `Search failed (${response.status})`;
         throw new Error(errorMsg);
       }
       const results = await response.json();
-      // Add to history...
+      console.log("====================================");
+      console.log(results);
+      console.log("====================================");
+      // Add to history the searched keywords
       if (
-        currentSearchTerm &&
-        (!lastSearches.length || lastSearches[0] !== currentSearchTerm)
+        trimmedKeyword &&
+        (!lastSearches.length || lastSearches[0] !== trimmedKeyword)
       ) {
         const updatedHistory = [
-          currentSearchTerm,
-          ...lastSearches.filter((item) => item !== currentSearchTerm),
+          trimmedKeyword,
+          ...lastSearches.filter((item) => item !== trimmedKeyword),
         ].slice(0, MAX_HISTORY_ITEMS);
         setLastSearches(updatedHistory);
         saveSearchHistory(updatedHistory);
       }
       // Navigate...
-      navigate("/search/results", {
+      navigate("/search-results", {
         state: { results: results, query: { keyword, sender, receiver } },
       });
     } catch (error) {
@@ -125,8 +122,6 @@ const AdvancedSearch = () => {
 
   const reuseSearchTerm = (term) => {
     setKeyword(term);
-    setSender("");
-    setReceiver("");
   };
 
   return (

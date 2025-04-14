@@ -55,3 +55,8 @@
   opacity: 0.5;
   filter: brightness(0.7);
 }
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
