@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import "./connect.css";
 import "../../../styles/global.css";
-import { loginUser } from "../../../utils/auth";
 
 import eyeOpenIcon from "../../../assets/icons/black/eye-open.svg";
 import eyeClosedIcon from "../../../assets/icons/black/eye-closed.svg";
@@ -14,8 +13,8 @@ import errorSound from "../../../assets/sounds/error-message.mp3";
 import Loader from "../../../components/Loader/Loader";
 import { API_BASE_URL } from "../../../config/constants";
 import { useAuth } from "../../../context/AuthContext";
+import { toast } from "react-toastify";
 
-import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../../../styles/toastify-custom.css";
 
@@ -67,6 +66,7 @@ const Login = () => {
   // Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -211,7 +211,6 @@ const Login = () => {
       <button className="btn-white btn-login" onClick={handleSubmit}>
         Log in
       </button>
-      <ToastContainer />
     </div>
   );
 };

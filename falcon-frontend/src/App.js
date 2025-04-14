@@ -8,8 +8,8 @@ import { AuthProvider } from "./context/AuthContext";
 
 const App = () => {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <AppRoutes />
         <ToastContainer
           position="top-right"
@@ -22,8 +22,8 @@ const App = () => {
           draggable
           pauseOnHover
         />
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 
