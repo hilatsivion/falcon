@@ -1,6 +1,5 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Inbox from "../pages/Main/Inbox/Inbox";
 import Analytics from "../pages/Main/Analytics/Analytics";
 import Compose from "../pages/Main/Compose/Compose";
 import MainLayout from "../layouts/MainLayout";
@@ -8,6 +7,7 @@ import OnboardingRoutes from "./OnboardingRoutes";
 import AdvancedSearch from "../components/AdvancedSearch/AdvancedSearch";
 import SelectInterests from "../pages/Onboarding/SelectInterests/SelectInterests"; // <<< Import Interests
 import LoadingDataScreen from "../pages/Onboarding/LoadingDataScreen/LoadingDataScreen"; // <<< Import Loading
+import GenericEmailPage from "../pages/Main/Inbox/GenericEmailPage";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -33,7 +33,7 @@ const AppRoutes = () => {
             path="/inbox"
             element={
               <MainLayout>
-                <Inbox />
+                <GenericEmailPage />
               </MainLayout>
             }
           />
@@ -58,6 +58,30 @@ const AppRoutes = () => {
             element={
               <MainLayout>
                 <AdvancedSearch />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/unread"
+            element={
+              <MainLayout>
+                <GenericEmailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/favorite"
+            element={
+              <MainLayout>
+                <GenericEmailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/sent"
+            element={
+              <MainLayout>
+                <GenericEmailPage />
               </MainLayout>
             }
           />
