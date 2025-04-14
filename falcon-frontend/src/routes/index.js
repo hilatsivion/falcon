@@ -85,6 +85,22 @@ const AppRoutes = () => {
               </MainLayout>
             }
           />
+          <Route
+            path="/search-results"
+            element={
+              <MainLayout>
+                <GenericEmailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/filter-results"
+            element={
+              <MainLayout>
+                <GenericEmailPage />
+              </MainLayout>
+            }
+          />
 
           <Route path="*" element={<Navigate to="/inbox" />} />
         </>

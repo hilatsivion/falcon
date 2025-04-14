@@ -21,6 +21,7 @@ ul {
 }
 li {
   padding-bottom: 5px;
+  font-size: 13px;
 }
 
 .last-searched {
@@ -59,4 +60,9 @@ li {
 
 .width-100 {
   width: 100%;
+}
+
+.search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

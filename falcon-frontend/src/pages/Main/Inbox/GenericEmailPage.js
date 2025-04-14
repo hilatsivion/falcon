@@ -16,7 +16,7 @@ const pageMap = {
   "/sent": { title: "Sent", api: "/api/mail/sent" },
   "/search-results": {
     title: "Results",
-    api: "/api/mail/search/results",
+    api: null,
   },
   "/filter-results": {
     title: "Filtered Results",
@@ -68,6 +68,8 @@ const GenericEmailPage = () => {
   );
 
   const fetchEmails = useCallback(async () => {
+    if (!authToken || !apiPath) return;
+
     if (!authToken) return;
     setIsLoading(true);
     try {
@@ -96,6 +98,23 @@ const GenericEmailPage = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    if (pathname === "/search-results") {
+      const resultsFromSearch = location.state?.results;
+      console.log("🧪 Search results from location.state:", resultsFromSearch);
+
+      if (resultsFromSearch && Array.isArray(resultsFromSearch)) {
+        setEmails(resultsFromSearch);
+      } else {
+        setEmails([]);
+      }
+    } else {
+      fetchEmails();
+    }
+  }, [isAuthenticated, fetchEmails, pathname, location.state]);
 
   const handleEmailSelect = useCallback(
     async (mailId) => {
@@ -144,6 +163,8 @@ const GenericEmailPage = () => {
         title={title}
         isListView={isListView}
         onToggleView={() => setIsListView(!isListView)}
+        showBackButton={pathname === "/search-results"}
+        onBack={() => navigate("/search")} // 👈 Back to the search page
       />
       {isListView ? listContent : <FilterFolderPage />}
       {isEmailViewOpen && fullEmailData && (
