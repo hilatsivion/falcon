@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 const Compose = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [hasSent, setHasSent] = useState(false);
 
   const initialTo = location.state?.to || "";
   const initialSubject = location.state?.subject || "";
@@ -84,6 +85,8 @@ const Compose = () => {
   };
 
   const handleSendClick = async () => {
+    if (hasSent || isLoading) return;
+    setHasSent(true);
     setError(null);
 
     if (!isValidEmail(to)) {
@@ -139,6 +142,7 @@ const Compose = () => {
       const msg = err.message || "A network error occurred.";
       setError(msg);
       toast.error(msg);
+      setHasSent(false);
     } finally {
       setIsLoading(false);
     }

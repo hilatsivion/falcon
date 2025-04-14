@@ -1,43 +1,20 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
 import FilterFolderPage from "../FilterFolderPage/FilterFolderPage";
 import InboxEmailList from "./InboxEmailList";
 import EmailView from "../../../components/EmailView/EmailView";
 import Loader from "../../../components/Loader/Loader";
-import listIcon from "../../../assets/icons/black/list.svg";
-import folderIcon from "../../../assets/icons/black/folder.svg";
 import "./Inbox.css";
 import { API_BASE_URL } from "../../../config/constants";
 import { useAuth } from "../../../context/AuthContext";
-
-export const Tag = ({ name }) => {
-  const tagColors = {
-    Inbox: "#cbd5ff",
-    Social: "#c8facc",
-    School: "#f6d6b8",
-    Work: "#b8ebf6",
-    Personal: "#ffb3c6",
-    Finance: "#ffd700",
-    Promotions: "#ff9f43",
-    Updates: "#6c757d",
-    Forums: "#28a745",
-    Travel: "#007bff",
-  };
-  return (
-    <span
-      className="email-tag"
-      style={{ backgroundColor: tagColors[name] || "#ddd" }}
-    >
-      {name}
-    </span>
-  );
-};
+import HeaderWithSwitch from "../../../components/HeaderWithSwitch/HeaderWithSwitch";
 
 const Inbox = () => {
   const { authToken, isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const toastShownRef = useRef(false);
 
   const [isListView, setIsListView] = useState(true);
   const [emails, setEmails] = useState([]);
@@ -205,10 +182,12 @@ const Inbox = () => {
   }, [isAuthenticated, fetchInboxPreviews]);
 
   useEffect(() => {
-    if (location.state?.message) {
-      const message = location.state.message;
-      window.history.replaceState({}, document.title);
+    const message = location.state?.message;
+
+    if (message && !toastShownRef.current) {
+      toastShownRef.current = true;
       toast.success(message);
+      window.history.replaceState({}, document.title); // clears the message
     }
   }, [location.state]);
 
@@ -359,7 +338,9 @@ const Inbox = () => {
       <p className="padding-sides">Please log in to view your inbox.</p>
     );
   } else if (emails.length === 0) {
-    listContent = <p className="padding-sides">Your inbox is empty.</p>;
+    listContent = (
+      <p className="padding-sides inbox-empty">Your inbox is empty.</p>
+    );
   } else {
     listContent = (
       <InboxEmailList
@@ -372,28 +353,11 @@ const Inbox = () => {
 
   return (
     <div className="page-container">
-      <div className="space-between-full-wid bottom-line-grey">
-        <h1>Inbox</h1>
-        <div
-          className="switch-button"
-          onClick={() => setIsListView(!isListView)}
-        >
-          <div
-            className={`switch-circle ${isListView ? "left" : "right"}`}
-          ></div>
-          <img
-            src={listIcon}
-            alt="List"
-            className={`switch-icon ${isListView ? "active" : "inactive"}`}
-          />
-          <img
-            src={folderIcon}
-            alt="Folder"
-            className={`switch-icon ${isListView ? "inactive" : "active"}`}
-          />
-        </div>
-      </div>
-
+      <HeaderWithSwitch
+        title="Inbox"
+        isListView={isListView}
+        onToggleView={() => setIsListView(!isListView)}
+      />
       {isListView ? listContent : <FilterFolderPage />}
 
       {isFetchingFullEmail && (

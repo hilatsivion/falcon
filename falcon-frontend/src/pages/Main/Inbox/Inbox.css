@@ -1,62 +1,3 @@
-.switch-button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 60px;
-  height: 30px;
-  background-color: #d9e9ff;
-  border-radius: 15px;
-  position: relative;
-  padding: 3px 4px;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.switch-circle {
-  width: 24px;
-  height: 24px;
-  background-color: #ffffff;
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  transition: left 0.3s ease-in-out;
-}
-
-.switch-circle.left {
-  left: 4px;
-}
-
-.switch-circle.right {
-  left: 32px;
-}
-
-.switch-icon {
-  width: 16px;
-  height: 16px;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  transition: opacity 0.3s ease-in-out, filter 0.3s ease-in-out;
-}
-
-.switch-icon:first-of-type {
-  left: 8px;
-}
-
-.switch-icon:last-of-type {
-  right: 8px;
-}
-
-.switch-icon.active {
-  opacity: 1;
-  filter: brightness(0);
-}
-
-.switch-icon.inactive {
-  opacity: 0.5;
-  filter: brightness(0.7);
-}
-
 /* Tags Section */
 .email-tags {
   display: flex;
@@ -89,4 +30,9 @@
   height: 30px;
   position: relative;
   left: 7px;
+}
+
+.padding-sides.inbox-empty {
+  text-align: center;
+  padding-top: 20px;
 }
