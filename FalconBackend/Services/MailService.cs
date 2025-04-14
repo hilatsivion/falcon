@@ -648,6 +648,106 @@ namespace FalconBackend.Services
             return snippet;
         }
 
+        public async Task<FavoriteEmailsDto> GetFavoriteEmailPreviewsAsync(string userEmail, int page = 1, int pageSize = 100) 
+        {
+            var userMailAccountIds = await _context.MailAccounts
+                                              .Where(ma => ma.AppUserEmail == userEmail)
+                                              .Select(ma => ma.MailAccountId)
+                                              .ToListAsync();
+
+            if (!userMailAccountIds.Any())
+            {
+                return new FavoriteEmailsDto(); 
+            }
+
+            int itemsToTakePerType = pageSize; 
+
+            var receivedFavoritesQuery = _context.MailReceived
+                                        .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
+                                        .Where(m => userMailAccountIds.Contains(m.MailAccountId) && m.IsFavorite == true);
+
+            var sentFavoritesQuery = _context.MailSent
+                                    .Include(m => m.Recipients)
+                                    .Where(m => userMailAccountIds.Contains(m.MailAccountId) && m.IsFavorite == true);
+
+            // Execute sequentially
+            var receivedFavorites = await receivedFavoritesQuery
+                                        .OrderByDescending(m => m.TimeReceived) 
+                                        .Skip((page - 1) * itemsToTakePerType) 
+                                        .Take(itemsToTakePerType)
+                                        .Select(m => new MailReceivedPreviewDto
+                                        {
+                                            MailId = m.MailId,
+                                            MailAccountId = m.MailAccountId,
+                                            Subject = m.Subject,
+                                            Sender = m.Sender,
+                                            TimeReceived = m.TimeReceived,
+                                            Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList() ?? new List<string>(),
+                                            BodySnippet = GenerateBodySnippet(m.Body),
+                                            IsRead = m.IsRead,
+                                            IsFavorite = m.IsFavorite
+                                        })
+                                        .ToListAsync();
+
+            var sentFavorites = await sentFavoritesQuery
+                                        .OrderByDescending(m => m.TimeSent) 
+                                        .Skip((page - 1) * itemsToTakePerType) 
+                                        .Take(itemsToTakePerType)
+                                        .Select(m => new MailSentPreviewDto
+                                        {
+                                            MailId = m.MailId,
+                                            MailAccountId = m.MailAccountId,
+                                            Subject = m.Subject,
+                                            TimeSent = m.TimeSent,
+                                            Recipients = m.Recipients.Select(r => r.Email).ToList() ?? new List<string>(),
+                                            BodySnippet = GenerateBodySnippet(m.Body),
+                                            IsFavorite = m.IsFavorite
+                                        })
+                                        .ToListAsync();
+
+            return new FavoriteEmailsDto
+            {
+                ReceivedFavorites = receivedFavorites,
+                SentFavorites = sentFavorites
+            };
+        }
+
+
+        public async Task<List<MailReceivedPreviewDto>> GetUnreadEmailPreviewsAsync(string userEmail, int page = 1, int pageSize = 100)
+        {
+            var userMailAccountIds = await _context.MailAccounts
+                                             .Where(ma => ma.AppUserEmail == userEmail)
+                                             .Select(ma => ma.MailAccountId)
+                                             .ToListAsync();
+
+            if (!userMailAccountIds.Any())
+            {
+                return new List<MailReceivedPreviewDto>();
+            }
+
+            var unreadEmails = await _context.MailReceived
+                                       .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
+                                       .Where(m => userMailAccountIds.Contains(m.MailAccountId) && m.IsRead == false) 
+                                       .OrderByDescending(m => m.TimeReceived)
+                                       .Skip((page - 1) * pageSize)
+                                       .Take(pageSize)
+                                       .Select(m => new MailReceivedPreviewDto
+                                       {
+                                           MailId = m.MailId,
+                                           MailAccountId = m.MailAccountId,
+                                           Subject = m.Subject,
+                                           Sender = m.Sender,
+                                           TimeReceived = m.TimeReceived,
+                                           Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList() ?? new List<string>(),
+                                           BodySnippet = GenerateBodySnippet(m.Body),
+                                           IsRead = m.IsRead,
+                                           IsFavorite = m.IsFavorite
+                                       })
+                                       .ToListAsync();
+
+            return unreadEmails;
+        }
+
     }
 
 }

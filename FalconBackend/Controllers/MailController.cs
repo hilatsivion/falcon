@@ -94,6 +94,51 @@ namespace FalconBackend.Controllers
             }
         }
 
+        [HttpGet("favorites/preview")]
+        [Authorize]
+        public async Task<IActionResult> GetFavoritePreviews([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                var favoriteEmails = await _mailService.GetFavoriteEmailPreviewsAsync(userEmail, page, pageSize);
+                return Ok(favoriteEmails); // Returns FavoriteEmailsDto { ReceivedFavorites: [...], SentFavorites: [...] }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Error fetching favorite previews for user {User.FindFirstValue(ClaimTypes.Email)}: {ex.Message} ---");
+                return StatusCode(500, "An error occurred while retrieving favorite emails.");
+            }
+        }
+
+
+        [HttpGet("unread/preview")]
+        [Authorize]
+        public async Task<IActionResult> GetUnreadPreviews([FromQuery] int page = 1, [FromQuery] int pageSize = 100)
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                var unreadEmails = await _mailService.GetUnreadEmailPreviewsAsync(userEmail, page, pageSize);
+                return Ok(unreadEmails); 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Error fetching unread previews for user {User.FindFirstValue(ClaimTypes.Email)}: {ex.Message} ---");
+                return StatusCode(500, "An error occurred while retrieving unread emails.");
+            }
+        }
+
         [HttpGet("received/byMailAccount/{mailAccountId}/preview")]
         public async Task<IActionResult> GetReceivedByMailAccountPreview(string mailAccountId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
