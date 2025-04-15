@@ -51,12 +51,13 @@ const dummyFilters = [
   },
 ];
 
-const FilterFolderPage = () => {
+const FilterFolderPage = ({ setIsListView }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleFilterClick = (filterId) => {
-    navigate(`/filters/${filterId}`);
+  const handleFilterClick = (filter) => {
+    navigate(`/filters/${filter.id}`, { state: filter });
+    setIsListView(true); // 👈 this will switch back to email list view
   };
 
   return (
@@ -66,7 +67,7 @@ const FilterFolderPage = () => {
           <div
             className={`folder-card`}
             key={filter.id}
-            onClick={() => handleFilterClick(filter.id)}
+            onClick={() => handleFilterClick(filter)}
           >
             <div className={`folder-top-row ${filter.color}`}>
               <Dots className="folder-dot" />

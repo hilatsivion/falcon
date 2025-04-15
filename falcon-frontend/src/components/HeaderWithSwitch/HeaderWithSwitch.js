@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import listIcon from "../../assets/icons/black/list.svg";
 import folderIcon from "../../assets/icons/black/folder.svg";
 import backIcon from "../../assets/icons/black/arrow-left-full.svg";
@@ -10,13 +11,31 @@ const HeaderWithSwitch = ({
   onToggleView,
   showBackButton,
   onBack,
-  colorBar, // 🎨 פס צבע אם קיים
+  colorBar,
 }) => {
+  const location = useLocation();
+
+  const determineTitle = () => {
+    if (!isListView && !location.pathname.startsWith("/filters/")) {
+      return "Filters";
+    }
+
+    if (location.pathname === "/inbox") return "Inbox";
+    if (location.pathname === "/unread") return "Unread";
+    if (location.pathname === "/favorite") return "Favorite";
+    if (location.pathname === "/sent") return "Sent";
+    if (location.pathname === "/search-results") return "Results";
+    if (location.pathname === "/filter-results") return "Filtered Results";
+    if (location.pathname.startsWith("/filters/")) return "Filter Folder";
+
+    return "Inbox";
+  };
+
   return (
     <div className="header-wrapper">
       <div
-        id="header-inbox"
         className="space-between-full-wid bottom-line-grey"
+        id="header-inbox"
       >
         <div className="header-left">
           {showBackButton && (
@@ -28,14 +47,12 @@ const HeaderWithSwitch = ({
               style={{ cursor: "pointer", marginRight: "12px", height: "20px" }}
             />
           )}
-          <h1>{title}</h1>
+          <h1>{title || determineTitle()}</h1>
         </div>
 
         {onToggleView && (
           <div className="switch-button" onClick={onToggleView}>
-            <div
-              className={`switch-circle ${isListView ? "left" : "right"}`}
-            ></div>
+            <div className={`switch-circle ${isListView ? "left" : "right"}`} />
             <img
               src={listIcon}
               alt="List"
@@ -49,13 +66,7 @@ const HeaderWithSwitch = ({
           </div>
         )}
       </div>
-
-      {colorBar && (
-        <div
-          className="header-color-bar"
-          style={{ background: colorBar, height: "6px", width: "100%" }}
-        />
-      )}
+      {colorBar && <div className={`header-color-bar ${colorBar}`} />}
     </div>
   );
 };

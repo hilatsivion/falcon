@@ -46,14 +46,20 @@ const GenericEmailPage = () => {
   const [fullEmailData, setFullEmailData] = useState(null);
   const [isEmailViewOpen, setIsEmailViewOpen] = useState(false);
   const [isFetchingFullEmail, setIsFetchingFullEmail] = useState(false);
-  const shouldShowSwitch = !["/filter-results", "/search-results"].includes(
-    pathname
-  );
 
-  const { title, api: apiPath } = pageMap[pathname] || {
-    title: "Inbox",
-    api: "/api/mail/received/preview",
-  };
+  let title =
+    pathname.startsWith("/filters/") && location.state?.name
+      ? location.state.name
+      : pageMap[pathname]?.title || "Inbox";
+  let apiPath = "/api/mail/received/preview";
+
+  if (pageMap[pathname]) {
+    title = pageMap[pathname].title;
+    apiPath = pageMap[pathname].api;
+  } else if (pathname.startsWith("/filters/")) {
+    title = location.state?.name || "Filter Folder";
+    apiPath = null; // fetch filters manually
+  }
 
   const fetchFullEmail = useCallback(
     async (mailId) => {
@@ -153,13 +159,20 @@ const GenericEmailPage = () => {
     setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}${apiPath}`, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        method: pathname === "/filter-results" ? "POST" : "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body:
+          pathname === "/filter-results"
+            ? JSON.stringify(location.state?.filter)
+            : undefined,
       });
-      if (!response.ok) throw new Error("Failed to fetch emails");
 
+      if (!response.ok) throw new Error("Failed to fetch emails");
       const data = await response.json();
 
-      // 👇 Handle the special case of Favorite page
       if (pageMap[pathname]?.expectsCombinedFavorites) {
         const { receivedFavorites = [], sentFavorites = [] } = data;
         setEmails([...receivedFavorites, ...sentFavorites]);
@@ -172,7 +185,7 @@ const GenericEmailPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [authToken, apiPath, pathname]);
+  }, [authToken, apiPath, pathname, location.state]);
 
   useEffect(() => {
     if (isAuthenticated) fetchEmails();
@@ -189,11 +202,16 @@ const GenericEmailPage = () => {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+
     if (pathname === "/search-results") {
       const resultsFromSearch = location.state?.results;
-      if (resultsFromSearch && Array.isArray(resultsFromSearch)) {
-        setEmails(resultsFromSearch);
+      setEmails(Array.isArray(resultsFromSearch) ? resultsFromSearch : []);
+    } else if (pathname.startsWith("/filters/")) {
+      const filterData = location.state;
+      if (filterData) {
+        fetchFilteredEmails(filterData);
       } else {
+        toast.error("Missing filter data.");
         setEmails([]);
       }
     } else {
@@ -233,6 +251,31 @@ const GenericEmailPage = () => {
     },
     [emails, isFetchingFullEmail, fetchFullEmail, updateReadStatusAPI]
   );
+
+  const fetchFilteredEmails = async (filterData) => {
+    setIsLoading(true);
+    try {
+      // temporary demo data – replace with API call later
+      const demoEmails = [
+        {
+          mailId: "e1",
+          sender: "team@company.com",
+          subject: "Project Update",
+          bodySnippet: "Latest updates on the Q2 release...",
+          tags: ["Work"],
+          timeReceived: new Date().toISOString(),
+          isRead: false,
+          isFavorite: false,
+        },
+      ];
+      setEmails(demoEmails);
+    } catch (err) {
+      toast.error("Failed to fetch filtered emails.");
+      setEmails([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleToggleFavorite = useCallback(
     async (mailId, newFavoriteStatus) => {
@@ -345,62 +388,43 @@ const GenericEmailPage = () => {
     );
   }
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    if (pathname === "/filter-results") {
-      const { filterCriteria, filterColor } = location.state || {};
-      if (filterCriteria) {
-        // כשתהיה קריאה אמיתית לשרת זה יהיה fetch לפי הקריטריונים
-        fetchFilteredEmails(filterCriteria);
-      } else {
-        setEmails([]);
-      }
-    } else if (pathname === "/search-results") {
-      const resultsFromSearch = location.state?.results;
-      setEmails(Array.isArray(resultsFromSearch) ? resultsFromSearch : []);
-    } else {
-      fetchEmails();
-    }
-  }, [isAuthenticated, fetchEmails, pathname, location.state]);
-
-  const fetchFilteredEmails = async (filter) => {
-    setIsLoading(true);
-    try {
-      // ❗ כאן תבוא קריאה אמיתית בעתיד עם filter כ-body או query
-      const dummyResponse = await fetch("/dummy/filter-results.json");
-      const data = await dummyResponse.json();
-      setEmails(data);
-    } catch (err) {
-      setError("Failed to load filtered emails.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="page-container">
       <HeaderWithSwitch
         title={title}
         isListView={isListView}
-        onToggleView={() => setIsListView(!isListView)}
-        showBackButton={["/filter-results", "/search-results"].includes(
-          pathname
-        )}
-        onBack={() =>
-          navigate(pathname === "/search-results" ? "/search" : "/filters")
+        onToggleView={
+          pathname.startsWith("/filters/")
+            ? undefined
+            : () => setIsListView(!isListView)
         }
+        showBackButton={
+          pathname.startsWith("/filters/") || pathname === "/search-results"
+        }
+        onBack={() => {
+          if (pathname.startsWith("/filters/")) {
+            setIsListView(false);
+            navigate("/inbox");
+          } else {
+            navigate(pathname === "/search-results" ? "/search" : "/inbox");
+          }
+        }}
         colorBar={
-          pathname === "/filter-results" ? location.state?.filterColor : null
+          pathname.startsWith("/filters/") ? location.state?.color : null
         }
       />
 
-      {isListView ? listContent : <FilterFolderPage />}
+      {isListView ? (
+        listContent
+      ) : (
+        <FilterFolderPage setIsListView={setIsListView} />
+      )}
       {isFetchingFullEmail && (
         <div className="fullscreen-loader">
           <Loader />
         </div>
       )}
+
       {!isFetchingFullEmail && isEmailViewOpen && fullEmailData && (
         <EmailView
           email={fullEmailData}
