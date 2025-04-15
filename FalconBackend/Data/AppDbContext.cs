@@ -1,5 +1,6 @@
 ﻿using FalconBackend.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Net.Mail;
 
 
@@ -27,6 +28,8 @@ namespace FalconBackend.Data
         public DbSet<Tag> Tags { get; set; }
         public DbSet<MailTag> MailTags { get; set; }
         public DbSet<UserCreatedTag> UserCreatedTag { get; set; }
+        public DbSet<FilterFolder> FilterFolders { get; set; }
+        public DbSet<FilterFolderTag> FilterFolderTags { get; set; }
 
         // Fluent API configurations
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -135,6 +138,51 @@ namespace FalconBackend.Data
                 .WithMany()
                 .HasForeignKey(uct => uct.CreatedByUserEmail)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<FilterFolder>(entity =>
+            {
+                entity.Property(e => e.Keywords)
+                    .HasConversion(
+                        v => string.Join(';', v),
+                        v => v.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList()
+                     )
+                     .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                        (c1, c2) => c1.SequenceEqual(c2),
+                        c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                        c => c.ToList()));
+
+                // Configure SenderEmails List<string> similarly
+                entity.Property(e => e.SenderEmails)
+                    .HasConversion(
+                        v => string.Join(';', v),
+                        v => v.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList()
+                     )
+                     .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                        (c1, c2) => c1.SequenceEqual(c2),
+                        c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                        c => c.ToList()));
+
+                // Configure relationships for FilterFolder (as added in previous step)
+                entity.HasOne(f => f.AppUser)
+                      .WithMany(u => u.FilterFolders) // Assumes FilterFolders collection exists on AppUser
+                      .HasForeignKey(f => f.AppUserEmail)
+                      .IsRequired();
+            });
+
+
+            // --- Configure FilterFolder / Tag Many-to-Many (as added in previous step) ---
+            modelBuilder.Entity<FilterFolderTag>(entity =>
+            {
+                entity.HasKey(fft => new { fft.FilterFolderId, fft.TagId });
+
+                entity.HasOne(fft => fft.FilterFolder)
+                      .WithMany(f => f.FilterFolderTags)
+                      .HasForeignKey(fft => fft.FilterFolderId);
+
+                entity.HasOne(fft => fft.Tag)
+                      .WithMany(t => t.FilterFolderTags)
+                      .HasForeignKey(fft => fft.TagId);
+            });
 
 
             base.OnModelCreating(modelBuilder);

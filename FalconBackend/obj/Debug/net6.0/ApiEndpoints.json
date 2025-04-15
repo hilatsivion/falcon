@@ -173,6 +173,163 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetFavoritePreviews",
+    "RelativePath": "api/mail/favorites/preview",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.FilterController",
+    "Method": "CreateFilter",
+    "RelativePath": "api/mail/filters",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "createDto",
+        "Type": "FalconBackend.Models.FilterFolderCreateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "FalconBackend.Models.FilterFolderDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.FilterController",
+    "Method": "GetFilters",
+    "RelativePath": "api/mail/filters",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[FalconBackend.Models.FilterFolderDto, FalconBackend, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.FilterController",
+    "Method": "GetFilterById",
+    "RelativePath": "api/mail/filters/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "FalconBackend.Models.FilterFolderDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ],
+    "EndpointName": "GetFilterById"
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.FilterController",
+    "Method": "DeleteFilter",
+    "RelativePath": "api/mail/filters/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.FilterController",
+    "Method": "UpdateFilter",
+    "RelativePath": "api/mail/filters/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "updateDto",
+        "Type": "FalconBackend.Models.FilterFolderUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.FilterController",
+    "Method": "GetEmailsByFilter",
+    "RelativePath": "api/mail/filters/{id}/emails",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[FalconBackend.Models.EmailSummaryDto, FalconBackend, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
     "Method": "ToggleReadBatch",
     "RelativePath": "api/mail/read",
     "HttpMethod": "PUT",
@@ -348,6 +505,27 @@
     "ContainingType": "FalconBackend.Controllers.MailController",
     "Method": "GetSentEmailPreviews",
     "RelativePath": "api/mail/sent/preview",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetUnreadPreviews",
+    "RelativePath": "api/mail/unread/preview",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

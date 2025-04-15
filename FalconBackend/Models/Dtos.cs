@@ -1,4 +1,6 @@
-﻿namespace FalconBackend.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace FalconBackend.Models
 {
     public class LoginRequest
     {
@@ -181,4 +183,50 @@
         public List<MailReceivedPreviewDto> ReceivedFavorites { get; set; } = new List<MailReceivedPreviewDto>();
         public List<MailSentPreviewDto> SentFavorites { get; set; } = new List<MailSentPreviewDto>();
     }
+
+    public class FilterFolderCreateDto
+    {
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; } = string.Empty;
+        [MaxLength(20)]
+        public string? FolderColor { get; set; }
+        public List<string> Keywords { get; set; } = new List<string>();
+        public List<string> SenderEmails { get; set; } = new List<string>();
+        public List<int>? TagIds { get; set; }
+    }
+
+    public class FilterFolderUpdateDto
+    {
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; } = string.Empty;
+        [MaxLength(20)]
+        public string? FolderColor { get; set; }
+        public List<string> Keywords { get; set; } = new List<string>();
+        public List<string> SenderEmails { get; set; } = new List<string>();
+        public List<int>? TagIds { get; set; }
+    }
+
+    public class FilterFolderDto
+    {
+        public int FilterFolderId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? FolderColor { get; set; }
+        public List<string> Keywords { get; set; } = new List<string>();
+        public List<string> SenderEmails { get; set; } = new List<string>();
+        public List<TagDto> Tags { get; set; } = new List<TagDto>();
+    }
+
+    public class EmailSummaryDto
+    {
+        public int MailId { get; set; }
+        public string Subject { get; set; } = string.Empty;
+        public string SenderEmail { get; set; } = string.Empty;
+        public DateTime TimeReceived { get; set; }
+        public string BodyPreview { get; set; } = string.Empty;
+        public bool IsRead { get; set; }
+        public List<TagDto> Tags { get; set; } = new List<TagDto>();
+    }
+
 }

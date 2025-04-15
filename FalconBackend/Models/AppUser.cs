@@ -39,5 +39,6 @@ namespace FalconBackend.Models
         public ICollection<Contact> Contacts { get; set; }
 
         public ICollection<FavoriteTag> FavoriteTags { get; set; } = new List<FavoriteTag>();
+        public virtual ICollection<FilterFolder> FilterFolders { get; set; } = new List<FilterFolder>();
     }
 }

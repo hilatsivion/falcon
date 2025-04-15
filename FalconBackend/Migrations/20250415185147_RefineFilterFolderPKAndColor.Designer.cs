@@ -4,6 +4,7 @@ using FalconBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FalconBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250415185147_RefineFilterFolderPKAndColor")]
+    partial class RefineFilterFolderPKAndColor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -262,14 +264,13 @@ namespace FalconBackend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FilterFolderId"), 1L, 1);
 
-                    b.Property<string>("AppUserEmail")
+                    b.Property<string>("AppUserId")
                         .IsRequired()
-                        .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("FolderColor")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
 
                     b.Property<string>("Keywords")
                         .IsRequired()
@@ -286,7 +287,7 @@ namespace FalconBackend.Migrations
 
                     b.HasKey("FilterFolderId");
 
-                    b.HasIndex("AppUserEmail");
+                    b.HasIndex("AppUserId");
 
                     b.ToTable("FilterFolders");
                 });
@@ -294,12 +295,10 @@ namespace FalconBackend.Migrations
             modelBuilder.Entity("FalconBackend.Models.FilterFolderTag", b =>
                 {
                     b.Property<int>("FilterFolderId")
-                        .HasColumnType("int")
-                        .HasColumnOrder(0);
+                        .HasColumnType("int");
 
                     b.Property<int>("TagId")
-                        .HasColumnType("int")
-                        .HasColumnOrder(1);
+                        .HasColumnType("int");
 
                     b.HasKey("FilterFolderId", "TagId");
 
@@ -639,7 +638,7 @@ namespace FalconBackend.Migrations
                 {
                     b.HasOne("FalconBackend.Models.AppUser", "AppUser")
                         .WithMany("FilterFolders")
-                        .HasForeignKey("AppUserEmail")
+                        .HasForeignKey("AppUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -14,4 +14,5 @@ public class Tag
 
     public ICollection<FavoriteTag> FavoriteTags { get; set; } = new List<FavoriteTag>();
     public ICollection<MailTag> MailTags { get; set; } = new List<MailTag>();
+    public virtual ICollection<FilterFolderTag> FilterFolderTags { get; set; } = new List<FilterFolderTag>();
 }
