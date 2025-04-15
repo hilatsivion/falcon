@@ -46,6 +46,9 @@ const GenericEmailPage = () => {
   const [fullEmailData, setFullEmailData] = useState(null);
   const [isEmailViewOpen, setIsEmailViewOpen] = useState(false);
   const [isFetchingFullEmail, setIsFetchingFullEmail] = useState(false);
+  const shouldShowSwitch = !["/filter-results", "/search-results"].includes(
+    pathname
+  );
 
   const { title, api: apiPath } = pageMap[pathname] || {
     title: "Inbox",
@@ -342,15 +345,56 @@ const GenericEmailPage = () => {
     );
   }
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    if (pathname === "/filter-results") {
+      const { filterCriteria, filterColor } = location.state || {};
+      if (filterCriteria) {
+        // כשתהיה קריאה אמיתית לשרת זה יהיה fetch לפי הקריטריונים
+        fetchFilteredEmails(filterCriteria);
+      } else {
+        setEmails([]);
+      }
+    } else if (pathname === "/search-results") {
+      const resultsFromSearch = location.state?.results;
+      setEmails(Array.isArray(resultsFromSearch) ? resultsFromSearch : []);
+    } else {
+      fetchEmails();
+    }
+  }, [isAuthenticated, fetchEmails, pathname, location.state]);
+
+  const fetchFilteredEmails = async (filter) => {
+    setIsLoading(true);
+    try {
+      // ❗ כאן תבוא קריאה אמיתית בעתיד עם filter כ-body או query
+      const dummyResponse = await fetch("/dummy/filter-results.json");
+      const data = await dummyResponse.json();
+      setEmails(data);
+    } catch (err) {
+      setError("Failed to load filtered emails.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="page-container">
       <HeaderWithSwitch
         title={title}
         isListView={isListView}
         onToggleView={() => setIsListView(!isListView)}
-        showBackButton={pathname === "/search-results"}
-        onBack={() => navigate("/search")}
+        showBackButton={["/filter-results", "/search-results"].includes(
+          pathname
+        )}
+        onBack={() =>
+          navigate(pathname === "/search-results" ? "/search" : "/filters")
+        }
+        colorBar={
+          pathname === "/filter-results" ? location.state?.filterColor : null
+        }
       />
+
       {isListView ? listContent : <FilterFolderPage />}
       {isFetchingFullEmail && (
         <div className="fullscreen-loader">

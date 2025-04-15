@@ -23,22 +23,22 @@
   padding: 1px 10px;
 }
 
-.color-folder-0 {
+.color1 {
   background: var(--folder-green-1);
 }
-.color-folder-1 {
+.color2 {
   background: var(--folder-green-2);
 }
-.color-folder-2 {
+.color3 {
   background: var(--folder-orange);
 }
-.color-folder-3 {
+.color4 {
   background: var(--folder-purple);
 }
-.color-folder-4 {
+.color5 {
   background: var(--folder-blue);
 }
-.color-folder-5 {
+.color6 {
   background: var(--folder-yellow);
 }
 
