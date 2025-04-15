@@ -9,7 +9,6 @@ import SelectInterests from "../pages/Onboarding/SelectInterests/SelectInterests
 import LoadingDataScreen from "../pages/Onboarding/LoadingDataScreen/LoadingDataScreen";
 import GenericEmailPage from "../pages/Main/Inbox/GenericEmailPage";
 import NotFound from "../pages/NotFound/NotFound";
-// import FilterResultsPage from "../pages//";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -92,14 +91,6 @@ const AppRoutes = () => {
               </MainLayout>
             }
           />
-          <Route
-            path="/filter-results"
-            element={
-              <MainLayout>
-                <GenericEmailPage />
-              </MainLayout>
-            }
-          />
 
           {/* 404 route for logged-in users */}
           <Route
@@ -111,14 +102,14 @@ const AppRoutes = () => {
             }
           />
 
-          {/* <Route
-            path="/filters/:filterId"
+          <Route
+            path="/filters/:id"
             element={
               <MainLayout>
-                <FilterResultsPage />
+                <GenericEmailPage />
               </MainLayout>
             }
-          /> */}
+          />
         </>
       )}
     </Routes>
