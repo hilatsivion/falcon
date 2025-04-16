@@ -17,6 +17,18 @@
         }
       }
     },
+    "/api/analytics/heartbeat": {
+      "post": {
+        "tags": [
+          "Analytics"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": [
@@ -1118,7 +1130,7 @@
             "type": "string"
           },
           "folderColor": {
-            "maxLength": 20,
+            "maxLength": 100,
             "type": "string",
             "nullable": true
           },
@@ -1182,6 +1194,14 @@
               "$ref": "#/components/schemas/TagDto"
             },
             "nullable": true
+          },
+          "totalEmails": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newEmailsCount": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -1198,7 +1218,7 @@
             "type": "string"
           },
           "folderColor": {
-            "maxLength": 20,
+            "maxLength": 100,
             "type": "string",
             "nullable": true
           },

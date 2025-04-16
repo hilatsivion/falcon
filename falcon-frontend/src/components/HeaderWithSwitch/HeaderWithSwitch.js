@@ -66,7 +66,9 @@ const HeaderWithSwitch = ({
           </div>
         )}
       </div>
-      {colorBar && <div className={`header-color-bar ${colorBar}`} />}
+      {colorBar && (
+        <div className="header-color-bar" style={{ background: colorBar }} />
+      )}
     </div>
   );
 };

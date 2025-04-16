@@ -12,27 +12,34 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => !!getAuthToken()
   );
+  // CHANGE: Added state to track validation process
+  const [isValidating, setIsValidating] = useState(true);
 
   const login = (token) => {
     loginUser(token);
     setAuthToken(token);
     setIsAuthenticated(true);
+    setIsValidating(false); // CHANGE: Update validation state on login
   };
 
   const logout = () => {
     logoutUser();
     setAuthToken(null);
     setIsAuthenticated(false);
+    setIsValidating(false); // CHANGE: Update validation state on logout
     navigate("/login");
   };
 
-  // Validate token once on app load
   useEffect(() => {
     const token = getAuthToken();
     if (!token) {
-      logout(); // just to ensure state is clean
+      setIsAuthenticated(false);
+      setIsValidating(false); // CHANGE: Update validation state if no token
       return;
     }
+
+    setIsValidating(true);
+    setIsAuthenticated(true);
 
     const validateToken = async () => {
       try {
@@ -43,20 +50,29 @@ export const AuthProvider = ({ children }) => {
         });
 
         if (!res.ok) {
-          logout(); // invalid token or expired
+          logoutUser();
+          setAuthToken(null);
+          setIsAuthenticated(false);
+        } else {
+          setAuthToken(token);
+          setIsAuthenticated(true);
         }
       } catch (err) {
-        console.error("Token validation failed:", err);
-        logout(); // network error fallback
+        logoutUser();
+        setAuthToken(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsValidating(false);
       }
     };
 
     validateToken();
-  }, []); // run once on mount
+  }, []);
 
   const value = {
     authToken,
     isAuthenticated,
+    isValidating,
     login,
     logout,
   };

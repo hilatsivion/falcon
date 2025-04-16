@@ -83,7 +83,7 @@ namespace FalconBackend.Services
         /// Also updates averages and streaks based on concluded periods.
         /// This is now the core logic hub.
         /// </summary>
-        public async Task CheckAndResetStatsOnLoginAsync(string userEmail)
+        public async Task<bool> CheckAndResetStatsOnLoginAsync(string userEmail)
         {
             var analytics = await _context.Analytics.FirstOrDefaultAsync(a => a.AppUserEmail == userEmail);
             if (analytics == null)
@@ -94,65 +94,85 @@ namespace FalconBackend.Services
                 if (analytics == null)
                 {
                     Console.WriteLine($"Failed to create or find analytics for {userEmail}. Aborting reset check.");
-                    return;
+                    return false; // Indicate no reset happened
                 }
             }
 
             DateTime now = DateTime.UtcNow;
             DateTime today = now.Date;
             bool requiresSave = false;
+            bool dailyResetPerformed = false; // Flag to return
 
             // --- Daily Reset Logic ---
             if (analytics.LastDailyReset < today)
             {
                 Console.WriteLine($"Performing daily reset for {analytics.AppUserEmail} (Last: {analytics.LastDailyReset}, Today: {today})");
+                dailyResetPerformed = true; // Mark that reset occurred
 
                 // Store previous day's value
                 analytics.TimeSpentYesterday = analytics.TimeSpentToday;
 
-                if (analytics.IsActiveToday) 
+                if (analytics.IsActiveToday)
                 {
                     // Update totals first
                     analytics.TotalTimeSpent += analytics.TimeSpentToday;
                     analytics.TotalDaysTracked += 1;
-
-                    // Update Daily Average Time Spent
-                    analytics.AvgTimeSpentDaily = analytics.TotalTimeSpent / Math.Max(1, analytics.TotalDaysTracked); // Avoid division by zero
+                    analytics.AvgTimeSpentDaily = analytics.TotalTimeSpent / Math.Max(1, analytics.TotalDaysTracked);
 
                     // Update Streak
                     if (analytics.LastDailyReset == today.AddDays(-1))
                     {
-                        analytics.CurrentStreak++; 
+                        analytics.CurrentStreak++;
                     }
                     else
                     {
-                        analytics.CurrentStreak = 1; 
+                        analytics.CurrentStreak = 1;
                     }
                     analytics.LongestStreak = Math.Max(analytics.LongestStreak, analytics.CurrentStreak);
                 }
-                else 
+                else
                 {
+                    // If not active today, check if the gap broke the streak
+                    // (Handle case where LastDailyReset might be much older than yesterday)
                     if (analytics.LastDailyReset < today.AddDays(-1))
                     {
                         analytics.CurrentStreak = 0;
                     }
+                    // If LastDailyReset was exactly yesterday, but they weren't active, streak also breaks.
+                    else if (analytics.LastDailyReset == today.AddDays(-1))
+                    {
+                        analytics.CurrentStreak = 0; // Reset streak if inactive yesterday
+                    }
+
                 }
 
                 // Reset daily counters for the NEW day
-                analytics.TimeSpentToday = 0;
+                analytics.TimeSpentToday = 0; // Reset today's counter
                 analytics.IsActiveToday = false;
                 analytics.LastDailyReset = today;
                 requiresSave = true;
             }
 
-            // --- Weekly Reset Logic ---
+            // --- Weekly Reset Logic --- (No changes needed here for this issue)
             DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek); // Assuming Sunday start
             if (analytics.LastWeeklyReset < startOfWeek)
             {
                 Console.WriteLine($"Performing weekly reset for {analytics.AppUserEmail} (Last: {analytics.LastWeeklyReset}, StartOfWeek: {startOfWeek})");
 
-                analytics.AvgTimeSpentWeekly = analytics.TimeSpentThisWeek / 7.0f;
-                analytics.AvgEmailsPerWeek = (float)(analytics.EmailsReceivedWeekly + analytics.EmailsSentWeekly) / 7.0f;
+                // Calculate averages *before* resetting weekly counters if week has data
+                if (analytics.TimeSpentThisWeek > 0 || analytics.EmailsReceivedWeekly > 0 || analytics.EmailsSentWeekly > 0)
+                {
+                    // Avoid division by zero, perhaps calculate based on days passed in week?
+                    // Simple approach: just average over 7 days for now.
+                    analytics.AvgTimeSpentWeekly = analytics.TimeSpentThisWeek / 7.0f;
+                    analytics.AvgEmailsPerWeek = (float)(analytics.EmailsReceivedWeekly + analytics.EmailsSentWeekly) / 7.0f;
+                }
+                else
+                {
+                    analytics.AvgTimeSpentWeekly = 0;
+                    analytics.AvgEmailsPerWeek = 0;
+                }
+
 
                 // Store previous week's values
                 analytics.TimeSpentLastWeek = analytics.TimeSpentThisWeek;
@@ -168,26 +188,30 @@ namespace FalconBackend.Services
                 analytics.EmailsSentWeekly = 0;
                 analytics.SpamEmailsWeekly = 0;
                 analytics.ReadEmailsWeekly = 0;
+                analytics.DeletedEmailsWeekly = 0; // Reset deleted counter too
                 analytics.LastWeeklyReset = startOfWeek;
-                analytics.DeletedEmailsWeekly = 0;
                 requiresSave = true;
             }
+
 
             if (requiresSave)
             {
                 await SaveAnalyticsAsync(analytics);
             }
+
+            return dailyResetPerformed; // Return the flag
         }
 
 
-        /// <summary>
-        /// Updates time spent based on user's LastLogin. Should be called periodically or on logout.
-        /// Assumes LastLogin is updated elsewhere when a session starts/resumes.
-        /// </summary>
+        // Modify the UpdateTimeSpentAsync method:
         public async Task UpdateTimeSpentAsync(string userEmail)
         {
-            // Check for resets *before* calculating time spent
-            await CheckAndResetStatsOnLoginAsync(userEmail);
+            DateTime currentTime = DateTime.UtcNow;
+            DateTime today = currentTime.Date;
+
+            // Check for resets *before* calculating time spent and get reset status
+            // *** Capture the return value ***
+            bool dailyResetJustPerformed = await CheckAndResetStatsOnLoginAsync(userEmail);
 
             // Fetch potentially updated analytics and user
             var analytics = await _context.Analytics.FirstOrDefaultAsync(a => a.AppUserEmail == userEmail);
@@ -196,43 +220,77 @@ namespace FalconBackend.Services
             if (user == null || !user.LastLogin.HasValue || analytics == null)
             {
                 Console.WriteLine($"Cannot update time spent for {userEmail}. User, LastLogin, or Analytics missing.");
+                // If user exists but LastLogin is null (first ever action?), set LastLogin now.
+                if (user != null && !user.LastLogin.HasValue)
+                {
+                    user.LastLogin = currentTime;
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"Initialized LastLogin for {userEmail}.");
+                }
                 return;
             }
 
-            DateTime loginTime = user.LastLogin.Value;
-            DateTime currentTime = DateTime.UtcNow;
-            double sessionDurationMinutes = (currentTime - loginTime).TotalMinutes;
+            DateTime loginTime = user.LastLogin.Value; // This is the *previous* last seen time
 
-            if (sessionDurationMinutes <= 0) return; 
+            // *** --- Adjustment Logic --- ***
+            DateTime effectiveStartTimeForCalc = loginTime;
 
-            // Add calculated duration to relevant counters
-            analytics.TimeSpentToday += (float)sessionDurationMinutes;
-            analytics.TimeSpentThisWeek += (float)sessionDurationMinutes;
-
-            // Mark user as active today if this is their first action today
-            bool needsSave = false;
-            if (!analytics.IsActiveToday)
+            // If a daily reset just happened and the last login was *before* today,
+            // then calculate time spent only from the beginning of *today*.
+            if (dailyResetJustPerformed && loginTime < today)
             {
-                analytics.IsActiveToday = true;
-                needsSave = true;
+                effectiveStartTimeForCalc = today;
+                Console.WriteLine($"Daily reset occurred. Calculating time for {userEmail} from start of today ({today}).");
             }
+            // *** --- End Adjustment Logic --- ***
 
-            user.LastLogin = currentTime;
-            _context.AppUsers.Update(user);
+            double sessionDurationMinutes = (currentTime - effectiveStartTimeForCalc).TotalMinutes;
 
-            // Save changes (only save analytics if activity flag changed, otherwise only user)
-            if (needsSave)
+            // Only add positive duration
+            if (sessionDurationMinutes > 0)
             {
-                await SaveAnalyticsAsync(analytics); // Updates LastUpdated timestamp
+                analytics.TimeSpentToday += (float)sessionDurationMinutes;
+                analytics.TimeSpentThisWeek += (float)sessionDurationMinutes;
+                Console.WriteLine($"Added {sessionDurationMinutes:F2} minutes to today's/week's time for {userEmail}. New TimeSpentToday: {analytics.TimeSpentToday:F2}");
             }
             else
             {
-                analytics.LastUpdated = currentTime; // Still update timestamp even if only time changed
-                _context.Analytics.Update(analytics);
+                // Duration might be zero or negative if calls are very close or slight clock skew
+                Console.WriteLine($"Calculated session duration is not positive ({sessionDurationMinutes:F2}) for {userEmail}. No time added.");
             }
-            await _context.SaveChangesAsync(); // Save user and potentially analytics changes
+
+
+            // Mark user as active today if this is their first action today
+            bool needsAnalyticsSave = false;
+            if (!analytics.IsActiveToday)
+            {
+                analytics.IsActiveToday = true;
+                needsAnalyticsSave = true;
+                Console.WriteLine($"Marked {userEmail} as active today.");
+            }
+
+            // Always update LastLogin to the current time for the next calculation
+            user.LastLogin = currentTime;
+            _context.AppUsers.Update(user);
+
+            // Update analytics LastUpdated timestamp regardless
+            analytics.LastUpdated = currentTime;
+            _context.Analytics.Update(analytics);
+
+
+            // Save changes (user definitely changed, analytics might have)
+            await _context.SaveChangesAsync();
+            if (needsAnalyticsSave)
+            {
+                Console.WriteLine($"Saved analytics update for {userEmail}.");
+            }
+            else
+            {
+                Console.WriteLine($"Saved LastLogin update for {userEmail}.");
+            }
         }
 
+        
         /// <summary>
         /// Increments weekly emails received count.
         /// </summary>

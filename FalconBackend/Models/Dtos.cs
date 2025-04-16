@@ -189,7 +189,7 @@ namespace FalconBackend.Models
         [Required]
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
-        [MaxLength(20)]
+        [MaxLength(100)]
         public string? FolderColor { get; set; }
         public List<string> Keywords { get; set; } = new List<string>();
         public List<string> SenderEmails { get; set; } = new List<string>();
@@ -201,7 +201,7 @@ namespace FalconBackend.Models
         [Required]
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
-        [MaxLength(20)]
+        [MaxLength(100)]
         public string? FolderColor { get; set; }
         public List<string> Keywords { get; set; } = new List<string>();
         public List<string> SenderEmails { get; set; } = new List<string>();
@@ -216,6 +216,8 @@ namespace FalconBackend.Models
         public List<string> Keywords { get; set; } = new List<string>();
         public List<string> SenderEmails { get; set; } = new List<string>();
         public List<TagDto> Tags { get; set; } = new List<TagDto>();
+        public int TotalEmails { get; set; }
+        public int NewEmailsCount { get; set; }
     }
 
     public class EmailSummaryDto

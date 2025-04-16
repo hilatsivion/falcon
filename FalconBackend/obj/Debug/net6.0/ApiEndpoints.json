@@ -10,6 +10,16 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "FalconBackend.Controllers.AnalyticsController",
+    "Method": "RecordHeartbeat",
+    "RelativePath": "api/analytics/heartbeat",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "FalconBackend.Controllers.AuthController",
     "Method": "LogIn",
     "RelativePath": "api/auth/login",

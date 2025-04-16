@@ -47,5 +47,29 @@ namespace FalconBackend.Controllers
                 return StatusCode(500, "An error occurred while retrieving analytics data.");
             }
         }
+
+        [HttpPost("heartbeat")]
+        public async Task<IActionResult> RecordHeartbeat()
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                await _analyticsService.UpdateTimeSpentAsync(userEmail);
+
+
+                return Ok(new { message = "Heartbeat recorded." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error recording heartbeat for user {User.FindFirstValue(ClaimTypes.Email) ?? "UNKNOWN"}: {ex.Message}");
+                // Log the exception ex more formally if needed
+                return StatusCode(500, "An error occurred while recording heartbeat.");
+            }
+        }
     }
 }

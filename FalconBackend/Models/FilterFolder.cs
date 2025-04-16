@@ -14,7 +14,7 @@ namespace FalconBackend.Models
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(20)] 
+        [MaxLength(100)] 
         public string? FolderColor { get; set; }
 
         public List<string> Keywords { get; set; } = new List<string>();
