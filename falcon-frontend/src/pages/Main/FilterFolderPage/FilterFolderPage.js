@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./FilterFolderPage.css";
 import NewFilterPopup from "./NewFilterPopup";
 import FilterActionsPopup from "../../../components/Popup/FilterActionsPopup";
+import ConfirmPopup from "../../../components/Popup/ConfirmPopup";
 import { ReactComponent as NumberOfEmailIcon } from "../../../assets/icons/black/email-enter-icon.svg";
 import { ReactComponent as Dots } from "../../../assets/icons/black/more-dots.svg";
 import Loader from "../../../components/Loader/Loader";
@@ -11,9 +12,13 @@ import { API_BASE_URL } from "../../../config/constants";
 import { toast } from "react-toastify";
 
 const FilterFolderPage = ({ setIsListView }) => {
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isCreatePopupOpen, setIsCreatePopupOpen] = useState(false);
+  const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
   const [actionPopupOpen, setActionPopupOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [filterToDelete, setFilterToDelete] = useState(null);
+
   const navigate = useNavigate();
   const { authToken } = useAuth();
   const [filters, setFilters] = useState([]);
@@ -70,7 +75,7 @@ const FilterFolderPage = ({ setIsListView }) => {
     fetchFiltersAndTags();
   }, [fetchFiltersAndTags]);
 
-  const handleSaveFilter = async (filterDataFromPopup) => {
+  const handleCreateFilter = async (filterDataFromPopup) => {
     if (!authToken) {
       toast.error("Authentication error.");
       return;
@@ -94,13 +99,95 @@ const FilterFolderPage = ({ setIsListView }) => {
       }
 
       toast.success(`Filter "${filterDataFromPopup.Name}" created!`);
-      setIsPopupOpen(false);
+      setIsCreatePopupOpen(false);
       fetchFiltersAndTags();
     } catch (err) {
-      console.error("Save filter error:", err);
-      toast.error(`Failed to save filter: ${err.message}`);
+      console.error("Create filter error:", err);
+      toast.error(`Failed to create filter: ${err.message}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleUpdateFilter = async (filterId, filterDataFromPopup) => {
+    if (!authToken) {
+      toast.error("Authentication error.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/mail/filters/${filterId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(filterDataFromPopup),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Failed to update filter (${response.status})`
+        );
+      }
+
+      toast.success(`Filter "${filterDataFromPopup.Name}" updated!`);
+      setIsEditPopupOpen(false);
+      setSelectedFilter(null);
+      fetchFiltersAndTags();
+    } catch (err) {
+      console.error("Update filter error:", err);
+      toast.error(`Failed to update filter: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteFilter = (filter) => {
+    setFilterToDelete(filter);
+    setShowDeleteConfirm(true);
+    setActionPopupOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!authToken || !filterToDelete) {
+      toast.error("Cannot delete filter: Missing information.");
+      setShowDeleteConfirm(false);
+      setFilterToDelete(null);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/mail/filters/${filterToDelete.filterFolderId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      if (!response.ok && response.status !== 204) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Failed to delete filter (${response.status})`
+        );
+      }
+
+      toast.success(`Filter "${filterToDelete.name}" deleted!`);
+      fetchFiltersAndTags();
+    } catch (err) {
+      console.error("Delete filter error:", err);
+      toast.error(`Failed to delete filter: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteConfirm(false);
+      setFilterToDelete(null);
     }
   };
 
@@ -116,9 +203,16 @@ const FilterFolderPage = ({ setIsListView }) => {
   };
 
   const openActionPopup = (e, filter) => {
-    e.stopPropagation(); // prevent triggering folder open
+    e.stopPropagation();
     setSelectedFilter(filter);
     setActionPopupOpen(true);
+  };
+
+  const openEditPopup = () => {
+    if (selectedFilter) {
+      setIsEditPopupOpen(true);
+      setActionPopupOpen(false);
+    }
   };
 
   if (isLoading) return <Loader />;
@@ -163,31 +257,56 @@ const FilterFolderPage = ({ setIsListView }) => {
 
         <div
           className="add-folder-card dashed"
-          onClick={() => setIsPopupOpen(true)}
+          onClick={() => setIsCreatePopupOpen(true)}
         >
           <div className="plus-circle">＋</div>
           <p className="add-folder-text">Add filter folder</p>
         </div>
       </div>
 
-      {isPopupOpen && (
+      {isCreatePopupOpen && (
         <NewFilterPopup
-          onClose={() => setIsPopupOpen(false)}
-          onSave={handleSaveFilter}
+          onClose={() => setIsCreatePopupOpen(false)}
+          onSave={handleCreateFilter}
           availableTags={availableTags}
+          isEditing={false}
         />
       )}
 
-      {actionPopupOpen && (
-        <FilterActionsPopup
-          onClose={() => setActionPopupOpen(false)}
-          onEdit={() => {
-            console.log("Edit", selectedFilter);
-            setActionPopupOpen(false);
+      {isEditPopupOpen && selectedFilter && (
+        <NewFilterPopup
+          onClose={() => {
+            setIsEditPopupOpen(false);
+            setSelectedFilter(null);
           }}
-          onDelete={() => {
-            console.log("Delete", selectedFilter);
+          onSave={handleUpdateFilter}
+          availableTags={availableTags}
+          isEditing={true}
+          editingFilter={selectedFilter}
+        />
+      )}
+
+      {actionPopupOpen && selectedFilter && (
+        <FilterActionsPopup
+          onClose={() => {
             setActionPopupOpen(false);
+            setSelectedFilter(null);
+          }}
+          onEdit={openEditPopup}
+          onDelete={() => handleDeleteFilter(selectedFilter)}
+        />
+      )}
+
+      {showDeleteConfirm && filterToDelete && (
+        <ConfirmPopup
+          isOpen={showDeleteConfirm}
+          message={`Are you sure you want to delete the filter "${filterToDelete.name}"?`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => {
+            setShowDeleteConfirm(false);
+            setFilterToDelete(null);
           }}
         />
       )}

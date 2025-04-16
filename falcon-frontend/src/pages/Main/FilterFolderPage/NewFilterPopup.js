@@ -1,9 +1,7 @@
-import React, { useState } from "react"; // Import useEffect
+import React, { useState, useEffect } from "react";
 import "./NewFilterPopup.css";
 import { ReactComponent as CloseIcon } from "../../../assets/icons/black/x.svg";
-import { toast } from "react-toastify"; // Import toast
-
-// Remove const allTags = [...]
+import { toast } from "react-toastify";
 
 const folderColors = [
   "var(--folder-green-1)",
@@ -14,25 +12,36 @@ const folderColors = [
   "var(--folder-yellow)",
 ];
 
-// Add availableTags prop
-const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
-  // Use availableTags prop
+const NewFilterPopup = ({
+  onClose,
+  onSave,
+  availableTags = [],
+  isEditing = false,
+  editingFilter = null,
+}) => {
   const [filterName, setFilterName] = useState("");
   const [emailInput, setEmailInput] = useState("");
   const [emails, setEmails] = useState([]);
   const [keywordInput, setKeywordInput] = useState("");
   const [keywords, setKeywords] = useState([]);
-  const [selectedTagIds, setSelectedTagIds] = useState([]); // Store IDs now
-  const [selectedColor, setSelectedColor] = useState(folderColors[0]); // Default color
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [selectedColor, setSelectedColor] = useState(folderColors[0]);
 
-  // No need to fetch tags here anymore, they are passed as props
+  useEffect(() => {
+    if (isEditing && editingFilter) {
+      setFilterName(editingFilter.name || "");
+      setEmails(editingFilter.senderEmails || []);
+      setKeywords(editingFilter.keywords || []);
+      setSelectedTagIds(editingFilter.tagIds || []);
+      setSelectedColor(editingFilter.folderColor || folderColors[0]);
+    }
+  }, [isEditing, editingFilter]);
 
   const isValidEmail = (email) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const addEmail = () => {
     if (isValidEmail(emailInput) && !emails.includes(emailInput.trim())) {
-      // Prevent duplicates
       setEmails([...emails, emailInput.trim()]);
       setEmailInput("");
     }
@@ -40,13 +49,11 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
 
   const addKeyword = () => {
     if (keywordInput.trim() && !keywords.includes(keywordInput.trim())) {
-      // Prevent duplicates
       setKeywords([...keywords, keywordInput.trim()]);
       setKeywordInput("");
     }
   };
 
-  // CHANGE: Toggle based on Tag ID
   const toggleTag = (tagId) => {
     setSelectedTagIds((prev) =>
       prev.includes(tagId)
@@ -55,7 +62,6 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
     );
   };
 
-  // CHANGE: Call onSave prop with data formatted for the backend DTO
   const handleSaveFolder = () => {
     if (!filterName.trim()) {
       toast.error("Filter name is required.");
@@ -68,31 +74,34 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
 
     const filterDataForBackend = {
       Name: filterName.trim(),
-      FolderColor: selectedColor, // Send the CSS variable name or map it if needed
+      FolderColor: selectedColor,
       Keywords: keywords,
       SenderEmails: emails,
-      TagIds: selectedTagIds, // Send the array of selected tag IDs
+      TagIds: selectedTagIds,
     };
-    // Call the onSave function passed from the parent
-    onSave(filterDataForBackend);
-    // onClose(); // Let the parent handle closing after successful save
+
+    if (isEditing && editingFilter) {
+      onSave(editingFilter.filterFolderId, filterDataForBackend);
+    } else {
+      onSave(filterDataForBackend);
+    }
   };
 
   return (
     <div className="popup-overlay">
       <div className="new-filter-popup">
         <div className="header-div">
-          <h2>Create a new Filter</h2>
+          <h2>{isEditing ? "Edit Filter" : "Create a new Filter"}</h2>
           <p>
-            Create a custom filter to automatically organize emails based on
-            your chosen criteria, like sender, tags, or keywords.
+            {isEditing
+              ? "Modify the criteria for this filter."
+              : "Create a custom filter to automatically organize emails based on your chosen criteria, like sender, tags, or keywords."}
           </p>
           <button className="close-btn" onClick={onClose}>
             <CloseIcon />
           </button>
         </div>
 
-        {/* Filter Name */}
         <div className="form-group">
           <label>
             Filter name <span className="required">*</span>
@@ -105,7 +114,6 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
           />
         </div>
 
-        {/* Sender Emails */}
         <div className="form-group">
           <label>Sender email address</label>
           <div className="input-row">
@@ -114,7 +122,7 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
               placeholder="Insert email address"
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addEmail()} // Add on Enter
+              onKeyDown={(e) => e.key === "Enter" && addEmail()}
             />
             <button
               className="add-btn"
@@ -129,7 +137,7 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
               <span className="pill" key={i}>
                 {email}{" "}
                 <span
-                  className="remove-pill" // Add class for styling removal 'x'
+                  className="remove-pill"
                   onClick={() => setEmails(emails.filter((_, j) => j !== i))}
                 >
                   ×
@@ -139,7 +147,6 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
           </div>
         </div>
 
-        {/* Keywords */}
         <div className="form-group">
           <label>Keywords included in the email subject / content</label>
           <div className="input-row">
@@ -148,7 +155,7 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
               placeholder="Insert keywords"
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addKeyword()} // Add on Enter
+              onKeyDown={(e) => e.key === "Enter" && addKeyword()}
             />
             <button
               className="add-btn"
@@ -163,7 +170,7 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
               <span className="pill" key={i}>
                 {kw}{" "}
                 <span
-                  className="remove-pill" // Add class for styling removal 'x'
+                  className="remove-pill"
                   onClick={() =>
                     setKeywords(keywords.filter((_, j) => j !== i))
                   }
@@ -175,21 +182,19 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
           </div>
         </div>
 
-        {/* Tags */}
         <div className="form-group">
           <label>Filtered tags (Optional)</label>
-          {/* CHANGE: Use availableTags prop */}
           {availableTags.length > 0 ? (
             <div className="tags-container">
               {availableTags.map((tag) => (
                 <span
-                  key={tag.tagId} // Use unique tagId
+                  key={tag.tagId}
                   className={`tag-filter ${
                     selectedTagIds.includes(tag.tagId) ? "selected" : ""
                   }`}
-                  onClick={() => toggleTag(tag.tagId)} // Toggle based on ID
+                  onClick={() => toggleTag(tag.tagId)}
                 >
-                  {tag.tagName} {/* Display name */}
+                  {tag.tagName}
                 </span>
               ))}
             </div>
@@ -198,7 +203,6 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
           )}
         </div>
 
-        {/* Folder Colors */}
         <div className="form-group">
           <label>
             Folder color <span className="required">*</span>
@@ -217,11 +221,9 @@ const NewFilterPopup = ({ onClose, onSave, availableTags = [] }) => {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="center-col">
-          {/* CHANGE: Call handleSaveFolder */}
           <button className="btn-blue" onClick={handleSaveFolder}>
-            Create Filter
+            {isEditing ? "Save Changes" : "Create Filter"}
           </button>
           <button className="cancel-link" onClick={onClose}>
             Cancel
