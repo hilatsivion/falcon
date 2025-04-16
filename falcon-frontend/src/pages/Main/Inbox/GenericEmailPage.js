@@ -64,7 +64,7 @@ const mapDtoToEmailItemProps = (dto, dtoType) => {
     case "MailSentPreviewDto":
       return {
         mailId: dto.mailId,
-        sender: "You", // Represent sender as 'You' for sent items list
+        sender: "You",
         recipients: dto.recipients || [], // Keep recipients info
         subject: dto.subject,
         bodySnippet: dto.bodySnippet,
