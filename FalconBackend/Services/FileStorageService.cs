@@ -2,6 +2,8 @@
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace FalconBackend.Services
 {
@@ -9,12 +11,10 @@ namespace FalconBackend.Services
     public class FileStorageService
     {
         private readonly string _basePath;
-
-        public FileStorageService()
+        public FileStorageService(IWebHostEnvironment environment) 
         {
-            // Get the directory where the server is running
-            string serverDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            _basePath = Path.Combine(serverDirectory, "Storage"); // Storage folder inside the server directory
+            // Use ContentRootPath to get the project's base directory
+            _basePath = Path.Combine(environment.ContentRootPath, "Storage"); 
 
             try
             {

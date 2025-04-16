@@ -13,7 +13,6 @@ import { toast } from "react-toastify";
 const Compose = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [hasSent, setHasSent] = useState(false);
 
   const initialTo = location.state?.to || "";
   const initialSubject = location.state?.subject || "";
@@ -31,7 +30,6 @@ const Compose = () => {
 
   const fileInputRef = useRef(null);
 
-  // Fetch sender email accounts on mount
   useEffect(() => {
     const fetchSenderAccounts = async () => {
       setIsLoading(true);
@@ -74,6 +72,10 @@ const Compose = () => {
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFiles((prev) => [...prev, ...selectedFiles]);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
   };
 
   const isValidEmail = (email) =>
@@ -85,8 +87,8 @@ const Compose = () => {
   };
 
   const handleSendClick = async () => {
-    if (hasSent || isLoading) return;
-    setHasSent(true);
+    if (isLoading) return;
+
     setError(null);
 
     if (!isValidEmail(to)) {
@@ -142,7 +144,6 @@ const Compose = () => {
       const msg = err.message || "A network error occurred.";
       setError(msg);
       toast.error(msg);
-      setHasSent(false);
     } finally {
       setIsLoading(false);
     }
@@ -157,7 +158,6 @@ const Compose = () => {
 
   return (
     <div className="compose-page page-container">
-      {/* Header */}
       <div className="compose-header space-between-full-wid">
         <button className="ai-button" onClick={() => setIsAiOpen(true)}>
           <GenerateIcon />
@@ -175,7 +175,6 @@ const Compose = () => {
         </button>
       </div>
 
-      {/* Inputs */}
       <div className="flex-col inputs-compose">
         <input
           className="compose-input subject underline-grey"
@@ -222,11 +221,10 @@ const Compose = () => {
         </div>
       </div>
 
-      {/* File Attach */}
       <div className="file-upload-row">
         <button
           className="files-btn"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => fileInputRef.current?.click()} // Triggers the input below
           disabled={isLoading}
         >
           <Paperclip />
@@ -236,10 +234,10 @@ const Compose = () => {
         <input
           type="file"
           multiple
-          accept="image/*" // אפשר להשאיר את זה כדי לאפשר בחירת תמונות או להסיר כדי לאפשר הכל
+          accept="image/*" // Or other desired types
           style={{ display: "none" }}
-          ref={fileInputRef}
-          onChange={handleFileChange}
+          ref={fileInputRef} // The ref we use
+          onChange={handleFileChange} // The handler we updated
           disabled={isLoading}
         />
 
@@ -262,7 +260,6 @@ const Compose = () => {
         </div>
       </div>
 
-      {/* Body */}
       <textarea
         className="compose-body"
         placeholder="Write here..."
@@ -272,7 +269,6 @@ const Compose = () => {
         disabled={isLoading}
       />
 
-      {/* AI Panel */}
       {isAiOpen && (
         <>
           <div className="ai-overlay" onClick={() => setIsAiOpen(false)} />

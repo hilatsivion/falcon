@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +14,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 Console.WriteLine($"Connection String: {connectionString}");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sqlServerOptionsAction: sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5, // Number of retry attempts
+            maxRetryDelay: TimeSpan.FromSeconds(30), // Max delay between retries
+            errorNumbersToAdd: null); // Use default list of transient errors (includes deadlocks)
+    }));
 
 // Register application services
 builder.Services.AddScoped<AuthService>();
