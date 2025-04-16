@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./AiComposePanel.css";
 import { ReactComponent as CloseIcon } from "../../../assets/icons/black/x.svg";
 import Loader from "../../../components/Loader/Loader";
-
-const HUGGING_FACE_API_TOKEN = "?";
+import { useAuth } from "../../../context/AuthContext";
+import { toast } from "react-toastify";
 
 const API_URL =
   "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct";
@@ -15,18 +15,26 @@ const AiComposePanel = ({ onClose, onDone }) => {
   const [content, setContent] = useState("");
   const [resultReady, setResultReady] = useState(false);
   const [error, setError] = useState(null);
+  const { aiKey } = useAuth();
+
+  useEffect(() => {
+    if (!aiKey) {
+      console.warn("AI Panel: AI Key is missing from context.");
+      setError(
+        "AI functionality requires a valid API key. Please re-login if needed."
+      );
+    } else {
+      setError(null); // Clear error if key becomes available
+    }
+  }, [aiKey]);
 
   const handleGenerate = async () => {
-    if (
-      !idea.trim() ||
-      !HUGGING_FACE_API_TOKEN ||
-      HUGGING_FACE_API_TOKEN === "hf_YOUR_TOKEN_HERE"
-    ) {
-      setError(
-        "Please enter your idea and ensure your Hugging Face API Token is set in AiComposePanel.js"
-      );
+    if (!aiKey) {
+      toast.error("AI Key is missing. Cannot generate content.");
+      setError("AI Key is missing. Please ensure you are logged in correctly.");
       return;
     }
+
     setError(null); // Clear previous errors
     setIsGenerating(true);
     setResultReady(false); // Clear previous results visually
@@ -41,7 +49,7 @@ Email Idea: ${idea}`;
       const response = await fetch(API_URL, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${HUGGING_FACE_API_TOKEN}`,
+          Authorization: `Bearer ${aiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

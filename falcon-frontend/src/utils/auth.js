@@ -1,23 +1,51 @@
+const TOKEN_KEY = "token";
+const AUTH_FLAG_KEY = "isAuthenticated";
+const AI_KEY = "aiKey";
+
 export const getAuthToken = () => {
-  return localStorage.getItem("token"); // Reads "token"
+  return localStorage.getItem(TOKEN_KEY);
 };
 
-export const isUserLoggedIn = () => {
-  const token = getAuthToken();
-  const authenticated = localStorage.getItem("isAuthenticated") === "true";
-  return !!token && authenticated;
+export const getAiKey = () => {
+  return localStorage.getItem(AI_KEY);
 };
 
-export const loginUser = (token) => {
+export const storeAuthToken = (token) => {
   if (token) {
-    localStorage.setItem("token", token);
-    localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem(TOKEN_KEY, token);
   } else {
-    console.error("loginUser called with null or undefined token");
+    localStorage.removeItem(TOKEN_KEY);
   }
 };
 
-export const logoutUser = () => {
-  localStorage.removeItem("token"); // Remove token
-  localStorage.removeItem("isAuthenticated"); // Remove flag
+export const removeAuthToken = () => {
+  localStorage.removeItem(TOKEN_KEY);
+};
+
+export const storeAiKey = (key) => {
+  if (key) {
+    localStorage.setItem(AI_KEY, key);
+  } else {
+    localStorage.removeItem(AI_KEY);
+  }
+};
+
+export const removeAiKey = () => {
+  localStorage.removeItem(AI_KEY);
+};
+
+export const handleLoginStorage = (token, aiKey) => {
+  storeAuthToken(token);
+  storeAiKey(aiKey);
+  localStorage.setItem(AUTH_FLAG_KEY, "true");
+};
+
+export const handleLogoutStorage = () => {
+  removeAuthToken();
+  removeAiKey();
+  localStorage.removeItem(AUTH_FLAG_KEY);
+};
+
+export const isUserLoggedIn = () => {
+  return !!getAuthToken();
 };

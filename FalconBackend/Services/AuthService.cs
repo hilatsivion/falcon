@@ -16,6 +16,7 @@ namespace FalconBackend.Services
     {
         private readonly AppDbContext _context;
         private readonly string _jwtSecret;
+        private readonly string _aiKey; 
         private readonly AnalyticsService _analyticsService;
         private readonly IConfiguration _configuration;
 
@@ -24,6 +25,7 @@ namespace FalconBackend.Services
         {
             _context = context;
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _aiKey = configuration["AiSettings:HuggingFaceApiKey"] ?? throw new ArgumentNullException("AiSettings:HuggingFaceApiKey", "Hugging Face API Key not found in configuration.");
             _jwtSecret = configuration["JwtSettings:Key"] ?? throw new Exception("JWT Secret Key not found in configuration.");
             _analyticsService = analyticsService;
         }
@@ -44,7 +46,7 @@ namespace FalconBackend.Services
         }
 
 
-        public async Task<string> LogInAsync(string email, string password)
+        public async Task<LoginResponseDto> LogInAsync(string email, string password)
         {
             var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null)
@@ -66,7 +68,11 @@ namespace FalconBackend.Services
             user.LastLogin = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return GenerateJwtToken(user);
+            return new LoginResponseDto
+            {
+                Token = GenerateJwtToken(user),
+                AiKey = _aiKey 
+            };
         }
 
         public async Task<bool> LogOutAsync(string email)
@@ -75,13 +81,12 @@ namespace FalconBackend.Services
             if (user == null)
                 throw new Exception("User not found");
 
-            // Update time spent in the app before logging out
             await _analyticsService.UpdateTimeSpentAsync(email);
 
             return true;
         }
 
-        public async Task<string> SignUpAsync(string fullName, string username, string email, string password)
+        public async Task<LoginResponseDto> SignUpAsync(string fullName, string username, string email, string password)
         {
             if (await _context.AppUsers.AnyAsync(u => u.Email == email))
                 throw new Exception("Email is already registered");
@@ -106,8 +111,11 @@ namespace FalconBackend.Services
 
             await _analyticsService.CreateAnalyticsForUserAsync(email);
 
-            string token = GenerateJwtToken(newUser);
-            return token; 
+            return new LoginResponseDto
+            {
+                Token = GenerateJwtToken(newUser),
+                AiKey = _aiKey 
+            };
         }
 
 

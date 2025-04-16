@@ -231,4 +231,10 @@ namespace FalconBackend.Models
         public List<TagDto> Tags { get; set; } = new List<TagDto>();
     }
 
+    public class LoginResponseDto
+    {
+        public string Token { get; set; }
+        public string AiKey { get; set; }
+    }
+
 }

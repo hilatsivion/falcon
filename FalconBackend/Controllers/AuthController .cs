@@ -20,12 +20,12 @@ namespace FalconBackend.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LogIn([FromBody] LoginRequest request)
+        public async Task<ActionResult<LoginResponseDto>> LogIn([FromBody] LoginRequest request)
         {
             try
             {
-                var token = await _authService.LogInAsync(request.Email, request.Password);
-                return Ok(new { Token = token });
+                var loginResponse = await _authService.LogInAsync(request.Email, request.Password);
+                return Ok(loginResponse);
             }
             catch (Exception ex)
             {
@@ -34,13 +34,13 @@ namespace FalconBackend.Controllers
         }
 
         [HttpPost("signup")]
-        public async Task<IActionResult> SignUp([FromBody] SignUpRequest request)
+        public async Task<ActionResult<LoginResponseDto>> SignUp([FromBody] SignUpRequest request)
         {
             try
             {
-                var token = await _authService.SignUpAsync(request.FullName, request.Username, request.Email, request.Password);
-
-                return Ok(new { Token = token });
+                var loginResponse = await _authService.SignUpAsync(request.FullName, request.Username, request.Email, request.Password);
+                // Return 201 Created with the response DTO
+                return Ok(loginResponse);
             }
             catch (Exception ex)
             {

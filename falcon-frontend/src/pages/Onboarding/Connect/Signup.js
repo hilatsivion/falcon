@@ -127,8 +127,8 @@ const SignUp = () => {
 
       const data = await signUpRes.json();
 
-      if (data?.token) {
-        login(data.token);
+      if (data && data.token && data.aiKey) {
+        login(data.token, data.aiKey);
         navigate("/interests");
       } else {
         showError("Signup succeeded, but failed to retrieve session token.");

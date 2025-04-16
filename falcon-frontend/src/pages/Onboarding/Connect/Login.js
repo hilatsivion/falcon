@@ -103,8 +103,8 @@ const Login = () => {
 
       const data = await loginRes.json();
 
-      if (data && data.token) {
-        login(data.token);
+      if (data && data.token && data.aiKey) {
+        login(data.token, data.aiKey);
         navigate("/inbox");
       } else {
         console.error("Login response OK but token missing:", data);
