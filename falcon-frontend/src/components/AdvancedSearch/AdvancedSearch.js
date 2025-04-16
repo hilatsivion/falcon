@@ -88,9 +88,6 @@ const AdvancedSearch = () => {
         throw new Error(errorMsg);
       }
       const results = await response.json();
-      console.log("====================================");
-      console.log(results);
-      console.log("====================================");
       // Add to history the searched keywords
       if (
         trimmedKeyword &&
@@ -103,9 +100,8 @@ const AdvancedSearch = () => {
         setLastSearches(updatedHistory);
         saveSearchHistory(updatedHistory);
       }
-      // Navigate...
       navigate("/search-results", {
-        state: { results: results, query: { keyword, sender, receiver } },
+        state: { results, query: { keyword, sender, receiver } },
       });
     } catch (error) {
       console.error("Search API error:", error);

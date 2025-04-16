@@ -677,10 +677,12 @@ const GenericEmailPage = () => {
           pathname.startsWith("/filters/") || pathname === "/search-results"
         }
         onBack={() => {
-          if (pathname.startsWith("/filters/")) {
+          if (pathname === "/search-results") {
+            navigate("/search", { replace: true });
+          } else if (pathname === "/search") {
             navigate("/inbox");
-          } else if (pathname === "/search-results") {
-            navigate("/search");
+          } else if (pathname.startsWith("/filters/")) {
+            navigate("/inbox");
           } else {
             navigate("/inbox");
           }
