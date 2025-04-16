@@ -5,13 +5,9 @@
   flex-direction: column;
 }
 
-.no-padding {
+.advanced-search-container .no-padding {
   padding: 0;
   margin-top: 10px;
-}
-
-.search-section {
-  width: 100%;
 }
 
 ul {
@@ -51,6 +47,7 @@ li {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
 }
 
 .clear-btn {
