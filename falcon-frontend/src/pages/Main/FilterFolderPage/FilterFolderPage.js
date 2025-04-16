@@ -1,30 +1,26 @@
-// src/pages/Main/FilterFolderPage/FilterFolderPage.js
-
-import React, { useState, useEffect, useCallback } from "react"; // Import hooks
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./FilterFolderPage.css";
 import NewFilterPopup from "./NewFilterPopup";
+import FilterActionsPopup from "../../../components/Popup/FilterActionsPopup";
 import { ReactComponent as NumberOfEmailIcon } from "../../../assets/icons/black/email-enter-icon.svg";
 import { ReactComponent as Dots } from "../../../assets/icons/black/more-dots.svg";
-import Loader from "../../../components/Loader/Loader"; // Import Loader
-import { useAuth } from "../../../context/AuthContext"; // Import useAuth
-import { API_BASE_URL } from "../../../config/constants"; // Import API Base URL
-import { toast } from "react-toastify"; // Import toast
-
-// Remove dummyFilters array
+import Loader from "../../../components/Loader/Loader";
+import { useAuth } from "../../../context/AuthContext";
+import { API_BASE_URL } from "../../../config/constants";
+import { toast } from "react-toastify";
 
 const FilterFolderPage = ({ setIsListView }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [actionPopupOpen, setActionPopupOpen] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState(null);
   const navigate = useNavigate();
-  const { authToken } = useAuth(); // Get token
-
-  // --- State for real data ---
-  const [filters, setFilters] = useState([]); // To hold filters from backend
+  const { authToken } = useAuth();
+  const [filters, setFilters] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [availableTags, setAvailableTags] = useState([]); // State for tags for the popup
+  const [availableTags, setAvailableTags] = useState([]);
 
-  // --- Function to fetch filters and tags ---
   const fetchFiltersAndTags = useCallback(async () => {
     if (!authToken) {
       setError("Not authenticated");
@@ -35,13 +31,11 @@ const FilterFolderPage = ({ setIsListView }) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch filters and tags concurrently
       const [filtersResponse, tagsResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/api/mail/filters`, {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
         fetch(`${API_BASE_URL}/api/user/tags`, {
-          // Fetch tags needed for the popup
           headers: { Authorization: `Bearer ${authToken}` },
         }),
       ]);
@@ -55,13 +49,9 @@ const FilterFolderPage = ({ setIsListView }) => {
       const tagsData = await tagsResponse.json();
 
       setFilters(Array.isArray(filtersData) ? filtersData : []);
-      // Process tags for the popup
       setAvailableTags(
         Array.isArray(tagsData)
-          ? tagsData.map((tag) => ({
-              tagId: tag.tagId, // Ensure field names match what backend sends
-              tagName: tag.tagName,
-            }))
+          ? tagsData.map((tag) => ({ tagId: tag.tagId, tagName: tag.tagName }))
           : []
       );
     } catch (err) {
@@ -76,12 +66,10 @@ const FilterFolderPage = ({ setIsListView }) => {
     }
   }, [authToken]);
 
-  // --- Fetch data on component mount ---
   useEffect(() => {
     fetchFiltersAndTags();
   }, [fetchFiltersAndTags]);
 
-  // --- Handler to create a new filter ---
   const handleSaveFilter = async (filterDataFromPopup) => {
     if (!authToken) {
       toast.error("Authentication error.");
@@ -95,7 +83,7 @@ const FilterFolderPage = ({ setIsListView }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(filterDataFromPopup), // Send data from popup
+        body: JSON.stringify(filterDataFromPopup),
       });
 
       if (!response.ok) {
@@ -106,71 +94,59 @@ const FilterFolderPage = ({ setIsListView }) => {
       }
 
       toast.success(`Filter "${filterDataFromPopup.Name}" created!`);
-      setIsPopupOpen(false); // Close popup on success
-      fetchFiltersAndTags(); // Refresh the list
+      setIsPopupOpen(false);
+      fetchFiltersAndTags();
     } catch (err) {
       console.error("Save filter error:", err);
       toast.error(`Failed to save filter: ${err.message}`);
-      // Decide if popup should stay open on error
-      // setIsPopupOpen(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Navigation Handler (Updated to use backend data structure) ---
   const handleFilterClick = (filter) => {
-    // Use filterFolderId from the backend DTO
     navigate(`/filters/${filter.filterFolderId}`, {
-      // Pass necessary state for GenericEmailPage header
       state: {
         id: filter.filterFolderId,
         name: filter.name,
-        color: filter.folderColor, // Pass color for header bar
+        color: filter.folderColor,
       },
     });
-    // Keep the logic to switch view in parent
-    if (setIsListView) {
-      setIsListView(true);
-    } else {
-      console.warn("setIsListView prop missing from FilterFolderPage");
-    }
+    if (setIsListView) setIsListView(true);
   };
 
-  // --- Render Logic ---
-  if (isLoading) {
-    return <Loader />;
-  }
+  const openActionPopup = (e, filter) => {
+    e.stopPropagation(); // prevent triggering folder open
+    setSelectedFilter(filter);
+    setActionPopupOpen(true);
+  };
 
-  if (error) {
-    return <p className="error-message padding-sides">{error}</p>;
-  }
+  if (isLoading) return <Loader />;
+  if (error)
+    return <p className="error-message padding-sides">Error: {error}</p>;
 
   return (
     <>
       <div className="folder-grid">
-        {/* Map over the filters state variable */}
         {filters.map((filter) => (
           <div
-            className={`folder-card`}
-            // Use unique key from backend data
+            className="folder-card"
             key={filter.filterFolderId}
             onClick={() => handleFilterClick(filter)}
           >
-            {/* Use folderColor from backend for the top row style */}
             <div
-              className={`folder-top-row`}
-              style={{ background: filter.folderColor || "var(--folder-blue)" }} // Apply color dynamically
+              className="folder-top-row"
+              style={{ background: filter.folderColor || "var(--folder-blue)" }}
             >
-              <Dots className="folder-dot" />
+              <Dots
+                className="folder-dot"
+                onClick={(e) => openActionPopup(e, filter)}
+              />
             </div>
-
             <div className="body-folder">
               <div>
-                {/* Use name from backend */}
                 <p className="folder-title">{filter.name}</p>
                 <p className="folder-subtext">
-                  {/* Use newEmailsCount from backend */}
                   {filter.newEmailsCount ?? 0} new email
                   {filter.newEmailsCount !== 1 ? "s" : ""}
                 </p>
@@ -179,7 +155,6 @@ const FilterFolderPage = ({ setIsListView }) => {
                 <span className="num-email-icon">
                   <NumberOfEmailIcon />
                 </span>
-                {/* Use totalEmails from backend */}
                 <span className="count-num">{filter.totalEmails ?? 0}</span>
               </div>
             </div>
@@ -198,8 +173,22 @@ const FilterFolderPage = ({ setIsListView }) => {
       {isPopupOpen && (
         <NewFilterPopup
           onClose={() => setIsPopupOpen(false)}
-          onSave={handleSaveFilter} // Pass the actual save handler
-          availableTags={availableTags} // Pass fetched tags
+          onSave={handleSaveFilter}
+          availableTags={availableTags}
+        />
+      )}
+
+      {actionPopupOpen && (
+        <FilterActionsPopup
+          onClose={() => setActionPopupOpen(false)}
+          onEdit={() => {
+            console.log("Edit", selectedFilter);
+            setActionPopupOpen(false);
+          }}
+          onDelete={() => {
+            console.log("Delete", selectedFilter);
+            setActionPopupOpen(false);
+          }}
         />
       )}
     </>

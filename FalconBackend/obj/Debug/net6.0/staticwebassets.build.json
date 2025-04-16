@@ -1,12 +1,11 @@
 {
   "Version": 1,
-  "Hash": "SkUCkn8TuMW16PfJYJdc9gGbiRHNBNrw1RocLChotqQ=",
+  "Hash": "wcCyltQmYv+q7Nm03+mUfR2J+tKChuM53GUT7atwejc=",
   "Source": "FalconBackend",
   "BasePath": "_content/FalconBackend",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
   "DiscoveryPatterns": [],
-  "Assets": [],
-  "Endpoints": []
+  "Assets": []
 }
