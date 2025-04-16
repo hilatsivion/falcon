@@ -2,7 +2,7 @@ import React from "react";
 import { Tag } from "../Tag/Tag";
 import "./EmailItem.css";
 import { formatEmailTime } from "../../utils/formatters";
-import { parseSender } from "../../utils/emailUtils";
+import { getOrCreateAvatarColor } from "../../utils/avatar";
 
 import "../../styles/global.css";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
@@ -22,6 +22,8 @@ export const EmailItem = ({
   onStarToggle,
 }) => {
   const senderInitial = sender ? sender.charAt(0).toUpperCase() : "?";
+  const avatarColorCurrUser = getOrCreateAvatarColor();
+
   const hashCode = (str) => {
     let hash = 0;
     if (!str) return hash;

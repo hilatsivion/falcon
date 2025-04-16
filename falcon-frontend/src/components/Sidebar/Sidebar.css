@@ -128,11 +128,17 @@
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
-  background-color: #ccc;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
   margin-right: 10px;
+  border-radius: 50%;
+  background-color: #ccc;
+  color: var(--dark-font-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  text-transform: uppercase;
 }
 
 .user-info .user-email {

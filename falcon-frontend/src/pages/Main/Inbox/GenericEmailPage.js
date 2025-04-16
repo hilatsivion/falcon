@@ -662,7 +662,7 @@ const GenericEmailPage = () => {
   let currentHeaderTitle = pathConfigRef.current.title; // Get the default title for the path
   // Check if we are on the Inbox path AND the view is toggled to show FilterFolderPage
   if (pathname === "/inbox" && !isListView) {
-    currentHeaderTitle = "Filters"; // Or "Manage Filters", "Filter Folders" - choose the title you prefer
+    currentHeaderTitle = "Filters";
   }
 
   return (

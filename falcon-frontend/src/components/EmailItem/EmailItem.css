@@ -9,12 +9,10 @@
   background-color: var(--white);
 }
 
-/* Apply background when starred */
 .email-item.starred {
   background-color: var(--favorite-opacity);
 }
 
-/* Apply opacity when email is read */
 .email-item.read {
   opacity: 0.7;
   background-color: var(--background-white);
@@ -25,34 +23,29 @@
   font-weight: 400;
 }
 
-/* Ensure starred emails keep their special background even when read */
 .email-item.starred.read {
   background-color: var(--favorite-opacity) !important;
-  opacity: 0.7; /* keep the slightly faded look if you want */
+  opacity: 0.7;
 }
 
-/* Sender Name + Avatar */
 .email-item .email-sender-container {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-/* Header: Sender + Time */
 .email-item .email-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-/* Left Section */
 .email-item .email-left {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Avatar */
 .email-item .email-avatar {
   min-width: 24px;
   width: 24px;
@@ -67,49 +60,42 @@
   font-size: 12px;
 }
 
-/* Email Content: Sender, Subject, Preview */
 .email-item .email-content {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-/* Sender */
 .email-item .email-sender {
   font-weight: 500;
   font-size: 15px;
   color: var(--dark-font-color);
 }
 
-/* Subject */
 .email-item .email-subject {
   font-weight: 500;
   font-size: 13px;
   color: var(--dark-font-color);
 }
 
-/* Email Preview */
 .email-item .email-preview {
   font-size: 11px;
   color: var(--icons-grey);
   font-weight: 400;
 }
 
-/* Email Body */
 .email-item .email-body {
   gap: 4px;
   display: flex;
   flex-direction: column;
 }
 
-/* Right Section: Time & Star Icon */
 .email-item .email-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Time */
 .email-item .email-time {
   font-size: 12px;
   color: var(--icons-grey);

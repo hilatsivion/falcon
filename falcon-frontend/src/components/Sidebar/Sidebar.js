@@ -19,6 +19,7 @@ import { ReactComponent as UnreadIconBlue } from "../../assets/icons/blue/unread
 
 import "./Sidebar.css";
 import ConfirmPopup from "../Popup/ConfirmPopup";
+import { getOrCreateAvatarColor, getUserInitial } from "../../utils/avatar";
 
 const Sidebar = ({ isOpen, closeSidebar }) => {
   const { logout } = useAuth();
@@ -28,6 +29,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+
+  const avatarColor = getOrCreateAvatarColor();
+  const userInitial = getUserInitial(userData.fullName);
 
   const confirmLogout = () => {
     setShowLogoutPopup(true);
@@ -77,6 +81,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
         confirmText="Logout"
         cancelText="Cancel"
         onConfirm={() => {
+          sessionStorage.removeItem("avatarColor"); // remove avatar color
           logout();
           navigate("/login");
         }}
@@ -170,7 +175,12 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             </div>
 
             <div className="sidebar-user">
-              <div className="user-avatar" />
+              <div
+                className="user-avatar"
+                style={{ backgroundColor: avatarColor }}
+              >
+                {userInitial}
+              </div>
               <div className="user-info">
                 <div className="user-name">
                   {userData.fullName || "Loading..."}
