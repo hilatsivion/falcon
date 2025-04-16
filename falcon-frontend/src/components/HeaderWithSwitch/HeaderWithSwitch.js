@@ -44,7 +44,7 @@ const HeaderWithSwitch = ({
               alt="Back"
               onClick={onBack}
               className="back-icon"
-              style={{ cursor: "pointer", marginRight: "12px", height: "20px" }}
+              style={{ marginRight: "12px", height: "20px" }}
             />
           )}
           <h1>{title || determineTitle()}</h1>

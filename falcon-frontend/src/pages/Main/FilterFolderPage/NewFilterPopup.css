@@ -26,7 +26,6 @@
   top: 16px;
   background: none;
   border: none;
-  cursor: pointer;
   padding: 0;
 }
 
@@ -83,7 +82,6 @@
 
 .add-btn:enabled {
   opacity: 1;
-  cursor: pointer;
 }
 
 .pills-container {
@@ -103,7 +101,6 @@
 
 .pill span {
   margin-left: 6px;
-  cursor: pointer;
 }
 
 .tags-container {
@@ -157,7 +154,6 @@
   background: none;
   border: none;
   text-decoration: underline;
-  cursor: pointer;
 }
 
 .center-col {

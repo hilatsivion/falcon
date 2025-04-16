@@ -19,6 +19,7 @@ const AdvancedSearch = () => {
   const navigate = useNavigate();
   const trimmedKeyword = keyword.trim();
 
+  // Load search history from localStorage on component mount
   useEffect(() => {
     try {
       const storedHistory = localStorage.getItem(SEARCH_HISTORY_KEY);
@@ -41,18 +42,19 @@ const AdvancedSearch = () => {
     }
   };
 
+  // Disable search button if all inputs are empty or loading is in progress
   const isSearchDisabled =
     (!keyword.trim() && !sender.trim() && !receiver.trim()) || isLoading;
 
+  // Ensure at least one search criterion is provided before sending the request
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
 
-    // Keep validation for disabling button (at least one field must have *real* content)
     const isActuallyEmpty =
       !keyword.trim() && !sender.trim() && !receiver.trim();
     if (isActuallyEmpty && !isLoading) {
       toast.error("Please enter at least one search criterion.");
-      return; // Still prevent search if truly all empty
+      return;
     }
 
     if (!authToken) {
@@ -87,7 +89,8 @@ const AdvancedSearch = () => {
         throw new Error(errorMsg);
       }
       const results = await response.json();
-      // Add to history the searched keywords
+
+      // Add current keyword to history if it's not already first in the list
       if (
         trimmedKeyword &&
         (!lastSearches.length || lastSearches[0] !== trimmedKeyword)
@@ -148,11 +151,7 @@ const AdvancedSearch = () => {
             {lastSearches.length > 0 ? (
               <ul>
                 {lastSearches.map((item, i) => (
-                  <li
-                    key={i}
-                    onClick={() => reuseSearchTerm(item)}
-                    style={{ cursor: "pointer" }}
-                  >
+                  <li key={i} onClick={() => reuseSearchTerm(item)}>
                     {item}
                   </li>
                 ))}
