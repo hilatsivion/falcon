@@ -70,7 +70,6 @@ const AdvancedSearch = () => {
     };
 
     const searchUrl = `${API_BASE_URL}/api/mail/search`;
-    console.log("Sending POST search request with body:", requestBody); // Check the body
     try {
       const response = await fetch(searchUrl, {
         method: "POST",

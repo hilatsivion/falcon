@@ -28,14 +28,6 @@ const EmailView = ({
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const { name: displayName, email: senderEmail } = parseSender(email?.sender);
 
-  console.log("✅ EmailView handlers:", {
-    onClose,
-    onDelete,
-    onMarkUnread,
-    onReply,
-    onForward,
-  });
-
   if (!email) {
     return null;
   }

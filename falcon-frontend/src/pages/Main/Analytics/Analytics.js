@@ -308,8 +308,6 @@ const Analytics = () => {
   const handleCancel = () => setIsEditMode(false);
   const handleSave = () => {
     setIsEditMode(false);
-    console.log("Visibility preferences saved.");
-    // Persisting changes to backend is not implemented here
   };
   const handleSelectToggle = (id) => {
     const newHiddenIds = new Set(hiddenInsightIds);

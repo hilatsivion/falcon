@@ -15,8 +15,7 @@ const MainLayout = ({ children }) => {
       return;
     }
     try {
-      console.log("Sending heartbeat...");
-
+      // Sending heartbeat
       const response = await fetch(`${API_BASE_URL}/api/analytics/heartbeat`, {
         method: "POST",
         headers: {

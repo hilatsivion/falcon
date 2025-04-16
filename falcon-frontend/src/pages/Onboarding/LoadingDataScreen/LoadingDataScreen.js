@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react"; // Import hooks
-import { useNavigate } from "react-router-dom"; // Import navigate
-import { useAuth } from "../../../context/AuthContext"; // Import Auth context hook
-import { API_BASE_URL } from "../../../config/constants"; // Import API Base URL
-import { toast } from "react-toastify"; // For error messages
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
+import { API_BASE_URL } from "../../../config/constants";
+import { toast } from "react-toastify";
 
 import "./loadingData.css";
 import "../../../styles/global.css";
@@ -11,37 +11,29 @@ import logo from "../../../assets/images/falcon-logo-full-blue.svg";
 import spinnerIcon from "../../../assets/icons/black/spinner.svg";
 
 const LoadingDataPage = () => {
-  const [isDataLoadingComplete, setIsDataLoadingComplete] = useState(false); // Tracks API call completion
-  const [isMinTimeElapsed, setIsMinTimeElapsed] = useState(false); // Tracks 3-second timer
-  const { authToken } = useAuth(); // Get token from context
+  const [isDataLoadingComplete, setIsDataLoadingComplete] = useState(false);
+  const [isMinTimeElapsed, setIsMinTimeElapsed] = useState(false);
+  const { authToken } = useAuth();
   const navigate = useNavigate();
 
-  // Effect 1: Minimum Display Time (3 seconds)
+  // Minimum Display Time (3 seconds)
   useEffect(() => {
-    console.log("LoadingDataPage: Starting min time timer...");
     const timer = setTimeout(() => {
-      console.log("LoadingDataPage: Minimum time elapsed.");
       setIsMinTimeElapsed(true);
-    }, 3000); // 3 seconds
+    }, 3000);
 
-    return () => clearTimeout(timer); // Cleanup timer on unmount
-  }, []); // Run only once on mount
+    return () => clearTimeout(timer);
+  }, []);
 
-  // Effect 2: Trigger Data Initialization API Call
+  // Trigger Data Initialization API Call
   useEffect(() => {
     const initializeData = async () => {
       if (!authToken) {
-        console.error(
-          "LoadingDataPage: No auth token found! Redirecting to login."
-        );
         toast.error("Authentication error. Please log in.");
-        navigate("/login", { replace: true }); // Redirect if no token
+        navigate("/login", { replace: true });
         return;
       }
-
-      console.log("LoadingDataPage: Starting data initialization API call...");
-      // We assume loading starts true conceptually until the API call finishes
-      setIsDataLoadingComplete(false); // Explicitly set loading incomplete
+      setIsDataLoadingComplete(false);
 
       try {
         const response = await fetch(
@@ -50,7 +42,6 @@ const LoadingDataPage = () => {
             method: "POST",
             headers: {
               Authorization: `Bearer ${authToken}`,
-              // No 'Content-Type' needed for POST without body
             },
           }
         );
@@ -76,26 +67,24 @@ const LoadingDataPage = () => {
         toast.error(
           `Failed to load initial data: ${error.message}. Proceeding anyway...`
         );
-        // Even if initialization fails, we might want to proceed to inbox
+        // navigate to inbox anyway
         setIsDataLoadingComplete(true); // Mark as complete even on error to allow navigation
       }
     };
 
     initializeData();
-  }, [authToken, navigate]); // Re-run if token changes (e.g., on quick re-render)
+  }, [authToken, navigate]); // Re-run if token changes
 
-  // Effect 3: Navigate when both conditions are met
+  // Navigate when both conditions are met
   useEffect(() => {
     console.log(
       `LoadingDataPage: Checking navigation conditions - MinTime: ${isMinTimeElapsed}, DataLoaded: ${isDataLoadingComplete}`
     );
     if (isMinTimeElapsed && isDataLoadingComplete) {
-      console.log("LoadingDataPage: Conditions met, navigating to /inbox...");
       navigate("/inbox", { replace: true }); // Navigate to inbox and replace history
     }
   }, [isMinTimeElapsed, isDataLoadingComplete, navigate]); // Depend on both flags
 
-  // Render the loading UI
   return (
     <div className="loading-container">
       <img className="loading-logo" src={logo} alt="Falcon Logo" />
