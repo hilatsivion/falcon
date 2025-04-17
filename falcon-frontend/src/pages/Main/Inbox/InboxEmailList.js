@@ -1,6 +1,6 @@
 import React from "react";
 import { EmailItem } from "../../../components/EmailItem/EmailItem";
-import "./Inbox.css"; // Or specific CSS for the list if needed
+import "./Inbox.css";
 
 const InboxEmailList = ({ emails, onEmailSelect, onToggleFavorite }) => {
   return (
