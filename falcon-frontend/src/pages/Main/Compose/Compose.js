@@ -156,6 +156,7 @@ const Compose = () => {
     body.trim() &&
     !isLoading;
 
+  // -- render --
   return (
     <div className="compose-page page-container">
       <div className="compose-header space-between-full-wid">
@@ -224,7 +225,7 @@ const Compose = () => {
       <div className="file-upload-row">
         <button
           className="files-btn"
-          onClick={() => fileInputRef.current?.click()} // Triggers the input below
+          onClick={() => fileInputRef.current?.click()} //
           disabled={isLoading}
         >
           <Paperclip />
@@ -234,10 +235,10 @@ const Compose = () => {
         <input
           type="file"
           multiple
-          accept="image/*" // Or other desired types
+          accept="image/*"
           style={{ display: "none" }}
-          ref={fileInputRef} // The ref we use
-          onChange={handleFileChange} // The handler we updated
+          ref={fileInputRef}
+          onChange={handleFileChange}
           disabled={isLoading}
         />
 

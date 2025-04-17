@@ -9,7 +9,6 @@ import Loader from "../../../components/Loader/Loader";
 import { API_BASE_URL } from "../../../config/constants";
 import { toast } from "react-toastify";
 
-// Define mappings for different page types to their API endpoints and titles
 const pageMap = {
   "/inbox": {
     title: "Inbox",
@@ -28,20 +27,19 @@ const pageMap = {
     api: "/api/mail/favorites/preview?page=1&pageSize=50",
     expectsCombinedFavorites: true,
     dtoType: "FavoriteEmailsDto",
-    // Detail view needs logic to determine type for favorites/search
-    detailApiBase: null, // Requires special handling
+    detailApiBase: null,
   },
   "/sent": {
     title: "Sent",
     api: "/api/mail/sent/preview?page=1&pageSize=100",
     dtoType: "MailSentPreviewDto",
-    detailApiBase: "/api/mail/sent/full/", // Correct endpoint for sent details
+    detailApiBase: "/api/mail/sent/full/",
   },
   "/search-results": {
     title: "Results",
     api: null,
     dtoType: "MailSearchResultDto",
-    detailApiBase: null, // Requires special handling
+    detailApiBase: null,
   },
 };
 
@@ -59,23 +57,23 @@ const mapDtoToEmailItemProps = (dto, dtoType) => {
         isRead: dto.isRead,
         isFavorite: dto.isFavorite,
         mailAccountId: dto.mailAccountId,
-        emailType: "received", // Add type hint
+        emailType: "received",
       };
     case "MailSentPreviewDto":
       return {
         mailId: dto.mailId,
         sender: "You",
-        recipients: dto.recipients || [], // Keep recipients info
+        recipients: dto.recipients || [],
         subject: dto.subject,
         bodySnippet: dto.bodySnippet,
         tags: [],
-        timeReceived: dto.timeSent, // Use timeSent
+        timeReceived: dto.timeSent,
         isRead: true,
         isFavorite: dto.isFavorite,
         mailAccountId: dto.mailAccountId,
-        emailType: "sent", // Add type hint
+        emailType: "sent",
       };
-    case "EmailSummaryDto": // DTO from /api/mail/filters/{id}/emails (assumed received)
+    case "EmailSummaryDto":
       return {
         mailId: dto.mailId,
         sender: dto.senderEmail,
@@ -84,16 +82,14 @@ const mapDtoToEmailItemProps = (dto, dtoType) => {
         tags: dto.tags ? dto.tags.map((tag) => tag.name) : [],
         timeReceived: dto.timeReceived,
         isRead: dto.isRead,
-        isFavorite: false, // Not available
+        isFavorite: false,
         mailAccountId: dto.mailAccountId || null,
-        emailType: "received", // Assume filtered emails are received
+        emailType: "received",
       };
     case "MailSearchResultDto":
-      // Search results can be mixed, include 'type' field from DTO
       const isSent = dto.type === "sent";
       return {
         mailId: dto.mailId,
-        // Display sender if received, or first recipient if sent
         sender: isSent
           ? dto.recipients && dto.recipients.length > 0
             ? `To: ${dto.recipients[0]}`
@@ -107,53 +103,49 @@ const mapDtoToEmailItemProps = (dto, dtoType) => {
         isRead: dto.isRead !== undefined ? dto.isRead : true,
         isFavorite: dto.isFavorite || false,
         mailAccountId: dto.mailAccountId,
-        emailType: dto.type, // Crucial: pass the type from search results
+        emailType: dto.type,
       };
     default:
       console.warn("Unknown DTO type for mapping:", dtoType);
-      return { ...dto, emailType: "unknown" }; // Add default type hint
+      return { ...dto, emailType: "unknown" };
   }
 };
 
-// Helper to map detail DTOs to the props expected by EmailView
 const mapDetailDtoToEmailViewProps = (detailDto, emailType) => {
   if (!detailDto) return null;
 
   if (emailType === "received") {
-    // Map MailReceivedDto to EmailView props
     return {
       mailId: detailDto.mailId,
       sender: detailDto.sender,
       recipients: detailDto.recipients || [],
       subject: detailDto.subject,
       body: detailDto.body,
-      timeReceived: detailDto.timeReceived, // Use timeReceived
+      timeReceived: detailDto.timeReceived,
       isRead: detailDto.isRead,
       isFavorite: detailDto.isFavorite,
-      tags: detailDto.tags || [], // Assuming TagDto structure
+      tags: detailDto.tags || [],
       attachments: detailDto.attachments || [],
       mailAccountId: detailDto.mailAccountId,
       emailType: "received",
     };
   } else if (emailType === "sent") {
-    // Map MailSentDto to EmailView props
     return {
       mailId: detailDto.mailId,
-      sender: "You", // Sender is always 'You' for sent items view
+      sender: "You",
       recipients: detailDto.recipients || [],
       subject: detailDto.subject,
       body: detailDto.body,
-      timeReceived: detailDto.timeSent, // Use timeSent for display consistency
-      isRead: true, // Sent items are conceptually 'read' by the sender
+      timeReceived: detailDto.timeSent,
+      isRead: true,
       isFavorite: detailDto.isFavorite,
-      tags: [], // Sent items don't have tags in this structure
+      tags: [],
       attachments: detailDto.attachments || [],
       mailAccountId: detailDto.mailAccountId,
       emailType: "sent",
     };
   } else {
     console.warn("Unknown email type for detail mapping:", emailType);
-    // Fallback or default mapping if needed
     return { ...detailDto, emailType };
   }
 };
@@ -167,12 +159,12 @@ const GenericEmailPage = () => {
   const toastShownRef = useRef(false);
 
   const [isListView, setIsListView] = useState(true);
-  const [emails, setEmails] = useState([]); // Holds mapped data for EmailItem
+  const [emails, setEmails] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedMailId, setSelectedMailId] = useState(null);
-  const [selectedEmailType, setSelectedEmailType] = useState(null); // Store type of selected email
-  const [fullEmailData, setFullEmailData] = useState(null); // Holds mapped data for EmailView
+  const [selectedEmailType, setSelectedEmailType] = useState(null);
+  const [fullEmailData, setFullEmailData] = useState(null);
   const [isEmailViewOpen, setIsEmailViewOpen] = useState(false);
   const [isFetchingFullEmail, setIsFetchingFullEmail] = useState(false);
 
@@ -199,13 +191,13 @@ const GenericEmailPage = () => {
       currentTitle = location.state?.name || "Filter Folder";
       currentApiPath = `/api/mail/filters/${filterIdFromParams}/emails`;
       currentDtoType = "EmailSummaryDto";
-      // Assume filtered emails are received for detail view for now
       currentDetailApiBase = "/api/mail/received/full/";
       currentIsListView = true;
     } else if (pathname === "/search-results") {
       currentTitle = "Results";
       currentApiPath = null;
       currentDtoType = "MailSearchResultDto";
+
       // Detail view needs logic based on the *specific* search result type
       currentDetailApiBase = null;
       currentIsListView = true;
@@ -232,7 +224,6 @@ const GenericEmailPage = () => {
   // --- API Callbacks ---
   const fetchFullEmail = useCallback(
     async (mailId, emailType) => {
-      // Accept emailType as argument
       if (!authToken || !mailId) return null;
 
       let detailEndpointBase = pathConfigRef.current.detailApiBase;
@@ -267,7 +258,7 @@ const GenericEmailPage = () => {
         }
         // Map the raw DTO to the structure EmailView expects
         const rawDetailDto = await response.json();
-        return mapDetailDtoToEmailViewProps(rawDetailDto, emailType); // Map using the determined type
+        return mapDetailDtoToEmailViewProps(rawDetailDto, emailType);
       } catch (err) {
         console.error("Fetch Full Email Error:", err);
         toast.error(`Could not load email details: ${err.message}`);
@@ -276,12 +267,11 @@ const GenericEmailPage = () => {
         setIsFetchingFullEmail(false);
       }
     },
-    [authToken] // Depends only on authToken
+    [authToken]
   );
 
   const updateReadStatusAPI = useCallback(
     async (mailIds, isRead) => {
-      // (Implementation unchanged)
       if (!authToken || !mailIds || mailIds.length === 0) return false;
       const body = mailIds.map((id) => ({ mailId: id, isRead }));
       try {
@@ -309,7 +299,6 @@ const GenericEmailPage = () => {
 
   const toggleFavoriteAPI = useCallback(
     async (mailId, newFavoriteStatus) => {
-      // (Implementation unchanged)
       if (!authToken || mailId === undefined) return false;
       try {
         const response = await fetch(
@@ -326,7 +315,7 @@ const GenericEmailPage = () => {
         return true;
       } catch (err) {
         console.error("Toggle Favorite Error:", err);
-        // Let calling function handle UI reversion/toast
+
         return false;
       }
     },
@@ -335,7 +324,6 @@ const GenericEmailPage = () => {
 
   const deleteEmailAPI = useCallback(
     async (mailId, mailAccountId) => {
-      // (Implementation unchanged, relies on mailAccountId being passed correctly)
       if (!authToken || !mailId || !mailAccountId) {
         console.warn(
           "Delete failed: Missing mailId or mailAccountId. MailAccountId:",
@@ -438,7 +426,7 @@ const GenericEmailPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [authToken, isAuthenticated, pathname, location.state?.results]); // Dependencies are stable values or from React Router
+  }, [authToken, isAuthenticated, pathname, location.state?.results]);
 
   // --- Effects ---
   useEffect(() => {
@@ -470,11 +458,9 @@ const GenericEmailPage = () => {
   // --- Event Handlers ---
   const handleEmailSelect = useCallback(
     async (mailId) => {
-      // Find the mapped email item to get its type hint
       const previewEmail = emails.find((e) => e.mailId === mailId);
       if (!previewEmail || isFetchingFullEmail) return;
 
-      // Store the type for fetching the correct detail DTO
       setSelectedEmailType(previewEmail.emailType);
       setSelectedMailId(mailId);
       setIsEmailViewOpen(false);
@@ -495,13 +481,12 @@ const GenericEmailPage = () => {
         previewEmail.emailType
       );
       if (fetchedMappedData) {
-        setFullEmailData(fetchedMappedData); // Set the *mapped* data for EmailView
+        setFullEmailData(fetchedMappedData);
         setIsEmailViewOpen(true);
         if (markedReadLocally && previewEmail.isRead !== undefined) {
-          updateReadStatusAPI([mailId], true); // Confirm read status with API
+          updateReadStatusAPI([mailId], true);
         }
       } else {
-        // Revert optimistic update if fetch failed
         if (markedReadLocally && previewEmail.isRead !== undefined) {
           setEmails((prev) =>
             prev.map((e) => (e.mailId === mailId ? { ...e, isRead: false } : e))
@@ -511,7 +496,6 @@ const GenericEmailPage = () => {
         setSelectedEmailType(null);
       }
     },
-    // Dependencies: Need emails list, isFetching, and the stable API callbacks
     [emails, isFetchingFullEmail, fetchFullEmail, updateReadStatusAPI]
   );
 
@@ -554,7 +538,6 @@ const GenericEmailPage = () => {
 
   const handleDeleteEmail = useCallback(async () => {
     if (!fullEmailData) return;
-    // Use mailAccountId from the mapped fullEmailData
     const { mailId, mailAccountId } = fullEmailData;
     if (!mailAccountId) {
       toast.error("Cannot delete: Mail Account ID is missing.");
@@ -562,17 +545,15 @@ const GenericEmailPage = () => {
     }
     const success = await deleteEmailAPI(mailId, mailAccountId);
     if (success) {
-      // Remove from the *mapped* emails list
       setEmails((prev) => prev.filter((e) => e.mailId !== mailId));
       setIsEmailViewOpen(false);
       setFullEmailData(null);
       setSelectedMailId(null);
       setSelectedEmailType(null);
     }
-  }, [fullEmailData, deleteEmailAPI]); // Depends on fullEmailData and deleteEmailAPI
+  }, [fullEmailData, deleteEmailAPI]);
 
   const handleMarkUnread = useCallback(async () => {
-    // (Implementation unchanged, relies on fullEmailData having isRead)
     if (!fullEmailData || fullEmailData.isRead === undefined) return;
     const { mailId } = fullEmailData;
     const success = await updateReadStatusAPI([mailId], false);
@@ -585,10 +566,9 @@ const GenericEmailPage = () => {
       setSelectedMailId(null);
       setSelectedEmailType(null);
     }
-  }, [fullEmailData, updateReadStatusAPI]); // Depends on fullEmailData and updateReadStatusAPI
+  }, [fullEmailData, updateReadStatusAPI]);
 
   const handleCloseEmailView = useCallback(() => {
-    // (Implementation unchanged)
     setIsEmailViewOpen(false);
     setFullEmailData(null);
     setSelectedMailId(null);
@@ -596,10 +576,8 @@ const GenericEmailPage = () => {
   }, []);
 
   const handleReply = useCallback(() => {
-    // (Implementation unchanged, relies on fullEmailData structure)
     if (!fullEmailData || fullEmailData.sender === undefined) return;
     let replyToAddress = fullEmailData.sender;
-    // Handle "You" as sender for sent items - can't reply to yourself easily here
     if (replyToAddress === "You") {
       toast.info("Replying to yourself? Try forwarding instead.");
       return;
@@ -611,10 +589,9 @@ const GenericEmailPage = () => {
     navigate("/compose", {
       state: { to: replyToAddress, subject: `Re: ${fullEmailData.subject}` },
     });
-  }, [navigate, fullEmailData]); // Depends on navigate and fullEmailData
+  }, [navigate, fullEmailData]);
 
   const handleForward = useCallback(() => {
-    // (Implementation unchanged, relies on fullEmailData structure)
     if (!fullEmailData) return;
     const time =
       fullEmailData.timeReceived || fullEmailData.timeSent || new Date();
@@ -626,7 +603,7 @@ const GenericEmailPage = () => {
     navigate("/compose", {
       state: { subject: `Fwd: ${fullEmailData.subject}`, body: forwardBody },
     });
-  }, [navigate, fullEmailData]); // Depends on navigate and fullEmailData
+  }, [navigate, fullEmailData]);
 
   // --- Render Logic ---
   let listContent;
@@ -659,8 +636,8 @@ const GenericEmailPage = () => {
   const shouldShowToggle =
     !pathname.startsWith("/filters/") && pathname !== "/search-results";
 
-  let currentHeaderTitle = pathConfigRef.current.title; // Get the default title for the path
-  // Check if we are on the Inbox path AND the view is toggled to show FilterFolderPage
+  let currentHeaderTitle = pathConfigRef.current.title;
+
   if (pathname === "/inbox" && !isListView) {
     currentHeaderTitle = "Filters";
   }
@@ -706,7 +683,7 @@ const GenericEmailPage = () => {
 
       {!isFetchingFullEmail && isEmailViewOpen && fullEmailData && (
         <EmailView
-          email={fullEmailData} // Pass the *mapped* full data
+          email={fullEmailData}
           onClose={handleCloseEmailView}
           onDelete={handleDeleteEmail}
           onMarkUnread={handleMarkUnread}
