@@ -6,7 +6,7 @@ import "./Analytics.css";
 import InsightCard from "../../../components/InsightCard/InsightCard";
 import Loader from "../../../components/Loader/Loader";
 import { API_BASE_URL } from "../../../config/constants";
-import { useAuth } from "../../../context/AuthContext"; // Use Auth context
+import { useAuth } from "../../../context/AuthContext";
 
 // --- Import Icons ---
 import { ReactComponent as ClockIcon } from "../../../assets/icons/black/clock-icon.svg";
@@ -88,6 +88,10 @@ const Analytics = () => {
       return new Set();
     }
   });
+
+  const [originalHiddenIds, setOriginalHiddenIds] = useState(
+    new Set(hiddenInsightIds)
+  );
 
   // --- Fetch Data Effect ---
   useEffect(() => {
@@ -304,8 +308,16 @@ const Analytics = () => {
       );
 
   // --- Edit Mode Handlers ---
-  const handleEditToggle = () => setIsEditMode(true);
-  const handleCancel = () => setIsEditMode(false);
+  const handleEditToggle = () => {
+    setOriginalHiddenIds(new Set(hiddenInsightIds)); // Save original
+    setIsEditMode(true);
+  };
+
+  const handleCancel = () => {
+    setHiddenInsightIds(new Set(originalHiddenIds)); // Revert changes
+    setIsEditMode(false);
+  };
+
   const handleSave = () => {
     setIsEditMode(false);
   };
