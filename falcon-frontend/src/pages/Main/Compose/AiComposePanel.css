@@ -52,13 +52,14 @@
   height: 100%;
   margin-top: 10px;
   padding: 20px 16px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--dark-font-color);
   background: linear-gradient(225deg, #e0edff 0%, #f8fbff 46%, #e0edff 100%);
   border: 1px solid var(--selected-blue);
   border-radius: 12px;
   resize: none;
   outline: none;
+  font-size: 16px;
   box-shadow: inset 2px 5px 7px rgba(210, 223, 255, 0.6);
 }
 
@@ -93,7 +94,7 @@
 }
 
 .ai-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   margin-top: 16px;
   align-self: flex-start;
@@ -102,7 +103,7 @@
 
 .retry-btn {
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 10px;
   text-decoration: underline;
   color: var(--dark-font-color);

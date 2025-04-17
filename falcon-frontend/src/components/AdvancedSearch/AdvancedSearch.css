@@ -15,9 +15,10 @@ ul {
   padding-left: 0;
   margin: 0;
 }
+
 li {
   padding-bottom: 5px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .last-searched {
@@ -25,9 +26,9 @@ li {
 }
 
 .advanced-search-container .sub-title {
-  font-size: 11px;
+  font-size: 13px;
   margin-bottom: 8px;
-  color: var(--icons-grey);
+  color: var(--dark-font-color);
 }
 
 .advanced-search-container .search-btn {
@@ -53,6 +54,7 @@ li {
 .clear-btn {
   background: transparent;
   padding: 0;
+  font-size: 13px;
 }
 
 .width-100 {

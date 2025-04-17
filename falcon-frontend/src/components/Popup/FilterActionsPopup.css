@@ -19,7 +19,8 @@
   color: var(--dark-font-color);
 }
 
-.filter-actions-popup .close-btn {
+.filter-actions-popup .close-btn,
+.popup-box .close-btn {
   background: transparent;
   border: none;
   padding: 4px;

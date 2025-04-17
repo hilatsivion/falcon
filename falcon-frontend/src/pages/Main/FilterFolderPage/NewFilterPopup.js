@@ -105,7 +105,7 @@ const NewFilterPopup = ({
         </div>
 
         <div className="form-group">
-          <label>
+          <label className="margin-bot">
             Filter name <span className="required">*</span>
           </label>
           <input
