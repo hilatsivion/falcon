@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace FalconBackend.Services
 {
@@ -372,16 +373,14 @@ namespace FalconBackend.Services
 
         public async Task SendMailAsync(SendMailRequest request, List<IFormFile> attachments)
         {
-            // --- Recipient Validation (Keep from previous implementation) ---
             if (request.Recipients == null || !request.Recipients.Any())
             {
                 throw new ArgumentException("Recipient list cannot be empty.");
             }
             foreach (var recipientEmail in request.Recipients)
             {
-                // Check if the recipient email exists in any MailAccount record
                 var recipientAccountExists = await _context.MailAccounts
-                                                   .AnyAsync(ma => ma.EmailAddress == recipientEmail);
+                                                      .AnyAsync(ma => ma.EmailAddress == recipientEmail);
                 if (!recipientAccountExists)
                 {
                     throw new KeyNotFoundException($"Recipient email not registered in any mail account: {recipientEmail}");
@@ -389,8 +388,8 @@ namespace FalconBackend.Services
             }
 
             var senderAccount = await _context.MailAccounts
-                                         .AsNoTracking()
-                                         .FirstOrDefaultAsync(ma => ma.MailAccountId == request.MailAccountId);
+                                             .AsNoTracking()
+                                             .FirstOrDefaultAsync(ma => ma.MailAccountId == request.MailAccountId);
 
             if (senderAccount == null)
             {
@@ -398,78 +397,101 @@ namespace FalconBackend.Services
             }
             string senderDisplayAddress = senderAccount.EmailAddress;
 
-            var mailSent = new MailSent
+            var executionStrategy = _context.Database.CreateExecutionStrategy();
+
+            await executionStrategy.ExecuteAsync(async () =>
             {
-                MailAccountId = request.MailAccountId,
-                Subject = request.Subject,
-                Body = request.Body,
-                TimeSent = DateTime.UtcNow,
-                Recipients = request.Recipients.Select(email => new Recipient { Email = email }).ToList(),
-                Attachments = new List<Attachments>()
-            };
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                _context.MailSent.Add(mailSent);
-                await _context.SaveChangesAsync();
-
-                await SaveAttachments(attachments, mailSent.MailId, mailSent.MailAccountId, "Sent", mailSent.Attachments);
-
-                List<MailReceived> receivedCopies = new List<MailReceived>();
-                foreach (var recipientEmail in request.Recipients)
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    var recipientMailAccount = await _context.MailAccounts
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(ma => ma.EmailAddress == recipientEmail);
-
-                    if (recipientMailAccount != null)
+                    var mailSent = new MailSent
                     {
-                        var mailReceived = new MailReceived
-                        {
-                            MailAccountId = recipientMailAccount.MailAccountId,
-                            Sender = senderDisplayAddress,
-                            Subject = request.Subject,
-                            Body = request.Body,
-                            TimeReceived = mailSent.TimeSent,
-                            IsRead = false,
-                            IsFavorite = false,
-                            Attachments = new List<Attachments>(),
-                            Recipients = new List<Recipient> { new Recipient { Email = recipientEmail } },
-                            MailTags = new List<MailTag>()
-                        };
-                        receivedCopies.Add(mailReceived);
+                        MailAccountId = request.MailAccountId,
+                        Subject = request.Subject,
+                        Body = request.Body,
+                        TimeSent = DateTime.UtcNow,
+                        Recipients = request.Recipients.Select(email => new Recipient { Email = email }).ToList(),
+                        Attachments = new List<Attachments>()
+                    };
 
-                        // --- Update Recipient's Analytics --
-                        if (_analyticsService != null)
+                    _context.MailSent.Add(mailSent);
+                    await _context.SaveChangesAsync();
+
+                    await SaveAttachments(attachments, mailSent.MailId, mailSent.MailAccountId, "Sent", mailSent.Attachments);
+                    await _context.SaveChangesAsync(); // Save attachments added in SaveAttachments
+
+                    List<MailReceived> receivedCopies = new List<MailReceived>();
+                    foreach (var recipientEmail in request.Recipients)
+                    {
+                        var recipientMailAccount = await _context.MailAccounts
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(ma => ma.EmailAddress == recipientEmail);
+
+                        if (recipientMailAccount != null)
                         {
-                            await _analyticsService.UpdateEmailsReceivedWeeklyAsync(recipientMailAccount.AppUserEmail);
+                            var receivedAttachments = new List<Attachments>();
+                            // Copy attachment records after saving mailSent and its attachments
+                            foreach (var sentAttachment in mailSent.Attachments)
+                            {
+                                receivedAttachments.Add(new Attachments
+                                {
+                                    // MailId will be set by EF Core relationship
+                                    Name = sentAttachment.Name,
+                                    FileType = sentAttachment.FileType,
+                                    FileSize = sentAttachment.FileSize,
+                                    FilePath = sentAttachment.FilePath // Link to the same physical file
+                                });
+                            }
+
+                            var mailReceived = new MailReceived
+                            {
+                                MailAccountId = recipientMailAccount.MailAccountId,
+                                Sender = senderDisplayAddress,
+                                Subject = request.Subject,
+                                Body = request.Body,
+                                TimeReceived = mailSent.TimeSent,
+                                IsRead = false,
+                                IsFavorite = false,
+                                Attachments = receivedAttachments, // Assign copied attachment records
+                                Recipients = new List<Recipient> { new Recipient { Email = recipientEmail } },
+                                MailTags = new List<MailTag>()
+                            };
+                            receivedCopies.Add(mailReceived);
+
+                            if (_analyticsService != null)
+                            {
+                                await _analyticsService.UpdateEmailsReceivedWeeklyAsync(recipientMailAccount.AppUserEmail);
+                            }
                         }
                     }
-                }
 
-                // 3. Add all generated MailReceived records 
-                if (receivedCopies.Any())
+                    if (receivedCopies.Any())
+                    {
+                        _context.MailReceived.AddRange(receivedCopies);
+                    }
+
+                    await _context.SaveChangesAsync(); // Save received copies and their attachments
+
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
                 {
-                    _context.MailReceived.AddRange(receivedCopies);
+                    if (transaction != null)
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                    Console.WriteLine($"Error during SendMail transaction: {ex.Message}");
+                    throw;
                 }
+            });
 
-                await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-
-                var senderUserEmail = senderAccount.AppUserEmail;
-                if (!string.IsNullOrEmpty(senderUserEmail) && _analyticsService != null)
-                {
-                    await _analyticsService.UpdateEmailsSentWeeklyAsync(senderUserEmail);
-                }
-            }
-            catch
+            var senderUserEmail = senderAccount.AppUserEmail;
+            if (!string.IsNullOrEmpty(senderUserEmail) && _analyticsService != null)
             {
-                await transaction.RollbackAsync();
-                throw; 
+                await _analyticsService.UpdateEmailsSentWeeklyAsync(senderUserEmail);
             }
         }
+
         public async Task<MailReceivedDto?> GetReceivedMailByIdAsync(string userEmail, int mailId)
         {
             var mail = await _context.MailReceived
