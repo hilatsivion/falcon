@@ -50,21 +50,24 @@ const HeaderWithSwitch = ({
           <h1>{title || determineTitle()}</h1>
         </div>
 
-        {onToggleView && (
-          <div className="switch-button" onClick={onToggleView}>
-            <div className={`switch-circle ${isListView ? "left" : "right"}`} />
-            <img
-              src={listIcon}
-              alt="List"
-              className={`switch-icon ${isListView ? "active" : "inactive"}`}
-            />
-            <img
-              src={folderIcon}
-              alt="Folder"
-              className={`switch-icon ${isListView ? "inactive" : "active"}`}
-            />
-          </div>
-        )}
+        {onToggleView &&
+          !["/unread", "/favorite", "/sent"].includes(location.pathname) && (
+            <div className="switch-button" onClick={onToggleView}>
+              <div
+                className={`switch-circle ${isListView ? "left" : "right"}`}
+              />
+              <img
+                src={listIcon}
+                alt="List"
+                className={`switch-icon ${isListView ? "active" : "inactive"}`}
+              />
+              <img
+                src={folderIcon}
+                alt="Folder"
+                className={`switch-icon ${isListView ? "inactive" : "active"}`}
+              />
+            </div>
+          )}
       </div>
       {colorBar && (
         <div className="header-color-bar" style={{ background: colorBar }} />
