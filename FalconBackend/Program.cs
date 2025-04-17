@@ -46,7 +46,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: myAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("http://localhost:3000", "https://hilatsivion.github.io/falcon/", "http://192.168.8.153:3000")
+                          policy.AllowAnyOrigin()
                                 .AllowAnyHeader()
                                 .AllowAnyMethod();
                       });
@@ -109,6 +109,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseDeveloperExceptionPage();
 // Enable Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -121,7 +122,6 @@ app.UseRouting();
 
 app.UseCors(myAllowSpecificOrigins);
 
-app.UseCors("AllowMyFrontend");
 app.UseAuthentication(); // Needed for JWT to work
 app.UseAuthorization();
 
