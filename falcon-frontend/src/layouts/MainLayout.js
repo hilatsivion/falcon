@@ -55,7 +55,6 @@ const MainLayout = ({ children }) => {
         clearInterval(intervalRef.current);
       }
     };
-    // CHANGE: Dependencies updated
   }, [isAuthenticated, isValidating, sendHeartbeat]);
 
   return (

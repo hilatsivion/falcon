@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { ReactComponent as ArrowDownIcon } from "../../../assets/icons/black/arrow-down.svg";
 import "./Analytics.css";
-
-// --- Import Components, Constants & Context ---
 import InsightCard from "../../../components/InsightCard/InsightCard";
 import Loader from "../../../components/Loader/Loader";
 import { API_BASE_URL } from "../../../config/constants";
 import { useAuth } from "../../../context/AuthContext";
 
-// --- Import Icons ---
 import { ReactComponent as ClockIcon } from "../../../assets/icons/black/clock-icon.svg";
 import { ReactComponent as SentIcon } from "../../../assets/icons/black/mail-sent.svg";
 import { ReactComponent as ReceivedIcon } from "../../../assets/icons/black/mail-received.svg";
@@ -17,7 +14,7 @@ import { ReactComponent as TrashIcon } from "../../../assets/icons/black/trash-b
 import { ReactComponent as ReadEmailIcon } from "../../../assets/icons/black/glasses.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/icons/black/streak.svg";
 
-// --- Helper function to format minutes ---
+// Helper function to format minutes
 const formatMinutes = (totalMinutes) => {
   if (
     totalMinutes === null ||
@@ -41,7 +38,7 @@ const formatMinutes = (totalMinutes) => {
   return result.trim();
 };
 
-// --- Helper function for Absolute Change ---
+// Helper function for Absolute Change
 const calculateAbsoluteChange = (current, previous) => {
   if (
     previous === null ||
@@ -69,14 +66,13 @@ const calculateAbsoluteChange = (current, previous) => {
 };
 
 const Analytics = () => {
-  // --- State ---
   const [isEditMode, setIsEditMode] = useState(false);
   const [isActivityExpanded, setIsActivityExpanded] = useState(true);
   const [isGraphExpanded, setIsGraphExpanded] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [error, setError] = useState(null);
-  const { authToken, isAuthenticated, logout } = useAuth(); // Get auth state
+  const { authToken, isAuthenticated, logout } = useAuth();
 
   // Load hidden IDs from localStorage
   const [hiddenInsightIds, setHiddenInsightIds] = useState(() => {
@@ -93,7 +89,7 @@ const Analytics = () => {
     new Set(hiddenInsightIds)
   );
 
-  // --- Fetch Data Effect ---
+  // Fetch initial Data
   useEffect(() => {
     const fetchAnalytics = async () => {
       if (!isAuthenticated || !authToken) {
@@ -141,9 +137,9 @@ const Analytics = () => {
     };
 
     fetchAnalytics();
-  }, [authToken, isAuthenticated, logout]); // Dependency array includes context values
+  }, [authToken, isAuthenticated, logout]);
 
-  // --- Prepare Insight Data ---
+  // Prepare Insight Data
   const allAvailableInsights = analyticsData
     ? [
         // Time Spent Today
@@ -307,7 +303,8 @@ const Analytics = () => {
         (insight) => !hiddenInsightIds.has(insight.id)
       );
 
-  // --- Edit Mode Handlers ---
+  // --------------------
+  // Edit Mode Handlers
   const handleEditToggle = () => {
     setOriginalHiddenIds(new Set(hiddenInsightIds)); // Save original
     setIsEditMode(true);
@@ -321,6 +318,7 @@ const Analytics = () => {
   const handleSave = () => {
     setIsEditMode(false);
   };
+
   const handleSelectToggle = (id) => {
     const newHiddenIds = new Set(hiddenInsightIds);
     if (newHiddenIds.has(id)) {
@@ -339,7 +337,6 @@ const Analytics = () => {
     }
   };
 
-  // --- Render ---
   return (
     <div className="page-container">
       {/* Header */}
@@ -398,8 +395,8 @@ const Analytics = () => {
                   title={insight.title}
                   value={insight.value}
                   icon={insight.icon}
-                  change={insight.change} // Absolute difference string
-                  isPositive={insight.isPositive} // Sign indicator
+                  change={insight.change}
+                  isPositive={insight.isPositive}
                   isEditMode={isEditMode}
                   isActive={!hiddenInsightIds.has(insight.id)}
                   onToggle={() => handleSelectToggle(insight.id)}
