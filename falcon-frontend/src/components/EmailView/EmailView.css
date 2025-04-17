@@ -93,6 +93,11 @@
   height: 20px;
 }
 
+.email-view-attachments {
+  padding: 1rem 20px;
+  line-height: 1.3rem;
+}
+
 .email-view .email-tools {
   background-color: #ebf1f9;
   stroke: 1px solid #e2ebff;

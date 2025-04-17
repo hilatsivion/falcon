@@ -25,9 +25,9 @@ const TopNav = () => {
           className="icon-button"
           onClick={() => {
             if (isSearchPage) {
-              navigate(-1); // חזרה אחורה
+              navigate("/inbox");
             } else {
-              navigate("/search"); // כניסה לעמוד החיפוש
+              navigate("/search");
             }
           }}
         >

@@ -35,12 +35,11 @@ const MainLayout = ({ children }) => {
   }, [authToken]);
 
   useEffect(() => {
-    // CHANGE: Condition now includes !isValidating
     if (isAuthenticated && !isValidating) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-      console.log("Starting heartbeat interval");
+      // console.log("Starting heartbeat interval");
 
       sendHeartbeat();
       intervalRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS);

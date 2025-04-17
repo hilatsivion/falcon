@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
           );
           logout();
         } else {
-          console.log("Token validated successfully.");
+          // console.log("Token validated successfully.");
         }
       } catch (err) {
         console.error("Error during token validation fetch:", err);

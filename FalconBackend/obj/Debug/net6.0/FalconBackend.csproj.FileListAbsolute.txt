@@ -366,6 +366,7 @@ C:/Users/user/Desktop/falcon/FalconBackend/obj/Debug/net6.0/FalconBackend.pdb
 C:/Users/user/Desktop/falcon/FalconBackend/obj/Debug/net6.0/FalconBackend.genruntimeconfig.cache
 C:/Users/user/Desktop/falcon/FalconBackend/obj/Debug/net6.0/ref/FalconBackend.dll
 C:/Users/user/Desktop/falcon/FalconBackend/obj/Debug/net6.0/staticwebassets.upToDateCheck.txt
+C:/Users/ranme/OneDrive/מסמכים/GitHub/falcon/FalconBackend/obj/Debug/net6.0/staticwebassets.upToDateCheck.txt
 /Users/hilatsivion/falcon-repo/FalconBackend/bin/Debug/net6.0/appsettings.Development.json
 /Users/hilatsivion/falcon-repo/FalconBackend/bin/Debug/net6.0/appsettings.json
 /Users/hilatsivion/falcon-repo/FalconBackend/bin/Debug/net6.0/FalconBackend
@@ -438,4 +439,3 @@ C:/Users/user/Desktop/falcon/FalconBackend/obj/Debug/net6.0/staticwebassets.upTo
 /Users/hilatsivion/falcon-repo/FalconBackend/obj/Debug/net6.0/FalconBackend.pdb
 /Users/hilatsivion/falcon-repo/FalconBackend/obj/Debug/net6.0/FalconBackend.genruntimeconfig.cache
 /Users/hilatsivion/falcon-repo/FalconBackend/obj/Debug/net6.0/ref/FalconBackend.dll
-C:/Users/ranme/OneDrive/מסמכים/GitHub/falcon/FalconBackend/obj/Debug/net6.0/staticwebassets.upToDateCheck.txt
