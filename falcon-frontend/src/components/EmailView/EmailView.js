@@ -26,14 +26,15 @@ const EmailView = ({
   onForward,
 }) => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const { name: displayName, email: senderEmail } = parseSender(email?.sender);
 
   if (!email) {
     return null;
   }
 
+  const { name: displayName, email: senderEmail } = parseSender(email?.sender);
+
   const handleStarClick = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevents closing the popup when clicking the star
     if (onToggleFavorite) {
       onToggleFavorite();
     }
@@ -59,8 +60,7 @@ const EmailView = ({
 
   const formatRecipients = (recipients) => {
     if (!Array.isArray(recipients)) return "";
-    // Assuming the main recipient is the first one for display simplicity here
-    return recipients.map((r) => r.email || r)[0] || "";
+    return recipients.map((r) => r.email || r)[0] || ""; // only one recipient for now
   };
 
   const formattedTime = formatEmailTime(email?.timeReceived);

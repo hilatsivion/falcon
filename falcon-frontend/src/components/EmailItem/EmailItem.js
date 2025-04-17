@@ -22,7 +22,6 @@ export const EmailItem = ({
   onStarToggle,
 }) => {
   const senderInitial = sender ? sender.charAt(0).toUpperCase() : "?";
-  const avatarColorCurrUser = getOrCreateAvatarColor();
 
   const hashCode = (str) => {
     let hash = 0;
