@@ -77,7 +77,7 @@
 /* ======= Sidebar Header ======= */
 .sidebar-header {
   display: flex;
-  align-items: anchor-center;
+  align-items: end;
   width: 100%;
   justify-content: space-between;
 }

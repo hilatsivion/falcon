@@ -19,7 +19,7 @@
   color: var(--dark-font-color);
 }
 
-.close-btn {
+.filter-actions-popup .close-btn {
   background: transparent;
   border: none;
   padding: 4px;
