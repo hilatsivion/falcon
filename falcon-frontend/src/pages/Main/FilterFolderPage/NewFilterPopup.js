@@ -28,6 +28,8 @@ const NewFilterPopup = ({
   const [selectedColor, setSelectedColor] = useState(folderColors[0]);
 
   useEffect(() => {
+    console.log("Editing filter object:", editingFilter);
+
     if (isEditing && editingFilter) {
       setFilterName(editingFilter.name || "");
       setEmails(editingFilter.senderEmails || []);

@@ -26,6 +26,7 @@ const FilterFolderPage = ({ setIsListView }) => {
   const [error, setError] = useState(null);
   const [availableTags, setAvailableTags] = useState([]);
 
+  // fetch all the filters from the server
   const fetchFiltersAndTags = useCallback(async () => {
     if (!authToken) {
       setError("Not authenticated");
@@ -210,6 +211,11 @@ const FilterFolderPage = ({ setIsListView }) => {
 
   const openEditPopup = () => {
     if (selectedFilter) {
+      const filterWithTagIds = {
+        ...selectedFilter,
+        tagIds: selectedFilter.tags?.map((tag) => tag.tagId) || [],
+      };
+      setSelectedFilter(filterWithTagIds);
       setIsEditPopupOpen(true);
       setActionPopupOpen(false);
     }
