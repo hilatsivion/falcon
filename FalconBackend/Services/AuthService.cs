@@ -88,8 +88,18 @@ namespace FalconBackend.Services
 
         public async Task<LoginResponseDto> SignUpAsync(string fullName, string username, string email, string password)
         {
-            if (await _context.AppUsers.AnyAsync(u => u.Email == email))
-                throw new Exception("Email is already registered");
+            if (await _context.AppUsers.AnyAsync(u => u.Email == email || u.Username == username))
+            {
+                bool emailExists = await _context.AppUsers.AnyAsync(u => u.Email == email);
+                if (emailExists)
+                {
+                    throw new Exception($"Email '{email}' is already registered.");
+                }
+                else
+                {
+                    throw new Exception($"Username '{username}' is already taken.");
+                }
+            }
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
 
@@ -102,22 +112,28 @@ namespace FalconBackend.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.AppUsers.Add(newUser);
+            _context.AppUsers.Add(newUser); // Only add if checks passed
 
             await CreateTestMailAccountForUserAsync(newUser);
 
-
-            await _context.SaveChangesAsync(); 
+            try 
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException dbEx) // Catch specific EF Core update exceptions
+            {
+                Console.WriteLine($"DBUpdateException: {dbEx.Message}, Inner: {dbEx.InnerException?.Message}"); // Basic console log
+                throw new Exception("Failed to save user data to the database. See server logs for details.", dbEx); // Rethrow generic error
+            }
 
             await _analyticsService.CreateAnalyticsForUserAsync(email);
 
             return new LoginResponseDto
             {
                 Token = GenerateJwtToken(newUser),
-                AiKey = _aiKey 
+                AiKey = _aiKey
             };
         }
-
 
         public async Task<AppUser> AuthenticateUserAsync(string token)
         {
