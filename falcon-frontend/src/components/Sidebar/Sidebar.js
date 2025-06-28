@@ -18,6 +18,8 @@ import { ReactComponent as UnreadIcon } from "../../assets/icons/black/unread-ic
 import { ReactComponent as UnreadIconBlue } from "../../assets/icons/blue/unread-icon-sidebar-blue.svg";
 import { ReactComponent as TrashIcon } from "../../assets/icons/black/trash-sidebar.svg";
 import { ReactComponent as TrashIconBlue } from "../../assets/icons/blue/trash-sidebar-blue.svg";
+import { ReactComponent as SpamIcon } from "../../assets/icons/black/spam-sidebar.svg";
+import { ReactComponent as SpamIconBlue } from "../../assets/icons/blue/spam-sidebar-blue.svg";
 
 import "./Sidebar.css";
 import ConfirmPopup from "../Popup/ConfirmPopup";
@@ -177,6 +179,16 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             >
               {currentPath === "/trash" ? <TrashIconBlue /> : <TrashIcon />}
               <span>Trash</span>
+            </Link>
+
+            <Link
+              to="/spam"
+              className={`sidebar-item ${
+                currentPath === "/spam" ? "active" : ""
+              }`}
+            >
+              {currentPath === "/spam" ? <SpamIconBlue /> : <SpamIcon />}
+              <span>Spam</span>
             </Link>
           </div>
 

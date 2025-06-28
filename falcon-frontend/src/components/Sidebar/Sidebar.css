@@ -89,6 +89,7 @@
   margin-top: 20px;
   position: relative;
   left: -6px;
+  overflow-y: auto;
 }
 
 .sidebar-item {

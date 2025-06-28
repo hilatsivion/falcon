@@ -66,3 +66,11 @@ if (pathname === "/trash") {
 - If you change the data structure, update the frontend mapping logic accordingly.
 
 ---
+
+## Spam Page Integration
+
+- The Spam page in the frontend currently uses mock data from `src/utils/mockSpamEmails.js`.
+- Backend should implement:
+  - `GET /api/mail/spam/preview?page=1&pageSize=100` (returns only spam emails for the authenticated user, same structure as MailReceivedPreviewDto)
+  - When an email is marked as spam, its favorite status should be removed (`IsFavorite = false`).
+- In `src/pages/Main/Inbox/GenericEmailPage.js`, remove the mock block for `/spam` when backend is ready.

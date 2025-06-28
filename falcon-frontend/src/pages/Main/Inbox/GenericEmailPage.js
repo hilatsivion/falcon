@@ -9,6 +9,7 @@ import Loader from "../../../components/Loader/Loader";
 import { API_BASE_URL } from "../../../config/constants";
 import { toast } from "react-toastify";
 import mockTrashEmails from "../../../utils/mockTrashEmails";
+import mockSpamEmails from "../../../utils/mockSpamEmails";
 
 const pageMap = {
   "/inbox": {
@@ -39,6 +40,12 @@ const pageMap = {
   "/trash": {
     title: "Deleted emails",
     api: "/api/mail/trash/preview?page=1&pageSize=100",
+    dtoType: "MailReceivedPreviewDto",
+    detailApiBase: "/api/mail/received/full/",
+  },
+  "/spam": {
+    title: "Spam",
+    api: "/api/mail/spam/preview?page=1&pageSize=100",
     dtoType: "MailReceivedPreviewDto",
     detailApiBase: "/api/mail/received/full/",
   },
@@ -388,6 +395,19 @@ const GenericEmailPage = () => {
       return;
     }
 
+    if (pathname === "/spam") {
+      // --- MOCK DATA FOR SPAM PAGE ---
+      // TODO: Remove this block when backend is ready. See README_BACKEND.md for details.
+      setEmails(
+        mockSpamEmails.map((dto) =>
+          mapDtoToEmailItemProps(dto, "MailReceivedPreviewDto")
+        )
+      );
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
     if (pathname === "/search-results") {
       const resultsFromSearch = location.state?.results || [];
       const mappedResults = resultsFromSearch.map((dto) =>
@@ -655,7 +675,10 @@ const GenericEmailPage = () => {
   }
 
   const shouldShowToggle =
-    !pathname.startsWith("/filters/") && pathname !== "/search-results";
+    !pathname.startsWith("/filters/") &&
+    pathname !== "/search-results" &&
+    pathname !== "/trash" &&
+    pathname !== "/spam";
 
   let currentHeaderTitle = pathConfigRef.current.title;
 

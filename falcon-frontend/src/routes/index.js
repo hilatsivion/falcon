@@ -99,6 +99,14 @@ const AppRoutes = () => {
               </MainLayout>
             }
           />
+          <Route
+            path="/spam"
+            element={
+              <MainLayout>
+                <GenericEmailPage />
+              </MainLayout>
+            }
+          />
 
           {/* 404 route for logged-in users */}
           <Route
