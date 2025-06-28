@@ -84,6 +84,14 @@ const AppRoutes = () => {
             }
           />
           <Route
+            path="/trash"
+            element={
+              <MainLayout>
+                <GenericEmailPage />
+              </MainLayout>
+            }
+          />
+          <Route
             path="/search-results"
             element={
               <MainLayout>

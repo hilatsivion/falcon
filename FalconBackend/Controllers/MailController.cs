@@ -139,6 +139,28 @@ namespace FalconBackend.Controllers
             }
         }
 
+        [HttpGet("trash/preview")]
+        [Authorize]
+        public async Task<IActionResult> GetTrashPreviews([FromQuery] int page = 1, [FromQuery] int pageSize = 100)
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                var trashEmails = await _mailService.GetTrashEmailPreviewsAsync(userEmail, page, pageSize);
+                return Ok(trashEmails);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Error fetching trash previews for user {User.FindFirstValue(ClaimTypes.Email)}: {ex.Message} ---");
+                return StatusCode(500, "An error occurred while retrieving trash emails.");
+            }
+        }
+
         [HttpGet("received/byMailAccount/{mailAccountId}/preview")]
         public async Task<IActionResult> GetReceivedByMailAccountPreview(string mailAccountId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
@@ -274,24 +296,35 @@ namespace FalconBackend.Controllers
             try
             {
                 var userEmail = GetUserEmailFromToken();
-
                 var result = await _mailService.DeleteMailsAsync(mailsToDelete, userEmail);
-
                 if (!result)
-                    return NotFound("No matching emails owned by the user found to delete.");
+                    return NotFound("No emails found to delete.");
 
                 return Ok("Selected emails deleted successfully.");
             }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Failed to delete emails. Error: {ex.Message}");
+                return StatusCode(500, $"Error deleting emails: {ex.Message}");
             }
         }
 
+        [HttpPut("restore")]
+        public async Task<IActionResult> RestoreMails([FromBody] List<MailDeleteDto> mailsToRestore)
+        {
+            try
+            {
+                var userEmail = GetUserEmailFromToken();
+                var result = await _mailService.RestoreMailsAsync(mailsToRestore, userEmail);
+                if (!result)
+                    return NotFound("No emails found to restore.");
+
+                return Ok("Selected emails restored successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error restoring emails: {ex.Message}");
+            }
+        }
 
         [HttpGet("received/full/{mailId}")]
         public async Task<IActionResult> GetReceivedMailByIdAsync(int mailId)

@@ -24,6 +24,7 @@ const EmailView = ({
   onToggleFavorite,
   onReply,
   onForward,
+  isTrashPage,
 }) => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
 
@@ -124,9 +125,11 @@ const EmailView = ({
                     {email.subject || "(No Subject)"}
                   </h3>
 
-                  <div className="email-star" onClick={handleStarClick}>
-                    {email.isFavorite ? <StarIconFull /> : <StarIconEmpty />}
-                  </div>
+                  {!isTrashPage && (
+                    <div className="email-star" onClick={handleStarClick}>
+                      {email.isFavorite ? <StarIconFull /> : <StarIconEmpty />}
+                    </div>
+                  )}
                 </div>
 
                 {Array.isArray(email.tags) && email.tags.length > 0 && (

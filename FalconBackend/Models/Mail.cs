@@ -15,6 +15,7 @@ namespace FalconBackend.Models
         public string Body { get; set; }
         public string Subject { get; set; }
         public bool IsFavorite { get; set; } = false;
+        public bool IsDeleted { get; set; } = false;
 
         // Relationships
         [Required]

@@ -8,6 +8,7 @@ import FilterFolderPage from "../FilterFolderPage/FilterFolderPage";
 import Loader from "../../../components/Loader/Loader";
 import { API_BASE_URL } from "../../../config/constants";
 import { toast } from "react-toastify";
+import mockTrashEmails from "../../../utils/mockTrashEmails";
 
 const pageMap = {
   "/inbox": {
@@ -34,6 +35,12 @@ const pageMap = {
     api: "/api/mail/sent/preview?page=1&pageSize=100",
     dtoType: "MailSentPreviewDto",
     detailApiBase: "/api/mail/sent/full/",
+  },
+  "/trash": {
+    title: "Deleted emails",
+    api: "/api/mail/trash/preview?page=1&pageSize=100",
+    dtoType: "MailReceivedPreviewDto",
+    detailApiBase: "/api/mail/received/full/",
   },
   "/search-results": {
     title: "Results",
@@ -368,6 +375,19 @@ const GenericEmailPage = () => {
       return;
     }
 
+    if (pathname === "/trash") {
+      // --- MOCK DATA FOR TRASH PAGE ---
+      // TODO: Remove this block when backend is ready. See README_BACKEND.md for details.
+      setEmails(
+        mockTrashEmails.map((dto) =>
+          mapDtoToEmailItemProps(dto, "MailReceivedPreviewDto")
+        )
+      );
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
     if (pathname === "/search-results") {
       const resultsFromSearch = location.state?.results || [];
       const mappedResults = resultsFromSearch.map((dto) =>
@@ -629,6 +649,7 @@ const GenericEmailPage = () => {
         emails={emails} // Pass the mapped emails
         onEmailSelect={handleEmailSelect}
         onToggleFavorite={handleToggleFavorite}
+        isTrashPage={pathname === "/trash"}
       />
     );
   }
@@ -695,6 +716,7 @@ const GenericEmailPage = () => {
           }
           onReply={handleReply}
           onForward={handleForward}
+          isTrashPage={pathname === "/trash"}
         />
       )}
     </div>

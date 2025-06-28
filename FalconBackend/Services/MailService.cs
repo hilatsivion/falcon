@@ -55,7 +55,8 @@ namespace FalconBackend.Services
             return await _context.MailReceived
                 .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
                 .Where(m => _context.MailAccounts.Where(ma => ma.AppUserEmail == userEmail)
-                    .Select(ma => ma.MailAccountId).Contains(m.MailAccountId))
+                    .Select(ma => ma.MailAccountId).Contains(m.MailAccountId)
+                    && !m.IsDeleted)
                 .OrderByDescending(m => m.TimeReceived)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -79,7 +80,8 @@ namespace FalconBackend.Services
             return await _context.MailSent
                 .Include(m => m.Recipients)
                 .Where(m => _context.MailAccounts.Where(ma => ma.AppUserEmail == userEmail)
-                    .Select(ma => ma.MailAccountId).Contains(m.MailAccountId))
+                    .Select(ma => ma.MailAccountId).Contains(m.MailAccountId)
+                    && !m.IsDeleted)
                 .OrderByDescending(m => m.TimeSent)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -120,7 +122,7 @@ namespace FalconBackend.Services
         {
             return await _context.MailReceived
                 .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
-                .Where(m => m.MailAccount.MailAccountId == mailAccountId)
+                .Where(m => m.MailAccount.MailAccountId == mailAccountId && !m.IsDeleted)
                 .OrderByDescending(m => m.TimeReceived)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -143,7 +145,7 @@ namespace FalconBackend.Services
         {
             return await _context.MailSent
                 .Include(m => m.Recipients)
-                .Where(m => m.MailAccount.MailAccountId == mailAccountId)
+                .Where(m => m.MailAccount.MailAccountId == mailAccountId && !m.IsDeleted)
                 .OrderByDescending(m => m.TimeSent)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -213,44 +215,15 @@ namespace FalconBackend.Services
 
             var mailsOwnedByUser = mails.Where(m => userMailAccountIds.Contains(m.MailAccountId)).ToList();
 
-
             if (mailsOwnedByUser.Count != mailsToDelete.Count)
             {
                 Console.WriteLine("Attempted to delete emails not owned by user or not found matching DTOs.");
             }
 
-
             foreach (var mail in mailsOwnedByUser) // Iterate only through owned mails found
             {
-                // Remove associated MailTags if it's MailReceived
-                if (mail is MailReceived received && received.MailTags != null)
-                {
-                    _context.MailTags.RemoveRange(received.MailTags);
-                }
-
-                if (mail.Attachments != null)
-                {
-                    foreach (var attachment in mail.Attachments.ToList()) // Use ToList() for safe removal during iteration
-                    {
-                        try
-                        {
-                            // Attempt file deletion (optional - depends on if you want physical delete)
-                            if (!string.IsNullOrEmpty(attachment.FilePath) && File.Exists(attachment.FilePath))
-                            {
-                                File.Delete(attachment.FilePath);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error deleting attachment file {attachment.FilePath}: {ex.Message}");
-                            // Decide if this error should stop the process
-                        }
-                        _context.Attachments.Remove(attachment); // Remove from DB regardless of file deletion success
-                    }
-                }
-
-
-                _context.Mails.Remove(mail); // Remove the mail itself
+                // Soft delete - mark as deleted instead of removing from database
+                mail.IsDeleted = true;
                 deleteCount++;
                 anyDeleted = true;
             }
@@ -272,6 +245,45 @@ namespace FalconBackend.Services
             }
 
             return anyDeleted;
+        }
+
+        public async Task<bool> RestoreMailsAsync(List<MailDeleteDto> mailsToRestore, string userEmail)
+        {
+            bool anyRestored = false;
+
+            // --- Get user's accounts once ---
+            var userMailAccountIds = await _context.MailAccounts
+                                           .Where(ma => ma.AppUserEmail == userEmail)
+                                           .Select(ma => ma.MailAccountId)
+                                           .ToListAsync();
+
+            var mailIdsToRestore = mailsToRestore.Select(dto => dto.MailId).ToList();
+
+            // Fetch all potentially relevant mails at once
+            var mails = await _context.Mails
+                .Where(m => mailIdsToRestore.Contains(m.MailId))
+                .ToListAsync();
+
+            var mailsOwnedByUser = mails.Where(m => userMailAccountIds.Contains(m.MailAccountId)).ToList();
+
+            if (mailsOwnedByUser.Count != mailsToRestore.Count)
+            {
+                Console.WriteLine("Attempted to restore emails not owned by user or not found matching DTOs.");
+            }
+
+            foreach (var mail in mailsOwnedByUser) // Iterate only through owned mails found
+            {
+                // Restore - mark as not deleted
+                mail.IsDeleted = false;
+                anyRestored = true;
+            }
+
+            if (anyRestored)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            return anyRestored;
         }
 
         private async Task SaveAttachments(List<IFormFile> attachments, int mailId, string mailAccountId, string emailType, ICollection<Attachments> emailAttachments)
@@ -737,37 +749,52 @@ namespace FalconBackend.Services
 
         public async Task<List<MailReceivedPreviewDto>> GetUnreadEmailPreviewsAsync(string userEmail, int page = 1, int pageSize = 100)
         {
-            var userMailAccountIds = await _context.MailAccounts
-                                             .Where(ma => ma.AppUserEmail == userEmail)
-                                             .Select(ma => ma.MailAccountId)
-                                             .ToListAsync();
+            return await _context.MailReceived
+                .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
+                .Where(m => _context.MailAccounts.Where(ma => ma.AppUserEmail == userEmail)
+                    .Select(ma => ma.MailAccountId).Contains(m.MailAccountId)
+                    && !m.IsRead && !m.IsDeleted)
+                .OrderByDescending(m => m.TimeReceived)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(m => new MailReceivedPreviewDto
+                {
+                    MailId = m.MailId,
+                    MailAccountId = m.MailAccountId,
+                    Subject = m.Subject,
+                    Sender = m.Sender,
+                    TimeReceived = m.TimeReceived,
+                    Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
+                    BodySnippet = GenerateBodySnippet(m.Body),
+                    IsRead = m.IsRead,
+                    IsFavorite = m.IsFavorite
+                })
+                .ToListAsync();
+        }
 
-            if (!userMailAccountIds.Any())
-            {
-                return new List<MailReceivedPreviewDto>();
-            }
-
-            var unreadEmails = await _context.MailReceived
-                                       .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
-                                       .Where(m => userMailAccountIds.Contains(m.MailAccountId) && m.IsRead == false) 
-                                       .OrderByDescending(m => m.TimeReceived)
-                                       .Skip((page - 1) * pageSize)
-                                       .Take(pageSize)
-                                       .Select(m => new MailReceivedPreviewDto
-                                       {
-                                           MailId = m.MailId,
-                                           MailAccountId = m.MailAccountId,
-                                           Subject = m.Subject,
-                                           Sender = m.Sender,
-                                           TimeReceived = m.TimeReceived,
-                                           Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList() ?? new List<string>(),
-                                           BodySnippet = GenerateBodySnippet(m.Body),
-                                           IsRead = m.IsRead,
-                                           IsFavorite = m.IsFavorite
-                                       })
-                                       .ToListAsync();
-
-            return unreadEmails;
+        public async Task<List<MailReceivedPreviewDto>> GetTrashEmailPreviewsAsync(string userEmail, int page = 1, int pageSize = 100)
+        {
+            return await _context.MailReceived
+                .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
+                .Where(m => _context.MailAccounts.Where(ma => ma.AppUserEmail == userEmail)
+                    .Select(ma => ma.MailAccountId).Contains(m.MailAccountId)
+                    && m.IsDeleted)
+                .OrderByDescending(m => m.TimeReceived)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(m => new MailReceivedPreviewDto
+                {
+                    MailId = m.MailId,
+                    MailAccountId = m.MailAccountId,
+                    Subject = m.Subject,
+                    Sender = m.Sender,
+                    TimeReceived = m.TimeReceived,
+                    Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
+                    BodySnippet = GenerateBodySnippet(m.Body),
+                    IsRead = m.IsRead,
+                    IsFavorite = m.IsFavorite
+                })
+                .ToListAsync();
         }
 
     }

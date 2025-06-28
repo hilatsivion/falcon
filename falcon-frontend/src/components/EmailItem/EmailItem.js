@@ -20,6 +20,7 @@ export const EmailItem = ({
   isFavorite,
   onClick,
   onStarToggle,
+  isTrashPage,
 }) => {
   const senderInitial = sender ? sender.charAt(0).toUpperCase() : "?";
 
@@ -97,9 +98,11 @@ export const EmailItem = ({
             ))}
         </div>
 
-        <div className="email-star" onClick={handleStarClick}>
-          {isFavorite ? <StarIconFull /> : <StarIconEmpty />}
-        </div>
+        {!isTrashPage && (
+          <div className="email-star" onClick={handleStarClick}>
+            {isFavorite ? <StarIconFull /> : <StarIconEmpty />}
+          </div>
+        )}
       </div>
     </div>
   );

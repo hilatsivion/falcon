@@ -2,7 +2,12 @@ import React from "react";
 import { EmailItem } from "../../../components/EmailItem/EmailItem";
 import "./Inbox.css";
 
-const InboxEmailList = ({ emails, onEmailSelect, onToggleFavorite }) => {
+const InboxEmailList = ({
+  emails,
+  onEmailSelect,
+  onToggleFavorite,
+  isTrashPage,
+}) => {
   return (
     <div className="emails-container">
       {emails.map((email) => (
@@ -18,6 +23,7 @@ const InboxEmailList = ({ emails, onEmailSelect, onToggleFavorite }) => {
           tags={email.tags}
           onClick={onEmailSelect}
           onStarToggle={onToggleFavorite}
+          isTrashPage={isTrashPage}
         />
       ))}
     </div>

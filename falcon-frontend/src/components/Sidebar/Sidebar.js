@@ -16,6 +16,8 @@ import { ReactComponent as StaredIcon } from "../../assets/icons/black/stared-ic
 import { ReactComponent as StaredIconBlue } from "../../assets/icons/blue/stared-icon-sidebar-blue.svg";
 import { ReactComponent as UnreadIcon } from "../../assets/icons/black/unread-icon-sidebar.svg";
 import { ReactComponent as UnreadIconBlue } from "../../assets/icons/blue/unread-icon-sidebar-blue.svg";
+import { ReactComponent as TrashIcon } from "../../assets/icons/black/trash-sidebar.svg";
+import { ReactComponent as TrashIconBlue } from "../../assets/icons/blue/trash-sidebar-blue.svg";
 
 import "./Sidebar.css";
 import ConfirmPopup from "../Popup/ConfirmPopup";
@@ -165,6 +167,16 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
                 <AnalyticsIcon />
               )}
               <span>Analytics</span>
+            </Link>
+
+            <Link
+              to="/trash"
+              className={`sidebar-item ${
+                currentPath === "/trash" ? "active" : ""
+              }`}
+            >
+              {currentPath === "/trash" ? <TrashIconBlue /> : <TrashIcon />}
+              <span>Trash</span>
             </Link>
           </div>
 
