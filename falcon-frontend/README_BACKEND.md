@@ -109,3 +109,20 @@ if (pathname === "/trash") {
     ]
     ```
 - In `src/components/InsightCard/EmailsByTimeOfDayCard.js`, replace the dummy data with a fetch to this endpoint and update the chart accordingly.
+
+## Top Senders (Last 7 Days) Chart Integration
+
+- The bar chart for "Top Senders (Last 7 Days)" in the analytics page currently uses dummy data.
+- Backend should implement:
+  - `GET /api/analytics/top-senders` (returns an array of up to 5 objects with `sender` and `count` fields, where `sender` is the sender's name/email and `count` is the number of emails received from that sender in the last 7 days)
+  - Example response:
+    ```json
+    [
+      { "sender": "alice.averylongemailaddress@example.com", "count": 18 },
+      { "sender": "bob@example.com", "count": 14 },
+      { "sender": "carol@example.com", "count": 10 },
+      { "sender": "dave@example.com", "count": 7 },
+      { "sender": "eve@example.com", "count": 5 }
+    ]
+    ```
+- In `src/components/InsightCard/TopSendersCard.js`, replace the dummy data with a fetch to this endpoint and update the chart accordingly.

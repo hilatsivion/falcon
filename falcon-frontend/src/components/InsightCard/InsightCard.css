@@ -187,3 +187,17 @@
   align-items: center;
   justify-content: center;
 }
+
+.top-senders-card {
+  min-height: 220px;
+  height: fit-content;
+  margin-top: 18px;
+}
+
+.top-senders-bar-container {
+  width: 100%;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -15,6 +15,7 @@ import { ReactComponent as ReadEmailIcon } from "../../../assets/icons/black/gla
 import { ReactComponent as StreakIcon } from "../../../assets/icons/black/streak.svg";
 import MonthlyEmailCategoriesCard from "../../../components/InsightCard/MonthlyEmailCategoriesCard";
 import EmailsByTimeOfDayCard from "../../../components/InsightCard/EmailsByTimeOfDayCard";
+import TopSendersCard from "../../../components/InsightCard/TopSendersCard";
 
 // Helper function to format minutes
 const formatMinutes = (totalMinutes) => {
@@ -427,6 +428,7 @@ const Analytics = () => {
             <div className="graphical-overview-cards">
               <MonthlyEmailCategoriesCard />
               <EmailsByTimeOfDayCard />
+              <TopSendersCard />
             </div>
           </div>
         </>
