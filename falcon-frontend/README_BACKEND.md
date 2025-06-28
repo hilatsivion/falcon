@@ -74,3 +74,38 @@ if (pathname === "/trash") {
   - `GET /api/mail/spam/preview?page=1&pageSize=100` (returns only spam emails for the authenticated user, same structure as MailReceivedPreviewDto)
   - When an email is marked as spam, its favorite status should be removed (`IsFavorite = false`).
 - In `src/pages/Main/Inbox/GenericEmailPage.js`, remove the mock block for `/spam` when backend is ready.
+
+## Monthly Email Categories Chart Integration
+
+- The donut chart for Monthly Email Categories in the analytics page currently uses dummy data.
+- Backend should implement:
+  - `GET /api/analytics/email-category-breakdown` (returns an array of objects with `name` and `value` fields, where value is the percentage for each category for the month)
+  - Example response:
+    ```json
+    [
+      { "name": "Work", "value": 10.33 },
+      { "name": "School", "value": 4.19 },
+      { "name": "Finance", "value": 25.33 },
+      { "name": "Marketing", "value": 10.33 },
+      { "name": "Design", "value": 4.19 }
+    ]
+    ```
+- In `src/components/InsightCard/MonthlyEmailCategoriesCard.js`, replace the dummy data with a fetch to this endpoint and update the chart accordingly.
+
+## Emails Received by Time of Day Chart Integration
+
+- The bar chart for "Emails Received by Time of Day" in the analytics page currently uses dummy data.
+- Backend should implement:
+  - `GET /api/analytics/emails-by-time-of-day` (returns an array of objects with `range` and `avg` fields, where `range` is a string like "09–12" and `avg` is the average number of emails received in that range for the current week)
+  - Example response:
+    ```json
+    [
+      { "range": "00–06", "avg": 2 },
+      { "range": "06–09", "avg": 5 },
+      { "range": "09–12", "avg": 12 },
+      { "range": "12–15", "avg": 8 },
+      { "range": "15–18", "avg": 6 },
+      { "range": "18–24", "avg": 3 }
+    ]
+    ```
+- In `src/components/InsightCard/EmailsByTimeOfDayCard.js`, replace the dummy data with a fetch to this endpoint and update the chart accordingly.

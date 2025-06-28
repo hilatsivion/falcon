@@ -13,6 +13,8 @@ import { ReactComponent as SpamIcon } from "../../../assets/icons/black/spam.svg
 import { ReactComponent as TrashIcon } from "../../../assets/icons/black/trash-black.svg";
 import { ReactComponent as ReadEmailIcon } from "../../../assets/icons/black/glasses.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/icons/black/streak.svg";
+import MonthlyEmailCategoriesCard from "../../../components/InsightCard/MonthlyEmailCategoriesCard";
+import EmailsByTimeOfDayCard from "../../../components/InsightCard/EmailsByTimeOfDayCard";
 
 // Helper function to format minutes
 const formatMinutes = (totalMinutes) => {
@@ -422,7 +424,10 @@ const Analytics = () => {
               isGraphExpanded ? "expanded" : "collapsed"
             }`}
           >
-            <p className="space-between-full-wid">Coming soon...</p>
+            <div className="graphical-overview-cards">
+              <MonthlyEmailCategoriesCard />
+              <EmailsByTimeOfDayCard />
+            </div>
           </div>
         </>
       )}
