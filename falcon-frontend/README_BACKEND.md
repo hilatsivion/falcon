@@ -115,6 +115,7 @@ if (pathname === "/trash") {
 - The bar chart for "Top Senders (Last 7 Days)" in the analytics page currently uses dummy data.
 - Backend should implement:
   - `GET /api/analytics/top-senders` (returns an array of up to 5 objects with `sender` and `count` fields, where `sender` is the sender's name/email and `count` is the number of emails received from that sender in the last 7 days)
+  - Ensure that the `sender` value is always a string (preferably an email address). If the sender is missing or malformed, return an empty string or a placeholder.
   - Example response:
     ```json
     [
