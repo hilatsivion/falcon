@@ -161,8 +161,20 @@ namespace FalconBackend.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieve paginated spam emails for the authenticated user
+        /// </summary>
+        /// <param name="page">Page number (default: 1)</param>
+        /// <param name="pageSize">Number of emails per page (default: 100, max: 1000)</param>
+        /// <returns>List of spam email previews</returns>
+        /// <response code="200">Returns the list of spam emails</response>
+        /// <response code="401">If the user is not authenticated or token is invalid</response>
+        /// <response code="500">If there was an internal server error</response>
         [HttpGet("spam/preview")]
         [Authorize]
+        [ProducesResponseType(typeof(List<MailReceivedPreviewDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetSpamPreviews([FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
             try

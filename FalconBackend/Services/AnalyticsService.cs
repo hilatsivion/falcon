@@ -417,6 +417,124 @@ namespace FalconBackend.Services
             return categories;
         }
 
+        /// <summary>
+        /// Gets emails by time of day for the current week with averages for 6-hour time blocks
+        /// </summary>
+        public async Task<List<object>> GetEmailsByTimeOfDayAsync(string userEmail)
+        {
+            // Calculate current week date range (last 7 days)
+            var today = DateTime.UtcNow.Date;
+            var weekStart = today.AddDays(-6); // Last 7 days including today
+
+            // Get user's mail account IDs
+            var userMailAccountIds = await _context.MailAccounts
+                .Where(ma => ma.AppUserEmail == userEmail)
+                .Select(ma => ma.MailAccountId)
+                .ToListAsync();
+
+            if (!userMailAccountIds.Any())
+            {
+                return new List<object>
+                {
+                    new { range = "00–06", avg = 0.0 },
+                    new { range = "06–09", avg = 0.0 },
+                    new { range = "09–12", avg = 0.0 },
+                    new { range = "12–15", avg = 0.0 },
+                    new { range = "15–18", avg = 0.0 },
+                    new { range = "18–24", avg = 0.0 }
+                };
+            }
+
+            // Get received emails for the current week
+            var receivedEmails = await _context.MailReceived
+                .Where(m => userMailAccountIds.Contains(m.MailAccountId) &&
+                           m.TimeReceived >= weekStart &&
+                           m.TimeReceived <= today.AddDays(1) &&
+                           !m.IsDeleted)
+                .Select(m => m.TimeReceived)
+                .ToListAsync();
+
+            // Define time ranges
+            var timeRanges = new[]
+            {
+                new { range = "00–06", start = 0, end = 6 },
+                new { range = "06–09", start = 6, end = 9 },
+                new { range = "09–12", start = 9, end = 12 },
+                new { range = "12–15", start = 12, end = 15 },
+                new { range = "15–18", start = 15, end = 18 },
+                new { range = "18–24", start = 18, end = 24 }
+            };
+
+            var result = new List<object>();
+
+            // Calculate averages for each time range
+            foreach (var timeRange in timeRanges)
+            {
+                var emailsInRange = receivedEmails.Where(time => 
+                {
+                    var hour = time.Hour;
+                    return hour >= timeRange.start && hour < timeRange.end;
+                }).Count();
+
+                // Average over 7 days
+                var average = Math.Round(emailsInRange / 7.0, 1);
+
+                result.Add(new { range = timeRange.range, avg = average });
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets top senders for the last 7 days, returning up to 5 senders with their email counts
+        /// </summary>
+        public async Task<List<object>> GetTopSendersAsync(string userEmail)
+        {
+            // Calculate last 7 days date range
+            var today = DateTime.UtcNow.Date;
+            var weekStart = today.AddDays(-6); // Last 7 days including today
+
+            // Get user's mail account IDs
+            var userMailAccountIds = await _context.MailAccounts
+                .Where(ma => ma.AppUserEmail == userEmail)
+                .Select(ma => ma.MailAccountId)
+                .ToListAsync();
+
+            if (!userMailAccountIds.Any())
+            {
+                return new List<object>();
+            }
+
+            // Get received emails for the last 7 days
+            var receivedEmails = await _context.MailReceived
+                .Where(m => userMailAccountIds.Contains(m.MailAccountId) &&
+                           m.TimeReceived >= weekStart &&
+                           m.TimeReceived <= today.AddDays(1) &&
+                           !m.IsDeleted)
+                .Select(m => m.Sender)
+                .ToListAsync();
+
+            if (!receivedEmails.Any())
+            {
+                return new List<object>();
+            }
+
+            // Group by sender and count, handling null/empty senders
+            var senderCounts = receivedEmails
+                .GroupBy(sender => string.IsNullOrWhiteSpace(sender) ? "Unknown Sender" : sender.Trim())
+                .Select(group => new { sender = group.Key, count = group.Count() })
+                .OrderByDescending(x => x.count)
+                .Take(5) // Top 5 senders
+                .ToList();
+
+            // Convert to the required object format
+            var result = senderCounts
+                .Select(sc => new { sender = sc.sender, count = sc.count })
+                .Cast<object>()
+                .ToList();
+
+            return result;
+        }
 
         /// <summary>
         /// Saves analytics changes using DbContext.Update to handle potentially detached entities.

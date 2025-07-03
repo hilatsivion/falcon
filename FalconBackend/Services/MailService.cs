@@ -199,6 +199,9 @@ namespace FalconBackend.Services
             var mail = await _context.Mails.FindAsync(mailId);
             if (mail == null) return false;
 
+            // Check if state is actually changing
+            bool stateChanged = mail.IsSpam != isSpam;
+
             mail.IsSpam = isSpam;
             
             // Business logic: When marking as spam, remove favorite status
@@ -208,6 +211,22 @@ namespace FalconBackend.Services
             }
 
             await _context.SaveChangesAsync();
+
+            // Add analytics tracking when marking as spam
+            if (_analyticsService != null && isSpam && stateChanged)
+            {
+                // Get user email from mail account
+                var mailAccount = await _context.MailAccounts
+                    .Where(ma => ma.MailAccountId == mail.MailAccountId)
+                    .FirstOrDefaultAsync();
+                
+                if (mailAccount != null)
+                {
+                    await _analyticsService.UpdateSpamEmailsWeeklyAsync(mailAccount.AppUserEmail);
+                    Console.WriteLine($"Incremented spam count for {mailAccount.AppUserEmail}");
+                }
+            }
+
             return true;
         }
 
@@ -232,6 +251,8 @@ namespace FalconBackend.Services
             if (mails.Any(m => !userMailAccountIds.Contains(m.MailAccountId)))
                 return false;
 
+            int spamMarkCount = 0; // Count how many emails are marked as spam
+
             foreach (var mail in mails)
             {
                 bool isSpam = mailUpdateMap[mail.MailId];
@@ -243,11 +264,24 @@ namespace FalconBackend.Services
                     if (isSpam)
                     {
                         mail.IsFavorite = false;
+                        spamMarkCount++; // Count when marking as spam
                     }
                 }
             }
 
             await _context.SaveChangesAsync();
+
+            // Add analytics tracking for marked spam emails
+            if (_analyticsService != null && spamMarkCount > 0)
+            {
+                // Call increment method 'spamMarkCount' times
+                for (int i = 0; i < spamMarkCount; i++)
+                {
+                    await _analyticsService.UpdateSpamEmailsWeeklyAsync(userEmail);
+                }
+                Console.WriteLine($"Incremented spam count by {spamMarkCount} for {userEmail}");
+            }
+
             return true;
         }
 
