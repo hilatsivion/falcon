@@ -70,7 +70,8 @@ namespace FalconBackend.Services
                     Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
                     BodySnippet = GenerateBodySnippet(m.Body),
                     IsRead = m.IsRead,
-                    IsFavorite = m.IsFavorite
+                    IsFavorite = m.IsFavorite,
+                    IsSpam = m.IsSpam
                 })
                 .ToListAsync();
         }
@@ -136,7 +137,8 @@ namespace FalconBackend.Services
                     Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
                     BodySnippet = GenerateBodySnippet(m.Body), 
                     IsRead = m.IsRead,
-                    IsFavorite = m.IsFavorite
+                    IsFavorite = m.IsFavorite,
+                    IsSpam = m.IsSpam
                 })
                 .ToListAsync();
         }
@@ -192,6 +194,63 @@ namespace FalconBackend.Services
             return true;
         }
 
+        public async Task<bool> ToggleSpamAsync(int mailId, bool isSpam)
+        {
+            var mail = await _context.Mails.FindAsync(mailId);
+            if (mail == null) return false;
+
+            mail.IsSpam = isSpam;
+            
+            // Business logic: When marking as spam, remove favorite status
+            if (isSpam)
+            {
+                mail.IsFavorite = false;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ToggleSpamBatchAsync(List<ToggleSpamDto> spamUpdates, string userEmail)
+        {
+            if (spamUpdates == null || spamUpdates.Count == 0)
+                return false;
+
+            var userMailAccountIds = await _context.MailAccounts
+                .Where(ma => ma.AppUserEmail == userEmail)
+                .Select(ma => ma.MailAccountId)
+                .ToListAsync();
+
+            var mailIds = spamUpdates.Select(x => x.MailId).ToList();
+            var mailUpdateMap = spamUpdates.ToDictionary(x => x.MailId, x => x.IsSpam);
+
+            var mails = await _context.Mails
+                .Where(m => mailIds.Contains(m.MailId))
+                .ToListAsync();
+
+            // Ensure all belong to the user's accounts
+            if (mails.Any(m => !userMailAccountIds.Contains(m.MailAccountId)))
+                return false;
+
+            foreach (var mail in mails)
+            {
+                bool isSpam = mailUpdateMap[mail.MailId];
+                if (mail.IsSpam != isSpam)
+                {
+                    mail.IsSpam = isSpam;
+                    
+                    // Business logic: When marking as spam, remove favorite status
+                    if (isSpam)
+                    {
+                        mail.IsFavorite = false;
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<bool> DeleteMailsAsync(List<MailDeleteDto> mailsToDelete, string userEmail)
         {
             bool anyDeleted = false;
@@ -222,8 +281,9 @@ namespace FalconBackend.Services
 
             foreach (var mail in mailsOwnedByUser) // Iterate only through owned mails found
             {
-                // Soft delete - mark as deleted instead of removing from database
+                // Soft delete - mark as deleted and remove favorite status
                 mail.IsDeleted = true;
+                mail.IsFavorite = false; // Remove favorite status when deleting
                 deleteCount++;
                 anyDeleted = true;
             }
@@ -637,6 +697,7 @@ namespace FalconBackend.Services
                     BodySnippet = GenerateBodySnippet(m.Body),
                     Date = m.TimeReceived,
                     IsFavorite = m.IsFavorite,
+                    IsSpam = m.IsSpam,
                     Type = "received",
                     IsRead = m.IsRead,
                     Sender = m.Sender,
@@ -655,6 +716,7 @@ namespace FalconBackend.Services
                    BodySnippet = GenerateBodySnippet(m.Body),
                    Date = m.TimeSent,
                    IsFavorite = m.IsFavorite,
+                   IsSpam = m.IsSpam,
                    Type = "sent",
                    IsRead = true,
                    Recipients = m.Recipients.Select(rec => rec.Email).ToList() ?? new List<string>()
@@ -719,7 +781,8 @@ namespace FalconBackend.Services
                                             Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList() ?? new List<string>(),
                                             BodySnippet = GenerateBodySnippet(m.Body),
                                             IsRead = m.IsRead,
-                                            IsFavorite = m.IsFavorite
+                                            IsFavorite = m.IsFavorite,
+                                            IsSpam = m.IsSpam
                                         })
                                         .ToListAsync();
 
@@ -767,7 +830,8 @@ namespace FalconBackend.Services
                     Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
                     BodySnippet = GenerateBodySnippet(m.Body),
                     IsRead = m.IsRead,
-                    IsFavorite = m.IsFavorite
+                    IsFavorite = m.IsFavorite,
+                    IsSpam = m.IsSpam
                 })
                 .ToListAsync();
         }
@@ -792,7 +856,34 @@ namespace FalconBackend.Services
                     Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
                     BodySnippet = GenerateBodySnippet(m.Body),
                     IsRead = m.IsRead,
-                    IsFavorite = m.IsFavorite
+                    IsFavorite = m.IsFavorite,
+                    IsSpam = m.IsSpam
+                })
+                .ToListAsync();
+        }
+
+        public async Task<List<MailReceivedPreviewDto>> GetSpamEmailPreviewsAsync(string userEmail, int page = 1, int pageSize = 100)
+        {
+            return await _context.MailReceived
+                .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
+                .Where(m => _context.MailAccounts.Where(ma => ma.AppUserEmail == userEmail)
+                    .Select(ma => ma.MailAccountId).Contains(m.MailAccountId)
+                    && m.IsSpam && !m.IsDeleted)
+                .OrderByDescending(m => m.TimeReceived)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(m => new MailReceivedPreviewDto
+                {
+                    MailId = m.MailId,
+                    MailAccountId = m.MailAccountId,
+                    Subject = m.Subject,
+                    Sender = m.Sender,
+                    TimeReceived = m.TimeReceived,
+                    Tags = m.MailTags.Select(mt => mt.Tag.TagName).ToList(),
+                    BodySnippet = GenerateBodySnippet(m.Body),
+                    IsRead = m.IsRead,
+                    IsFavorite = m.IsFavorite,
+                    IsSpam = m.IsSpam
                 })
                 .ToListAsync();
         }

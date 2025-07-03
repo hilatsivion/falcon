@@ -108,6 +108,7 @@ namespace FalconBackend.Models
         public string BodySnippet { get; set; }
         public bool IsRead { get; set; }
         public bool IsFavorite { get; set; }
+        public bool IsSpam { get; set; }
     }
 
     public class MailSentPreviewDto
@@ -138,6 +139,12 @@ namespace FalconBackend.Models
     {
         public int MailId { get; set; }
         public bool IsRead { get; set; }
+    }
+
+    public class ToggleSpamDto
+    {
+        public int MailId { get; set; }
+        public bool IsSpam { get; set; }
     }
 
     public class SendMailRequest
@@ -171,6 +178,7 @@ namespace FalconBackend.Models
         public string BodySnippet { get; set; }
         public DateTime Date { get; set; }
         public bool IsFavorite { get; set; }
+        public bool IsSpam { get; set; }
         public string Type { get; set; } 
         public bool IsRead { get; set; }
         public string Sender { get; set; } 

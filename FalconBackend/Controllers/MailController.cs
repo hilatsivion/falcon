@@ -161,6 +161,28 @@ namespace FalconBackend.Controllers
             }
         }
 
+        [HttpGet("spam/preview")]
+        [Authorize]
+        public async Task<IActionResult> GetSpamPreviews([FromQuery] int page = 1, [FromQuery] int pageSize = 100)
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                var spamEmails = await _mailService.GetSpamEmailPreviewsAsync(userEmail, page, pageSize);
+                return Ok(spamEmails);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Error fetching spam previews for user {User.FindFirstValue(ClaimTypes.Email)}: {ex.Message} ---");
+                return StatusCode(500, "An error occurred while retrieving spam emails.");
+            }
+        }
+
         [HttpGet("received/byMailAccount/{mailAccountId}/preview")]
         public async Task<IActionResult> GetReceivedByMailAccountPreview(string mailAccountId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
         {
@@ -231,6 +253,32 @@ namespace FalconBackend.Controllers
             }
         }
 
+        [HttpPut("spam/{mailId}/{isSpam}")]
+        public async Task<IActionResult> ToggleSpam(int mailId, bool isSpam)
+        {
+            try
+            {
+                var userEmail = GetUserEmailFromToken();
+
+                var isOwner = await _mailService.IsUserOwnerOfMailAsync(mailId, userEmail);
+                if (!isOwner)
+                    return Forbid("You are not authorized to modify this mail.");
+
+                var result = await _mailService.ToggleSpamAsync(mailId, isSpam);
+                if (!result)
+                    return NotFound("Email not found.");
+
+                return Ok(isSpam ? "Email marked as spam." : "Email unmarked as spam.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to update spam status. Error: {ex.Message}");
+            }
+        }
 
         [HttpPut("read")]
         public async Task<IActionResult> ToggleReadBatch([FromBody] List<ToggleReadDto> readUpdates)
@@ -252,6 +300,29 @@ namespace FalconBackend.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Failed to update read status. Error: {ex.Message}");
+            }
+        }
+
+        [HttpPut("spam")]
+        public async Task<IActionResult> ToggleSpamBatch([FromBody] List<ToggleSpamDto> spamUpdates)
+        {
+            try
+            {
+                var userEmail = GetUserEmailFromToken();
+                var result = await _mailService.ToggleSpamBatchAsync(spamUpdates, userEmail);
+
+                if (!result)
+                    return BadRequest("Some emails are not owned by this user or update failed.");
+
+                return Ok("Spam status updated for selected emails.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Failed to update spam status. Error: {ex.Message}");
             }
         }
 

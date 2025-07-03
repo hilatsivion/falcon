@@ -71,5 +71,27 @@ namespace FalconBackend.Controllers
                 return StatusCode(500, "An error occurred while recording heartbeat.");
             }
         }
+
+        [HttpGet("email-category-breakdown")]
+        public async Task<IActionResult> GetEmailCategoryBreakdown()
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return Unauthorized("User email claim not found in token.");
+                }
+
+                var categoryBreakdown = await _analyticsService.GetEmailCategoryBreakdownAsync(userEmail);
+
+                return Ok(categoryBreakdown);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching email category breakdown for user {User.FindFirstValue(ClaimTypes.Email) ?? "UNKNOWN"}: {ex.Message}");
+                return StatusCode(500, "An error occurred while retrieving email category breakdown.");
+            }
+        }
     }
 }

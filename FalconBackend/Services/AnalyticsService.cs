@@ -347,6 +347,76 @@ namespace FalconBackend.Services
             await SaveAnalyticsAsync(analytics);
         }
 
+        /// <summary>
+        /// Gets email category breakdown for the current month as percentages
+        /// </summary>
+        public async Task<List<object>> GetEmailCategoryBreakdownAsync(string userEmail)
+        {
+            var currentMonth = DateTime.UtcNow.Date.AddDays(1 - DateTime.UtcNow.Day); // First day of current month
+            var nextMonth = currentMonth.AddMonths(1);
+
+            // Get user's mail account IDs
+            var userMailAccountIds = await _context.MailAccounts
+                .Where(ma => ma.AppUserEmail == userEmail)
+                .Select(ma => ma.MailAccountId)
+                .ToListAsync();
+
+            if (!userMailAccountIds.Any())
+            {
+                return new List<object>();
+            }
+
+            // Get all emails for the current month for this user
+            var allEmails = await _context.Mails
+                .Where(m => userMailAccountIds.Contains(m.MailAccountId) &&
+                           ((m is MailReceived && ((MailReceived)m).TimeReceived >= currentMonth && ((MailReceived)m).TimeReceived < nextMonth) ||
+                            (m is MailSent && ((MailSent)m).TimeSent >= currentMonth && ((MailSent)m).TimeSent < nextMonth)))
+                .ToListAsync();
+
+            if (!allEmails.Any())
+            {
+                return new List<object>
+                {
+                    new { name = "No Data", value = 100.0 }
+                };
+            }
+
+            var totalEmails = allEmails.Count;
+
+            // Calculate category counts
+            var receivedCount = allEmails.OfType<MailReceived>().Count(m => !m.IsSpam && !m.IsDeleted);
+            var sentCount = allEmails.OfType<MailSent>().Count(m => !m.IsDeleted);
+            var spamCount = allEmails.Count(m => m.IsSpam && !m.IsDeleted);
+            var favoriteCount = allEmails.Count(m => m.IsFavorite && !m.IsDeleted);
+            var deletedCount = allEmails.Count(m => m.IsDeleted);
+
+            // Convert to percentages
+            var categories = new List<object>();
+
+            if (receivedCount > 0)
+                categories.Add(new { name = "Received", value = Math.Round((double)receivedCount / totalEmails * 100, 1) });
+            
+            if (sentCount > 0)
+                categories.Add(new { name = "Sent", value = Math.Round((double)sentCount / totalEmails * 100, 1) });
+            
+            if (spamCount > 0)
+                categories.Add(new { name = "Spam", value = Math.Round((double)spamCount / totalEmails * 100, 1) });
+            
+            if (favoriteCount > 0)
+                categories.Add(new { name = "Favorites", value = Math.Round((double)favoriteCount / totalEmails * 100, 1) });
+            
+            if (deletedCount > 0)
+                categories.Add(new { name = "Deleted", value = Math.Round((double)deletedCount / totalEmails * 100, 1) });
+
+            // If no categories, return a default
+            if (!categories.Any())
+            {
+                categories.Add(new { name = "Other", value = 100.0 });
+            }
+
+            return categories;
+        }
+
 
         /// <summary>
         /// Saves analytics changes using DbContext.Update to handle potentially detached entities.
