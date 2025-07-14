@@ -114,110 +114,146 @@ namespace FalconBackend.Services
 
 
 
-        //not real data need to change it later 
-        public async Task InitializeDummyUserDataAsync(string userEmail)
+        /// <summary>
+        /// Fetches real Outlook emails for a user and stores them in the database
+        /// Replaces the previous dummy data implementation
+        /// </summary>
+        public async Task InitializeRealOutlookDataAsync(string userEmail)
         {
-            Console.WriteLine($"--- Initializing dummy data for user: {userEmail} ---");
+            Console.WriteLine($"--- Fetching real Outlook emails for user: {userEmail} ---");
 
             var mailAccount = await _context.MailAccounts
                                         .FirstOrDefaultAsync(ma => ma.AppUserEmail == userEmail);
 
             if (mailAccount == null)
             {
-                Console.WriteLine($"--- No MailAccount found for {userEmail}. Cannot add dummy emails. ---");
+                Console.WriteLine($"--- No MailAccount found for {userEmail}. Cannot fetch emails. ---");
                 return;
             }
 
-            // Check if dummy data already exists
-            bool alreadyInitialized = await _context.MailReceived
-                                              .AnyAsync(mr => mr.MailAccountId == mailAccount.MailAccountId && mr.Subject.StartsWith("Dummy Subject"));
-            if (alreadyInitialized)
+            // Check if we have a valid access token
+            if (string.IsNullOrEmpty(mailAccount.Token))
             {
-                Console.WriteLine($"--- Dummy data seems to already exist for account {mailAccount.MailAccountId}. Skipping creation. ---");
+                Console.WriteLine($"--- No access token found for account {mailAccount.MailAccountId}. User needs to authenticate first. ---");
                 return;
             }
-
-            // --- Fetch available system tags (interests) ---
-            var availableTags = await _context.Tags
-                                            .Where(t => !(t is UserCreatedTag)) // Assuming interests are not UserCreatedTag
-                                            .ToListAsync();
-
-            if (!availableTags.Any())
-            {
-                Console.WriteLine($"--- Warning: No system tags found in the database to assign to dummy emails. ---");
-                // Proceed without tags or handle as needed
-            }
-
-            // --- Create Dummy Emails using a Loop ---
-            var dummyEmailsToAdd = new List<MailReceived>();
-            var random = new Random();
-
-            for (int i = 1; i <= 20; i++)
-            {
-                var senderName = $"Sender {i}";
-                var senderEmail = $"sender{i}@example.com";
-                bool isRead = random.Next(0, 2) == 1;
-                bool isFavorite = i <= 3 ? (random.Next(0, 2) == 1) : false;
-
-                // --- Create MailTags list for this email ---
-                var tagsForThisEmail = new List<MailTag>();
-                if (availableTags.Any()) 
-                {
-                    int numberOfTags = random.Next(1, 4);
-                    var assignedTags = new HashSet<int>(); 
-
-                    for (int j = 0; j < numberOfTags && assignedTags.Count < availableTags.Count; j++)
-                    {
-                        // Select a random tag from the available list
-                        Tag selectedTagEntity = availableTags[random.Next(availableTags.Count)];
-
-                        // Ensure we don't add the same tag twice to the same email
-                        if (assignedTags.Add(selectedTagEntity.Id))
-                        {
-                            tagsForThisEmail.Add(new MailTag
-                            {
-                                Tag = selectedTagEntity 
-                            });
-                        }
-                    }
-                }
-                // --- End Create MailTags ---
-
-
-                var dummyEmail = new MailReceived
-                {
-                    MailAccountId = mailAccount.MailAccountId,
-                    Sender = $"{senderName} <{senderEmail}>",
-                    Subject = $"Dummy Subject {i}: Meeting Follow-up", // Varied subject
-                    Body = $"Hello {userEmail},\n\nThis is the detailed body content for dummy email number {i}. Discussing the points from our last meeting.\n\nRegards,\n{senderName}",
-                    TimeReceived = DateTime.UtcNow.AddMinutes(-(i * 5 + 5)),
-                    IsRead = isRead,
-                    IsFavorite = isFavorite,
-                    Recipients = new List<Recipient> { new Recipient { Email = mailAccount.EmailAddress } },
-                    Attachments = new List<Attachments>(),
-                    MailTags = tagsForThisEmail 
-                };
-                dummyEmailsToAdd.Add(dummyEmail);
-            }
-
-            // Add the list of generated emails (with their MailTags) to the context
-            _context.MailReceived.AddRange(dummyEmailsToAdd);
 
             try
             {
-                await _context.SaveChangesAsync(); // EF Core handles linking MailTags to the new MailReceived IDs
-                Console.WriteLine($"--- Successfully added {dummyEmailsToAdd.Count} dummy emails with tags for account {mailAccount.MailAccountId} ---");
+                // Create OutlookService (you'll need to inject this in the constructor)
+                var configuration = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json")
+                    .Build();
+                
+                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var logger = loggerFactory.CreateLogger<OutlookService>();
+                var outlookService = new OutlookService(configuration, logger);
+
+                // Validate token first
+                bool isTokenValid = await outlookService.ValidateAccessTokenAsync(mailAccount.Token);
+                if (!isTokenValid)
+                {
+                    Console.WriteLine($"--- Access token for account {mailAccount.MailAccountId} is invalid or expired. User needs to re-authenticate. ---");
+                    return;
+                }
+
+                // Check if emails already exist for this account (avoid duplicates)
+                bool hasExistingEmails = await _context.MailReceived
+                                                  .AnyAsync(mr => mr.MailAccountId == mailAccount.MailAccountId);
+                if (hasExistingEmails)
+                {
+                    Console.WriteLine($"--- Emails already exist for account {mailAccount.MailAccountId}. Skipping to avoid duplicates. ---");
+                    return;
+                }
+
+                // Fetch emails from Outlook
+                var outlookEmails = await outlookService.GetUserEmailsAsync(mailAccount.Token, mailAccount.MailAccountId, 50);
+
+                if (!outlookEmails.Any())
+                {
+                    Console.WriteLine($"--- No emails found in Outlook for account {mailAccount.MailAccountId} ---");
+                    return;
+                }
+
+                // --- Fetch available system tags for potential auto-tagging ---
+                var availableTags = await _context.Tags
+                                                .Where(t => !(t is UserCreatedTag))
+                                                .ToListAsync();
+
+                // Process each email and optionally assign tags based on content analysis
+                foreach (var email in outlookEmails)
+                {
+                    // Auto-assign tags based on simple keyword matching (optional)
+                    if (availableTags.Any())
+                    {
+                        var emailTags = AutoAssignTags(email, availableTags);
+                        email.MailTags = emailTags;
+                    }
+                }
+
+                // Add emails to the database
+                _context.MailReceived.AddRange(outlookEmails);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"--- Successfully fetched and saved {outlookEmails.Count} real Outlook emails for account {mailAccount.MailAccountId} ---");
+
+                // Update last sync time
+                mailAccount.LastMailSync = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"--- FAILED to save dummy emails with tags for account {mailAccount.MailAccountId}: {ex.Message} ---");
-                // Log inner exception if possible
+                Console.WriteLine($"--- FAILED to fetch Outlook emails for account {mailAccount.MailAccountId}: {ex.Message} ---");
                 if (ex.InnerException != null)
                 {
                     Console.WriteLine($"--- Inner Exception: {ex.InnerException.Message} ---");
                 }
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Auto-assigns tags to emails based on simple keyword matching
+        /// This is a basic implementation - you can enhance it with AI/ML for better accuracy
+        /// </summary>
+        private List<MailTag> AutoAssignTags(MailReceived email, List<Tag> availableTags)
+        {
+            var mailTags = new List<MailTag>();
+            var emailContent = $"{email.Subject} {email.Body}".ToLowerInvariant();
+
+            // Simple keyword matching for demo purposes
+            var tagKeywords = new Dictionary<string, List<string>>
+            {
+                { "work", new List<string> { "meeting", "project", "deadline", "work", "business", "office" } },
+                { "personal", new List<string> { "family", "friend", "personal", "vacation", "birthday" } },
+                { "important", new List<string> { "urgent", "important", "asap", "priority", "critical" } },
+                { "finance", new List<string> { "payment", "invoice", "money", "bank", "finance", "budget" } },
+                { "travel", new List<string> { "flight", "hotel", "travel", "trip", "booking", "reservation" } }
+            };
+
+            foreach (var tag in availableTags.Take(3)) // Limit to 3 tags per email
+            {
+                var tagName = tag.TagName.ToLowerInvariant();
+                
+                // Check if tag name matches any keyword category
+                foreach (var category in tagKeywords)
+                {
+                    if (category.Key == tagName || category.Value.Any(keyword => emailContent.Contains(keyword)))
+                    {
+                        mailTags.Add(new MailTag
+                        {
+                            Tag = tag,
+                            MailReceived = email
+                        });
+                        break; // Avoid duplicate tags
+                    }
+                }
+
+                if (mailTags.Count >= 3) break; // Limit tags per email
+            }
+
+            return mailTags;
         }
     }
 

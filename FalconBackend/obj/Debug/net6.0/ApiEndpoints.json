@@ -11,6 +11,74 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.AnalyticsController",
+    "Method": "GetEmailCategoryBreakdown",
+    "RelativePath": "api/analytics/email-category-breakdown",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[System.Object, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
+      },
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 500
+      }
+    ]
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.AnalyticsController",
+    "Method": "GetEmailsByTimeOfDay",
+    "RelativePath": "api/analytics/emails-by-time-of-day",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[System.Object, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
+      },
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 500
+      }
+    ]
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.AnalyticsController",
     "Method": "RecordHeartbeat",
     "RelativePath": "api/analytics/heartbeat",
     "HttpMethod": "POST",
@@ -18,6 +86,40 @@
     "Order": 0,
     "Parameters": [],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.AnalyticsController",
+    "Method": "GetTopSenders",
+    "RelativePath": "api/analytics/top-senders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[System.Object, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
+      },
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 500
+      }
+    ]
   },
   {
     "ContainingType": "FalconBackend.Controllers.AuthController",
@@ -439,6 +541,22 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "RestoreMails",
+    "RelativePath": "api/mail/restore",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailsToRestore",
+        "Type": "System.Collections.Generic.List\u00601[[FalconBackend.Models.MailDeleteDto, FalconBackend, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
     "Method": "SearchEmails",
     "RelativePath": "api/mail/search",
     "HttpMethod": "POST",
@@ -554,6 +672,109 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "ToggleSpamBatch",
+    "RelativePath": "api/mail/spam",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "spamUpdates",
+        "Type": "System.Collections.Generic.List\u00601[[FalconBackend.Models.ToggleSpamDto, FalconBackend, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "ToggleSpam",
+    "RelativePath": "api/mail/spam/{mailId}/{isSpam}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "isSpam",
+        "Type": "System.Boolean",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetSpamPreviews",
+    "RelativePath": "api/mail/spam/preview",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.List\u00601[[FalconBackend.Models.MailReceivedPreviewDto, FalconBackend, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 401
+      },
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 500
+      }
+    ]
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetTrashPreviews",
+    "RelativePath": "api/mail/trash/preview",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
     "Method": "GetUnreadPreviews",
     "RelativePath": "api/mail/unread/preview",
     "HttpMethod": "GET",
@@ -569,6 +790,64 @@
         "Name": "pageSize",
         "Type": "System.Int32",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OutlookTestController",
+    "Method": "FetchEmailsTest",
+    "RelativePath": "api/outlook-test/fetch-emails-test",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Controllers.FetchEmailsTestRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OutlookTestController",
+    "Method": "GetEmailsWithToken",
+    "RelativePath": "api/outlook-test/get-emails",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Controllers.GetEmailsRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OutlookTestController",
+    "Method": "SyncOutlookEmails",
+    "RelativePath": "api/outlook-test/sync-emails",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OutlookTestController",
+    "Method": "ValidateOutlookToken",
+    "RelativePath": "api/outlook-test/validate-token",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "accessToken",
+        "Type": "System.String",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []

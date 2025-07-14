@@ -28,6 +28,7 @@ builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<OutlookService>();
 builder.Services.AddScoped<IFilterService, FilterService>();
 
 

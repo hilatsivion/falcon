@@ -128,7 +128,7 @@ namespace FalconBackend.Controllers
 
                 Console.WriteLine($"--- Endpoint /initialize-account called for user: {userEmail} ---");
 
-                await _userService.InitializeDummyUserDataAsync(userEmail);
+                await _userService.InitializeRealOutlookDataAsync(userEmail);
 
                 Console.WriteLine($"--- Endpoint /initialize-account finished for user: {userEmail} ---");
                 return Ok(new { message = "Account initialization process completed." }); 
