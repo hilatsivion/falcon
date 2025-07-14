@@ -245,4 +245,52 @@ namespace FalconBackend.Models
         public string AiKey { get; set; }
     }
 
+    // OAuth2 and Token Management DTOs
+    public class OAuthAuthorizeRequest 
+    {
+        public string RedirectUri { get; set; }
+        public string? State { get; set; }
+        public string Scope { get; set; } = "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send";
+    }
+
+    public class OAuthTokenRequest
+    {
+        public string Code { get; set; }
+        public string State { get; set; }
+        public string RedirectUri { get; set; }
+    }
+
+    public class TokenResponse
+    {
+        public string AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
+        public int ExpiresIn { get; set; } // seconds
+        public DateTime ExpiresAt { get; set; }
+        public string TokenType { get; set; } = "Bearer";
+        public string Scope { get; set; }
+    }
+
+    public class RefreshTokenRequest
+    {
+        public string RefreshToken { get; set; }
+    }
+
+    public class MailAccountCreateRequest
+    {
+        public string EmailAddress { get; set; }
+        public string AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
+        public int? ExpiresIn { get; set; } // seconds until access token expires
+        public MailAccount.MailProvider Provider { get; set; } = MailAccount.MailProvider.Outlook;
+        public bool IsDefault { get; set; } = false;
+        public bool SyncMailsImmediately { get; set; } = true; // Auto-sync mails when account is created
+    }
+
+    public class AllEmailsForAccountDto
+    {
+        public List<MailReceivedPreviewDto> ReceivedEmails { get; set; } = new List<MailReceivedPreviewDto>();
+        public List<MailSentPreviewDto> SentEmails { get; set; } = new List<MailSentPreviewDto>();
+        public List<DraftPreviewDto> Drafts { get; set; } = new List<DraftPreviewDto>();
+        public int TotalCount => ReceivedEmails.Count + SentEmails.Count + Drafts.Count;
+    }
 }

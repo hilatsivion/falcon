@@ -205,6 +205,32 @@
   },
   {
     "ContainingType": "FalconBackend.Controllers.MailController",
+    "Method": "GetAllEmailsForAccount",
+    "RelativePath": "api/mail/account/{mailAccountId}/emails",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailAccountId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.MailController",
     "Method": "DeleteMails",
     "RelativePath": "api/mail/delete",
     "HttpMethod": "DELETE",
@@ -795,6 +821,64 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "FalconBackend.Controllers.OAuthController",
+    "Method": "GetAuthorizationUrl",
+    "RelativePath": "api/oauth/authorize-url",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Models.OAuthAuthorizeRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OAuthController",
+    "Method": "ExchangeToken",
+    "RelativePath": "api/oauth/exchange-token",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Models.OAuthTokenRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OAuthController",
+    "Method": "RefreshToken",
+    "RelativePath": "api/oauth/refresh-token",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Models.RefreshTokenRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OAuthController",
+    "Method": "SyncEmails",
+    "RelativePath": "api/oauth/sync-emails",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "FalconBackend.Controllers.OutlookTestController",
     "Method": "FetchEmailsTest",
     "RelativePath": "api/outlook-test/fetch-emails-test",
@@ -821,6 +905,38 @@
       {
         "Name": "request",
         "Type": "FalconBackend.Controllers.GetEmailsRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OutlookTestController",
+    "Method": "SendDetailedEmail",
+    "RelativePath": "api/outlook-test/send-detailed-email",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Controllers.SendDetailedEmailRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "FalconBackend.Controllers.OutlookTestController",
+    "Method": "SendEmail",
+    "RelativePath": "api/outlook-test/send-email",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "FalconBackend.Controllers.SendEmailRequest",
         "IsRequired": true
       }
     ],

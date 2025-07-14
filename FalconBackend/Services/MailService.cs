@@ -16,12 +16,14 @@ namespace FalconBackend.Services
         private readonly AppDbContext _context;
         private readonly FileStorageService _fileStorageService;
         private readonly AnalyticsService _analyticsService;
+        private readonly OutlookService _outlookService;
 
-        public MailService(AppDbContext context, FileStorageService fileStorageService, AnalyticsService analyticsService)
+        public MailService(AppDbContext context, FileStorageService fileStorageService, AnalyticsService analyticsService, OutlookService outlookService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
             _analyticsService = analyticsService;
+            _outlookService = outlookService;
         }
 
         // DTO Conversion
@@ -181,6 +183,21 @@ namespace FalconBackend.Services
                     Recipients = m.Recipients.Select(r => r.Email).ToList()
                 })
                 .ToListAsync();
+        }
+
+        public async Task<AllEmailsForAccountDto> GetAllEmailsForMailAccountAsync(string mailAccountId, int page = 1, int pageSize = 100)
+        {
+            // Get all three types of emails sequentially to avoid DbContext threading issues
+            var receivedEmails = await GetReceivedEmailPreviewsByMailAccountAsync(mailAccountId, page, pageSize);
+            var sentEmails = await GetSentEmailPreviewsByMailAccountAsync(mailAccountId, page, pageSize);
+            var drafts = await GetDraftEmailPreviewsByMailAccountAsync(mailAccountId, page, pageSize);
+
+            return new AllEmailsForAccountDto
+            {
+                ReceivedEmails = receivedEmails,
+                SentEmails = sentEmails,
+                Drafts = drafts
+            };
         }
 
 
@@ -483,25 +500,26 @@ namespace FalconBackend.Services
             {
                 throw new ArgumentException("Recipient list cannot be empty.");
             }
-            foreach (var recipientEmail in request.Recipients)
-            {
-                var recipientAccountExists = await _context.MailAccounts
-                                                      .AnyAsync(ma => ma.EmailAddress == recipientEmail);
-                if (!recipientAccountExists)
-                {
-                    throw new KeyNotFoundException($"Recipient email not registered in any mail account: {recipientEmail}");
-                }
-            }
 
             var senderAccount = await _context.MailAccounts
-                                             .AsNoTracking()
-                                             .FirstOrDefaultAsync(ma => ma.MailAccountId == request.MailAccountId);
+                                            .AsNoTracking()
+                                            .FirstOrDefaultAsync(ma => ma.MailAccountId == request.MailAccountId);
 
             if (senderAccount == null)
             {
                 throw new InvalidOperationException("Sender mail account not found.");
             }
             string senderDisplayAddress = senderAccount.EmailAddress;
+
+            // Actually send the email via Outlook API
+            Console.WriteLine($"--- Sending email via Outlook API: {request.Subject} ---");
+            bool emailSent = await _outlookService.SendEmailAsync(senderAccount.AccessToken, request);
+            
+            if (!emailSent)
+            {
+                throw new InvalidOperationException("Failed to send email via Outlook API. Email not sent.");
+            }
+            Console.WriteLine($"--- Email sent successfully via Outlook API ---");
 
             var executionStrategy = _context.Database.CreateExecutionStrategy();
 
@@ -526,6 +544,7 @@ namespace FalconBackend.Services
                     await SaveAttachments(attachments, mailSent.MailId, mailSent.MailAccountId, "Sent", mailSent.Attachments);
                     await _context.SaveChangesAsync(); // Save attachments added in SaveAttachments
 
+                    
                     List<MailReceived> receivedCopies = new List<MailReceived>();
                     foreach (var recipientEmail in request.Recipients)
                     {
@@ -772,7 +791,14 @@ namespace FalconBackend.Services
         private static string GenerateBodySnippet(string body)
         {
             if (string.IsNullOrWhiteSpace(body)) return string.Empty;
-            var words = body.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            // Remove HTML tags using regex
+            var plainText = System.Text.RegularExpressions.Regex.Replace(body, "<.*?>", " ");
+            
+            // Replace multiple whitespaces with single space and trim
+            plainText = System.Text.RegularExpressions.Regex.Replace(plainText, @"\s+", " ").Trim();
+            
+            var words = plainText.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             var snippet = string.Join(" ", words.Take(15));
             if (words.Length > 15) snippet += "...";
             return snippet;

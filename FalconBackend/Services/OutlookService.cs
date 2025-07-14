@@ -9,6 +9,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Abstractions;
 using Microsoft.Graph.Models;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace FalconBackend.Services
 {
@@ -37,7 +40,8 @@ namespace FalconBackend.Services
         /// </summary>
         private GraphServiceClient CreateGraphServiceClient(string accessToken)
         {
-            var authenticationProvider = new BaseBearerTokenAuthenticationProvider(new AccessTokenProvider(accessToken));
+            var accessTokenProvider = new AccessTokenProvider(accessToken);
+            var authenticationProvider = new BaseBearerTokenAuthenticationProvider(accessTokenProvider);
             return new GraphServiceClient(authenticationProvider);
         }
 
@@ -333,5 +337,240 @@ namespace FalconBackend.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// Refreshes an expired access token using the refresh token
+        /// Returns new token response with updated access and refresh tokens
+        /// </summary>
+        public async Task<TokenResponse?> RefreshAccessTokenAsync(string refreshToken)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to refresh access token");
+
+                using var httpClient = new HttpClient();
+                var tokenEndpoint = $"{_configuration["MicrosoftGraph:Instance"]}common/oauth2/v2.0/token";
+
+                var tokenRequestData = new List<KeyValuePair<string, string>>
+                {
+                    new("client_id", _clientId),
+                    new("client_secret", _clientSecret),
+                    new("grant_type", "refresh_token"),
+                    new("refresh_token", refreshToken),
+                    new("scope", "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send")
+                };
+
+                var tokenRequest = new FormUrlEncodedContent(tokenRequestData);
+                var tokenResponse = await httpClient.PostAsync(tokenEndpoint, tokenRequest);
+
+                if (!tokenResponse.IsSuccessStatusCode)
+                {
+                    var errorContent = await tokenResponse.Content.ReadAsStringAsync();
+                    _logger.LogError($"Token refresh failed: {errorContent}");
+                    return null;
+                }
+
+                var tokenJsonResponse = await tokenResponse.Content.ReadAsStringAsync();
+                var tokenDocument = JsonDocument.Parse(tokenJsonResponse);
+                var tokenData = tokenDocument.RootElement;
+                
+                var result = new TokenResponse
+                {
+                    AccessToken = tokenData.GetProperty("access_token").GetString()!,
+                    RefreshToken = tokenData.TryGetProperty("refresh_token", out var refreshProp) ? 
+                                 refreshProp.GetString() : refreshToken, // Use existing if not provided
+                    ExpiresIn = tokenData.GetProperty("expires_in").GetInt32(),
+                    ExpiresAt = DateTime.UtcNow.AddSeconds(tokenData.GetProperty("expires_in").GetInt32()),
+                    TokenType = tokenData.GetProperty("token_type").GetString()!,
+                    Scope = tokenData.TryGetProperty("scope", out var scopeProp) ? 
+                           scopeProp.GetString() : "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send"
+                };
+
+                _logger.LogInformation("Access token refreshed successfully");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to refresh access token: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets a valid access token, automatically refreshing if needed
+        /// This is the key method for seamless token management
+        /// </summary>
+        public async Task<string?> GetValidAccessTokenAsync(MailAccount mailAccount, Func<MailAccount, Task> updateMailAccountCallback)
+        {
+            try
+            {
+                // Check if current token is still valid
+                if (!mailAccount.NeedsTokenRefresh() && mailAccount.IsTokenValid)
+                {
+                    return mailAccount.AccessToken;
+                }
+
+                // Token needs refresh - check if we have a valid refresh token
+                if (!mailAccount.HasValidRefreshToken())
+                {
+                    _logger.LogWarning($"No valid refresh token available for account {mailAccount.EmailAddress}");
+                    mailAccount.IsTokenValid = false;
+                    await updateMailAccountCallback(mailAccount);
+                    return null;
+                }
+
+                // Refresh the token
+                var tokenResponse = await RefreshAccessTokenAsync(mailAccount.RefreshToken!);
+                if (tokenResponse == null)
+                {
+                    _logger.LogError($"Failed to refresh token for account {mailAccount.EmailAddress}");
+                    mailAccount.IsTokenValid = false;
+                    await updateMailAccountCallback(mailAccount);
+                    return null;
+                }
+
+                // Update the mail account with new tokens
+                mailAccount.AccessToken = tokenResponse.AccessToken;
+                if (!string.IsNullOrEmpty(tokenResponse.RefreshToken))
+                {
+                    mailAccount.RefreshToken = tokenResponse.RefreshToken;
+                }
+                mailAccount.TokenExpiresAt = tokenResponse.ExpiresAt;
+                mailAccount.IsTokenValid = true;
+
+                // Save the updated tokens
+                await updateMailAccountCallback(mailAccount);
+
+                _logger.LogInformation($"Token refreshed successfully for account {mailAccount.EmailAddress}");
+                return mailAccount.AccessToken;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting valid access token for {mailAccount.EmailAddress}: {ex.Message}");
+                mailAccount.IsTokenValid = false;
+                await updateMailAccountCallback(mailAccount);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Exchange authorization code for access and refresh tokens
+        /// This is called after user completes OAuth flow
+        /// </summary>
+        public async Task<TokenResponse?> ExchangeCodeForTokensAsync(string authorizationCode, string redirectUri)
+        {
+            try
+            {
+                _logger.LogInformation("Exchanging authorization code for tokens");
+
+                using var httpClient = new HttpClient();
+                var tokenEndpoint = $"{_configuration["MicrosoftGraph:Instance"]}common/oauth2/v2.0/token";
+
+                var tokenRequestData = new List<KeyValuePair<string, string>>
+                {
+                    new("client_id", _clientId),
+                    new("client_secret", _clientSecret),
+                    new("grant_type", "authorization_code"),
+                    new("code", authorizationCode),
+                    new("redirect_uri", redirectUri),
+                    new("scope", "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send")
+                };
+
+                var tokenRequest = new FormUrlEncodedContent(tokenRequestData);
+                var tokenResponse = await httpClient.PostAsync(tokenEndpoint, tokenRequest);
+
+                if (!tokenResponse.IsSuccessStatusCode)
+                {
+                    var errorContent = await tokenResponse.Content.ReadAsStringAsync();
+                    _logger.LogError($"Token exchange failed: {errorContent}");
+                    return null;
+                }
+
+                var tokenJsonResponse = await tokenResponse.Content.ReadAsStringAsync();
+                var tokenDocument = JsonDocument.Parse(tokenJsonResponse);
+                var tokenData = tokenDocument.RootElement;
+                
+                var result = new TokenResponse
+                {
+                    AccessToken = tokenData.GetProperty("access_token").GetString()!,
+                    RefreshToken = tokenData.TryGetProperty("refresh_token", out var refreshProp) ? 
+                                 refreshProp.GetString() : null,
+                    ExpiresIn = tokenData.GetProperty("expires_in").GetInt32(),
+                    ExpiresAt = DateTime.UtcNow.AddSeconds(tokenData.GetProperty("expires_in").GetInt32()),
+                    TokenType = tokenData.GetProperty("token_type").GetString()!,
+                    Scope = tokenData.TryGetProperty("scope", out var scopeProp) ? 
+                           scopeProp.GetString() : "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send"
+                };
+
+                _logger.LogInformation("Tokens obtained successfully");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to exchange code for tokens: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Generate OAuth2 authorization URL for user to login
+        /// </summary>
+        public string GetAuthorizationUrl(string redirectUri, string? state = null)
+        {
+            var baseUrl = $"{_configuration["MicrosoftGraph:Instance"]}common/oauth2/v2.0/authorize";
+            var scope = "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send";
+            
+            var queryParams = new List<string>
+            {
+                $"client_id={Uri.EscapeDataString(_clientId)}",
+                $"response_type=code",
+                $"redirect_uri={Uri.EscapeDataString(redirectUri)}",
+                $"scope={Uri.EscapeDataString(scope)}",
+                $"response_mode=query"
+            };
+
+            if (!string.IsNullOrEmpty(state))
+            {
+                queryParams.Add($"state={Uri.EscapeDataString(state)}");
+            }
+
+            return $"{baseUrl}?{string.Join("&", queryParams)}";
+        }
+
+        /// <summary>
+        /// Get user profile information from Microsoft Graph API
+        /// </summary>
+        public async Task<UserProfile?> GetUserProfileAsync(string accessToken)
+        {
+            try
+            {
+                var graphServiceClient = CreateGraphServiceClient(accessToken);
+                var user = await graphServiceClient.Me.GetAsync();
+                
+                return new UserProfile
+                {
+                    Email = user?.Mail ?? user?.UserPrincipalName,
+                    DisplayName = user?.DisplayName,
+                    GivenName = user?.GivenName,
+                    Surname = user?.Surname
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to get user profile: {ex.Message}");
+                return null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// User profile information from Microsoft Graph
+    /// </summary>
+    public class UserProfile
+    {
+        public string? Email { get; set; }
+        public string? DisplayName { get; set; }
+        public string? GivenName { get; set; }
+        public string? Surname { get; set; }
     }
 } 

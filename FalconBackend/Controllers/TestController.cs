@@ -43,7 +43,7 @@ namespace FalconBackend.Controllers
             {
                 AppUserEmail = userEmail, // Link to the logged-in user
                 EmailAddress = randomEmail,
-                Token = Guid.NewGuid().ToString(), // Placeholder token
+                AccessToken = Guid.NewGuid().ToString(), // Placeholder token
                 Provider = MailAccount.MailProvider.Gmail, // Default to Gmail for test
                 LastMailSync = DateTime.UtcNow,
                 IsDefault = !_context.MailAccounts.Any(ma => ma.AppUserEmail == userEmail) // Make first account default

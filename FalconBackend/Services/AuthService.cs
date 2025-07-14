@@ -19,31 +19,20 @@ namespace FalconBackend.Services
         private readonly string _aiKey; 
         private readonly AnalyticsService _analyticsService;
         private readonly IConfiguration _configuration;
+        private readonly UserService _userService;
 
 
-        public AuthService(AppDbContext context, IConfiguration configuration, AnalyticsService analyticsService)
+        public AuthService(AppDbContext context, IConfiguration configuration, AnalyticsService analyticsService, UserService userService)
         {
             _context = context;
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _aiKey = configuration["AiSettings:HuggingFaceApiKey"] ?? throw new ArgumentNullException("AiSettings:HuggingFaceApiKey", "Hugging Face API Key not found in configuration.");
             _jwtSecret = configuration["JwtSettings:Key"] ?? throw new Exception("JWT Secret Key not found in configuration.");
             _analyticsService = analyticsService;
+            _userService = userService;
         }
 
-        private async Task CreateTestMailAccountForUserAsync(AppUser user)
-        {
-            var newAccount = new MailAccount
-            {
-                AppUserEmail = user.Email, 
-                EmailAddress = user.Email,
-                Token = Guid.NewGuid().ToString(),
-                Provider = MailAccount.MailProvider.Gmail, 
-                LastMailSync = DateTime.UtcNow,
-                IsDefault = true 
-            };
 
-            _context.MailAccounts.Add(newAccount);
-        }
 
 
         public async Task<LoginResponseDto> LogInAsync(string email, string password)
@@ -68,11 +57,63 @@ namespace FalconBackend.Services
             user.LastLogin = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
+            // Refresh tokens and sync emails for all user's mail accounts (background task)
+            _ = Task.Run(async () => await RefreshTokensAndSyncEmailsAsync(email));
+
             return new LoginResponseDto
             {
                 Token = GenerateJwtToken(user),
                 AiKey = _aiKey 
             };
+        }
+
+        /// <summary>
+        /// Refresh tokens and sync emails for all user's mail accounts on login
+        /// </summary>
+        private async Task RefreshTokensAndSyncEmailsAsync(string userEmail)
+        {
+            try
+            {
+                Console.WriteLine($"--- Starting background token refresh and email sync for user {userEmail} ---");
+
+                // Get all mail accounts for the user
+                var mailAccounts = await _context.MailAccounts
+                    .Where(ma => ma.AppUserEmail == userEmail)
+                    .ToListAsync();
+
+                if (!mailAccounts.Any())
+                {
+                    Console.WriteLine($"--- No mail accounts found for user {userEmail} ---");
+                    return;
+                }
+
+                Console.WriteLine($"--- Found {mailAccounts.Count} mail accounts for user {userEmail} ---");
+
+                // Process each mail account
+                foreach (var mailAccount in mailAccounts)
+                {
+                    try
+                    {
+                        Console.WriteLine($"--- Processing mail account {mailAccount.EmailAddress} ---");
+                        
+                        // Sync emails for this account (includes automatic token refresh)
+                        await _userService.SyncMailsForAccountAsync(mailAccount);
+                        
+                        Console.WriteLine($"--- Completed sync for mail account {mailAccount.EmailAddress} ---");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"--- Failed to sync mail account {mailAccount.EmailAddress}: {ex.Message} ---");
+                        // Continue with other accounts even if one fails
+                    }
+                }
+
+                Console.WriteLine($"--- Completed background sync for user {userEmail} ---");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Error in background token refresh and sync for user {userEmail}: {ex.Message} ---");
+            }
         }
 
         public async Task<bool> LogOutAsync(string email)
@@ -113,8 +154,6 @@ namespace FalconBackend.Services
             };
 
             _context.AppUsers.Add(newUser); // Only add if checks passed
-
-            await CreateTestMailAccountForUserAsync(newUser);
 
             try 
             {

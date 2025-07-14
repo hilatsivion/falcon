@@ -237,6 +237,31 @@ namespace FalconBackend.Controllers
             }
         }
 
+        [HttpGet("account/{mailAccountId}/emails")]
+        public async Task<IActionResult> GetAllEmailsForAccount(string mailAccountId, [FromQuery] int page = 1, [FromQuery] int pageSize = 100)
+        {
+            try
+            {
+                var userEmail = GetUserEmailFromToken();
+                
+                // Verify user owns this mail account
+                if (!await _mailService.DoesUserOwnMailAccountAsync(userEmail, mailAccountId))
+                {
+                    return Forbid("You are not authorized to access this mail account.");
+                }
+
+                var allEmails = await _mailService.GetAllEmailsForMailAccountAsync(mailAccountId, page, pageSize);
+                return Ok(allEmails);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
 
         [HttpPut("favorite/{mailId}/{isFavorite}")]
         public async Task<IActionResult> ToggleFavorite(int mailId, bool isFavorite)

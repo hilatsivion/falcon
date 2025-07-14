@@ -11,10 +11,191 @@ namespace FalconBackend.Services
     public class UserService
     {
         private readonly AppDbContext _context;
+        private readonly OutlookService _outlookService;
 
-        public UserService(AppDbContext context)
+        public UserService(AppDbContext context, OutlookService outlookService)
         {
             _context = context;
+            _outlookService = outlookService;
+        }
+
+        /// <summary>
+        /// Create a new mail account with OAuth tokens and automatically sync emails
+        /// This method handles the complete flow after OAuth authentication
+        /// </summary>
+        public async Task<MailAccount> CreateMailAccountAsync(MailAccountCreateRequest request, string userEmail)
+        {
+            try
+            {
+                Console.WriteLine($"--- Creating mail account for {request.EmailAddress} ---");
+
+                // Check if user exists
+                var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Email == userEmail);
+                if (user == null)
+                {
+                    throw new InvalidOperationException($"User {userEmail} not found");
+                }
+
+                // Check if mail account already exists
+                var existingAccount = await _context.MailAccounts
+                    .FirstOrDefaultAsync(ma => ma.EmailAddress == request.EmailAddress && ma.AppUserEmail == userEmail);
+                
+                if (existingAccount != null)
+                {
+                    throw new InvalidOperationException($"Mail account {request.EmailAddress} already exists for user {userEmail}");
+                }
+
+                // Calculate token expiration
+                var tokenExpiresAt = request.ExpiresIn.HasValue 
+                    ? DateTime.UtcNow.AddSeconds(request.ExpiresIn.Value)
+                    : DateTime.UtcNow.AddHours(1); // Default 1 hour
+
+                // Create new mail account with OAuth tokens
+                var mailAccount = new MailAccount
+                {
+                    EmailAddress = request.EmailAddress,
+                    AccessToken = request.AccessToken,
+                    RefreshToken = request.RefreshToken,
+                    TokenExpiresAt = tokenExpiresAt,
+                    RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(14), // Refresh tokens typically last 14+ days
+                    Provider = request.Provider,
+                    IsDefault = request.IsDefault,
+                    AppUserEmail = userEmail,
+                    LastMailSync = DateTime.UtcNow,
+                    IsTokenValid = true
+                };
+
+                // Add to database
+                _context.MailAccounts.Add(mailAccount);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"--- Mail account {mailAccount.MailAccountId} created successfully ---");
+
+                // Automatically sync emails if requested
+                if (request.SyncMailsImmediately)
+                {
+                    Console.WriteLine($"--- Starting automatic email sync for {mailAccount.EmailAddress} ---");
+                    await SyncMailsForAccountAsync(mailAccount);
+                }
+
+                return mailAccount;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- FAILED to create mail account for {request.EmailAddress}: {ex.Message} ---");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Sync emails for a specific mail account with automatic token refresh
+        /// Includes placeholder for AI-powered tagging
+        /// </summary>
+        public async Task SyncMailsForAccountAsync(MailAccount mailAccount)
+        {
+            try
+            {
+                Console.WriteLine($"--- Syncing emails for account {mailAccount.EmailAddress} ---");
+
+                // Get a valid access token (automatically refreshes if needed)
+                var validAccessToken = await _outlookService.GetValidAccessTokenAsync(mailAccount, async (updatedAccount) =>
+                {
+                    _context.MailAccounts.Update(updatedAccount);
+                    await _context.SaveChangesAsync();
+                });
+
+                if (string.IsNullOrEmpty(validAccessToken))
+                {
+                    Console.WriteLine($"--- Failed to get valid access token for account {mailAccount.EmailAddress}. Token refresh needed. ---");
+                    mailAccount.IsTokenValid = false;
+                    await _context.SaveChangesAsync();
+                    return;
+                }
+
+                // Get the last sync time to only fetch new emails
+                var lastSyncTime = mailAccount.LastMailSync;
+                Console.WriteLine($"--- Last sync was at: {lastSyncTime} ---");
+
+                // Fetch emails from Outlook
+                var outlookEmails = await _outlookService.GetUserEmailsAsync(validAccessToken, mailAccount.MailAccountId, 100);
+
+                if (!outlookEmails.Any())
+                {
+                    Console.WriteLine($"--- No new emails found for account {mailAccount.EmailAddress} ---");
+                    return;
+                }
+
+                // Filter out emails that are already in the database (avoid duplicates)
+                var existingEmailIds = await _context.MailReceived
+                    .Where(mr => mr.MailAccountId == mailAccount.MailAccountId)
+                    .Select(mr => mr.Subject + "|" + mr.TimeReceived.ToString("yyyy-MM-dd HH:mm:ss") + "|" + mr.Sender)
+                    .ToListAsync();
+
+                var newEmails = outlookEmails.Where(email => 
+                    !existingEmailIds.Contains(email.Subject + "|" + email.TimeReceived.ToString("yyyy-MM-dd HH:mm:ss") + "|" + email.Sender))
+                    .ToList();
+
+                if (!newEmails.Any())
+                {
+                    Console.WriteLine($"--- No new emails to sync for account {mailAccount.EmailAddress} ---");
+                    mailAccount.LastMailSync = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                    return;
+                }
+
+                // --- Fetch available system tags for potential auto-tagging ---
+                var availableTags = await _context.Tags
+                    .Where(t => !(t is UserCreatedTag))
+                    .ToListAsync();
+
+                // Process each new email and assign tags
+                foreach (var email in newEmails)
+                {
+                    // Auto-assign tags based on simple keyword matching
+                    if (availableTags.Any())
+                    {
+                        var emailTags = AutoAssignTags(email, availableTags);
+                        email.MailTags = emailTags;
+                    }
+
+                    // TODO: ✨ AI-POWERED TAGGING PLACEHOLDER ✨
+                    // This is where advanced AI tagging will be implemented later:
+                    // ================================================================
+                    // var aiTags = await _aiTaggingService.GetSmartTagsAsync(
+                    //     subject: email.Subject, 
+                    //     body: email.Body,
+                    //     sender: email.Sender,
+                    //     userPreferences: userTagPreferences
+                    // );
+                    // 
+                    // foreach (var aiTag in aiTags)
+                    // {
+                    //     email.MailTags.Add(new MailTag 
+                    //     { 
+                    //         MailId = email.MailId, 
+                    //         TagId = aiTag.TagId,
+                    //         AssignedBy = "AI",
+                    //         Confidence = aiTag.Confidence
+                    //     });
+                    // }
+                    // ================================================================
+                }
+
+                // Add new emails to the database
+                _context.MailReceived.AddRange(newEmails);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"--- Successfully synced {newEmails.Count} new emails for account {mailAccount.EmailAddress} ---");
+
+                // Update last sync time
+                mailAccount.LastMailSync = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- FAILED to sync emails for account {mailAccount.EmailAddress}: {ex.Message} ---");
+                throw;
+            }
         }
 
         public async Task<bool> SaveUserTagsAsync(string userEmail, List<string> tags)
@@ -132,7 +313,7 @@ namespace FalconBackend.Services
             }
 
             // Check if we have a valid access token
-            if (string.IsNullOrEmpty(mailAccount.Token))
+            if (string.IsNullOrEmpty(mailAccount.AccessToken))
             {
                 Console.WriteLine($"--- No access token found for account {mailAccount.MailAccountId}. User needs to authenticate first. ---");
                 return;
@@ -140,21 +321,18 @@ namespace FalconBackend.Services
 
             try
             {
-                // Create OutlookService (you'll need to inject this in the constructor)
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json")
-                    .Build();
-                
-                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-                var logger = loggerFactory.CreateLogger<OutlookService>();
-                var outlookService = new OutlookService(configuration, logger);
-
-                // Validate token first
-                bool isTokenValid = await outlookService.ValidateAccessTokenAsync(mailAccount.Token);
-                if (!isTokenValid)
+                // Get a valid access token (automatically refreshes if needed)
+                var validAccessToken = await _outlookService.GetValidAccessTokenAsync(mailAccount, async (updatedAccount) =>
                 {
-                    Console.WriteLine($"--- Access token for account {mailAccount.MailAccountId} is invalid or expired. User needs to re-authenticate. ---");
+                    _context.MailAccounts.Update(updatedAccount);
+                    await _context.SaveChangesAsync();
+                });
+
+                if (string.IsNullOrEmpty(validAccessToken))
+                {
+                    Console.WriteLine($"--- Failed to get valid access token for account {mailAccount.MailAccountId}. User needs to re-authenticate. ---");
+                    mailAccount.IsTokenValid = false;
+                    await _context.SaveChangesAsync();
                     return;
                 }
 
@@ -167,8 +345,8 @@ namespace FalconBackend.Services
                     return;
                 }
 
-                // Fetch emails from Outlook
-                var outlookEmails = await outlookService.GetUserEmailsAsync(mailAccount.Token, mailAccount.MailAccountId, 50);
+                // Fetch emails from Outlook using the valid token
+                var outlookEmails = await _outlookService.GetUserEmailsAsync(validAccessToken, mailAccount.MailAccountId, 50);
 
                 if (!outlookEmails.Any())
                 {
@@ -190,6 +368,11 @@ namespace FalconBackend.Services
                         var emailTags = AutoAssignTags(email, availableTags);
                         email.MailTags = emailTags;
                     }
+
+                    // TODO: Replace with AI-powered tagging later
+                    // This is where AI tagging will be implemented:
+                    // var aiTags = await _aiTaggingService.GetSmartTagsAsync(email.Subject, email.Body);
+                    // email.MailTags.AddRange(aiTags);
                 }
 
                 // Add emails to the database
