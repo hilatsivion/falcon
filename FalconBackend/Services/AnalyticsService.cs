@@ -114,7 +114,7 @@ namespace FalconBackend.Services
                 else
                 {
                     // Break streak if not active
-                    analytics.CurrentStreak = 0;
+                        analytics.CurrentStreak = 0;
                 }
 
                 // Reset daily counters for the NEW day
@@ -187,11 +187,11 @@ namespace FalconBackend.Services
 
             // Initialize LastLogin if it's the first time
             if (!user.LastLogin.HasValue)
-            {
-                user.LastLogin = currentTime;
+                {
+                    user.LastLogin = currentTime;
                 analytics.IsActiveToday = true;
-                await _context.SaveChangesAsync();
-                Console.WriteLine($"Initialized LastLogin for {userEmail}.");
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"Initialized LastLogin for {userEmail}.");
                 return;
             }
 
@@ -230,7 +230,7 @@ namespace FalconBackend.Services
         // TIME-RELEVANT FUNCTIONS (Current Actions)
         // ===========================================
         // These should only be called for actions happening TODAY
-
+        
         /// <summary>
         /// Call when user RECEIVES an email TODAY (not for old synced emails)
         /// </summary>

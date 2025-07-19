@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,8 +34,12 @@ builder.Services.AddScoped<OutlookService>();
 builder.Services.AddScoped<IFilterService, FilterService>();
 builder.Services.AddScoped<AiTaggingService>();
 
-// Register HttpClient for AiTaggingService
-builder.Services.AddHttpClient<AiTaggingService>();
+// Register HttpClient for AiTaggingService with timeout and retry policy
+builder.Services.AddHttpClient<AiTaggingService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30); // 30 second timeout
+})
+.AddPolicyHandler(GetRetryPolicy());
 
 
 // Add controllers
@@ -132,6 +138,21 @@ app.UseAuthorization();
 
 // Map controller routes
 app.MapControllers();
+
+// Configure retry policy for AI tagging service
+static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError() // Handles HttpRequestException and 5XX, 408 status codes
+        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+        .WaitAndRetryAsync(
+            retryCount: 3,
+            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), // Exponential backoff: 2s, 4s, 8s
+            onRetry: (outcome, timespan, retryCount, context) =>
+            {
+                Console.WriteLine($"AI Tagging Service - Retry attempt {retryCount} after {timespan}s delay");
+            });
+}
 
 // Run the application
 app.Run();

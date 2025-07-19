@@ -20,18 +20,16 @@ namespace FalconBackend.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<OutlookService> _logger;
-        private readonly AiTaggingService _aiTaggingService;
         private readonly FileStorageService _fileStorageService;
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly string _tenantId;
         private readonly string _graphApiUrl;
 
-        public OutlookService(IConfiguration configuration, ILogger<OutlookService> logger, AiTaggingService aiTaggingService, FileStorageService fileStorageService)
+        public OutlookService(IConfiguration configuration, ILogger<OutlookService> logger, FileStorageService fileStorageService)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _aiTaggingService = aiTaggingService ?? throw new ArgumentNullException(nameof(aiTaggingService));
             _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
             
             _clientId = _configuration["MicrosoftGraph:ClientId"] ?? throw new ArgumentNullException("MicrosoftGraph:ClientId not found in configuration");
@@ -104,33 +102,6 @@ namespace FalconBackend.Services
                             _logger.LogWarning($"Failed to convert message {message.Id}: {ex.Message}");
                             continue; // Skip this email and continue with others
                         }
-                    }
-                }
-
-                // Apply AI-powered tagging to the emails
-                if (emailList.Any())
-                {
-                    try
-                    {
-                        _logger.LogInformation($"Applying AI tagging to {emailList.Count} emails");
-                        var aiTags = await _aiTaggingService.GetAiTagsAsync(emailList);
-                        
-                        // Apply the AI tags to the emails
-                        foreach (var aiTag in aiTags)
-                        {
-                            var email = emailList.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
-                            if (email != null)
-                            {
-                                email.MailTags.Add(aiTag);
-                            }
-                        }
-                        
-                        _logger.LogInformation($"Successfully applied {aiTags.Count} AI-generated tags");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning($"AI tagging failed, continuing without AI tags: {ex.Message}");
-                        // Continue without AI tags if the service fails
                     }
                 }
 
@@ -772,9 +743,12 @@ namespace FalconBackend.Services
             try
             {
                 _logger.LogInformation("Exchanging authorization code for tokens");
+                _logger.LogInformation($"Using redirect URI: {redirectUri}");
+                _logger.LogInformation($"Using client ID: {_clientId}");
 
                 using var httpClient = new HttpClient();
                 var tokenEndpoint = $"{_configuration["MicrosoftGraph:Instance"]}common/oauth2/v2.0/token";
+                _logger.LogInformation($"Token endpoint: {tokenEndpoint}");
 
                 var tokenRequestData = new List<KeyValuePair<string, string>>
                 {
@@ -792,7 +766,32 @@ namespace FalconBackend.Services
                 if (!tokenResponse.IsSuccessStatusCode)
                 {
                     var errorContent = await tokenResponse.Content.ReadAsStringAsync();
-                    _logger.LogError($"Token exchange failed: {errorContent}");
+                    _logger.LogError($"Token exchange failed with status {tokenResponse.StatusCode}");
+                    _logger.LogError($"Error response: {errorContent}");
+                    _logger.LogError($"Request details - Redirect URI: {redirectUri}, Client ID: {_clientId}");
+                    
+                    // Try to parse the error for more specific details
+                    try
+                    {
+                        var errorDocument = JsonDocument.Parse(errorContent);
+                        var errorData = errorDocument.RootElement;
+                        if (errorData.TryGetProperty("error", out var errorProp))
+                        {
+                            var errorType = errorProp.GetString();
+                            _logger.LogError($"OAuth Error Type: {errorType}");
+                            
+                            if (errorData.TryGetProperty("error_description", out var descProp))
+                            {
+                                var errorDesc = descProp.GetString();
+                                _logger.LogError($"OAuth Error Description: {errorDesc}");
+                            }
+                        }
+                    }
+                    catch (Exception parseEx)
+                    {
+                        _logger.LogWarning($"Could not parse error response: {parseEx.Message}");
+                    }
+                    
                     return null;
                 }
 
