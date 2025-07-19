@@ -19,15 +19,17 @@ namespace FalconBackend.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<OutlookService> _logger;
+        private readonly AiTaggingService _aiTaggingService;
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly string _tenantId;
         private readonly string _graphApiUrl;
 
-        public OutlookService(IConfiguration configuration, ILogger<OutlookService> logger)
+        public OutlookService(IConfiguration configuration, ILogger<OutlookService> logger, AiTaggingService aiTaggingService)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _aiTaggingService = aiTaggingService ?? throw new ArgumentNullException(nameof(aiTaggingService));
             
             _clientId = _configuration["MicrosoftGraph:ClientId"] ?? throw new ArgumentNullException("MicrosoftGraph:ClientId not found in configuration");
             _clientSecret = _configuration["MicrosoftGraph:ClientSecret"] ?? throw new ArgumentNullException("MicrosoftGraph:ClientSecret not found in configuration");
@@ -99,6 +101,33 @@ namespace FalconBackend.Services
                             _logger.LogWarning($"Failed to convert message {message.Id}: {ex.Message}");
                             continue; // Skip this email and continue with others
                         }
+                    }
+                }
+
+                // Apply AI-powered tagging to the emails
+                if (emailList.Any())
+                {
+                    try
+                    {
+                        _logger.LogInformation($"Applying AI tagging to {emailList.Count} emails");
+                        var aiTags = await _aiTaggingService.GetAiTagsAsync(emailList);
+                        
+                        // Apply the AI tags to the emails
+                        foreach (var aiTag in aiTags)
+                        {
+                            var email = emailList.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
+                            if (email != null)
+                            {
+                                email.MailTags.Add(aiTag);
+                            }
+                        }
+                        
+                        _logger.LogInformation($"Successfully applied {aiTags.Count} AI-generated tags");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"AI tagging failed, continuing without AI tags: {ex.Message}");
+                        // Continue without AI tags if the service fails
                     }
                 }
 

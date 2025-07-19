@@ -21,6 +21,8 @@
           "Microsoft.Extensions.FileProviders.Abstractions": "6.0.0",
           "Microsoft.Extensions.Primitives": "6.0.0",
           "Microsoft.Graph": "5.85.0",
+          "Microsoft.Kiota.Abstractions": "1.19.0",
+          "Microsoft.Kiota.Authentication.Azure": "1.19.0",
           "Swashbuckle.AspNetCore": "6.5.0",
           "System.IdentityModel.Tokens.Jwt": "8.6.1"
         },
@@ -151,22 +153,22 @@
           "runtimes/win-arm/native/Microsoft.Data.SqlClient.SNI.dll": {
             "rid": "win-arm",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "2.1.1.0"
           },
           "runtimes/win-arm64/native/Microsoft.Data.SqlClient.SNI.dll": {
             "rid": "win-arm64",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "2.1.1.0"
           },
           "runtimes/win-x64/native/Microsoft.Data.SqlClient.SNI.dll": {
             "rid": "win-x64",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "2.1.1.0"
           },
           "runtimes/win-x86/native/Microsoft.Data.SqlClient.SNI.dll": {
             "rid": "win-x86",
             "assetType": "native",
-            "fileVersion": "0.0.0.0"
+            "fileVersion": "2.1.1.0"
           }
         }
       },
@@ -328,8 +330,8 @@
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.6.1",
           "Microsoft.IdentityModel.Validators": "8.6.1",
-          "Microsoft.Kiota.Abstractions": "1.17.1",
-          "Microsoft.Kiota.Authentication.Azure": "1.17.1",
+          "Microsoft.Kiota.Abstractions": "1.19.0",
+          "Microsoft.Kiota.Authentication.Azure": "1.19.0",
           "Microsoft.Kiota.Http.HttpClientLibrary": "1.17.1",
           "Microsoft.Kiota.Serialization.Form": "1.17.1",
           "Microsoft.Kiota.Serialization.Json": "1.17.1",
@@ -450,32 +452,32 @@
           }
         }
       },
-      "Microsoft.Kiota.Abstractions/1.17.1": {
+      "Microsoft.Kiota.Abstractions/1.19.0": {
         "dependencies": {
-          "Std.UriTemplate": "2.0.1"
+          "Std.UriTemplate": "2.0.5"
         },
         "runtime": {
           "lib/net6.0/Microsoft.Kiota.Abstractions.dll": {
-            "assemblyVersion": "1.17.1.0",
-            "fileVersion": "1.17.1.0"
+            "assemblyVersion": "1.19.0.0",
+            "fileVersion": "1.19.0.0"
           }
         }
       },
-      "Microsoft.Kiota.Authentication.Azure/1.17.1": {
+      "Microsoft.Kiota.Authentication.Azure/1.19.0": {
         "dependencies": {
           "Azure.Core": "1.46.1",
-          "Microsoft.Kiota.Abstractions": "1.17.1"
+          "Microsoft.Kiota.Abstractions": "1.19.0"
         },
         "runtime": {
           "lib/net6.0/Microsoft.Kiota.Authentication.Azure.dll": {
-            "assemblyVersion": "1.17.1.0",
-            "fileVersion": "1.17.1.0"
+            "assemblyVersion": "1.19.0.0",
+            "fileVersion": "1.19.0.0"
           }
         }
       },
       "Microsoft.Kiota.Http.HttpClientLibrary/1.17.1": {
         "dependencies": {
-          "Microsoft.Kiota.Abstractions": "1.17.1"
+          "Microsoft.Kiota.Abstractions": "1.19.0"
         },
         "runtime": {
           "lib/net6.0/Microsoft.Kiota.Http.HttpClientLibrary.dll": {
@@ -486,7 +488,7 @@
       },
       "Microsoft.Kiota.Serialization.Form/1.17.1": {
         "dependencies": {
-          "Microsoft.Kiota.Abstractions": "1.17.1"
+          "Microsoft.Kiota.Abstractions": "1.19.0"
         },
         "runtime": {
           "lib/net6.0/Microsoft.Kiota.Serialization.Form.dll": {
@@ -497,7 +499,7 @@
       },
       "Microsoft.Kiota.Serialization.Json/1.17.1": {
         "dependencies": {
-          "Microsoft.Kiota.Abstractions": "1.17.1"
+          "Microsoft.Kiota.Abstractions": "1.19.0"
         },
         "runtime": {
           "lib/net6.0/Microsoft.Kiota.Serialization.Json.dll": {
@@ -508,7 +510,7 @@
       },
       "Microsoft.Kiota.Serialization.Multipart/1.17.1": {
         "dependencies": {
-          "Microsoft.Kiota.Abstractions": "1.17.1"
+          "Microsoft.Kiota.Abstractions": "1.19.0"
         },
         "runtime": {
           "lib/net6.0/Microsoft.Kiota.Serialization.Multipart.dll": {
@@ -519,7 +521,7 @@
       },
       "Microsoft.Kiota.Serialization.Text/1.17.1": {
         "dependencies": {
-          "Microsoft.Kiota.Abstractions": "1.17.1"
+          "Microsoft.Kiota.Abstractions": "1.19.0"
         },
         "runtime": {
           "lib/net6.0/Microsoft.Kiota.Serialization.Text.dll": {
@@ -562,11 +564,11 @@
           }
         }
       },
-      "Std.UriTemplate/2.0.1": {
+      "Std.UriTemplate/2.0.5": {
         "runtime": {
           "lib/net5.0/Std.UriTemplate.dll": {
-            "assemblyVersion": "2.0.1.0",
-            "fileVersion": "2.0.1.0"
+            "assemblyVersion": "2.0.5.0",
+            "fileVersion": "2.0.5.0"
           }
         }
       },
@@ -1061,19 +1063,19 @@
       "path": "microsoft.identitymodel.validators/8.6.1",
       "hashPath": "microsoft.identitymodel.validators.8.6.1.nupkg.sha512"
     },
-    "Microsoft.Kiota.Abstractions/1.17.1": {
+    "Microsoft.Kiota.Abstractions/1.19.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-nznpJUkC8F0iwZBael68nIS90g0wKgipJsLwarknd8hsGom0nJhyogZvIJUIzRWfNNSp0JhsxRYEW0WhvmppKw==",
-      "path": "microsoft.kiota.abstractions/1.17.1",
-      "hashPath": "microsoft.kiota.abstractions.1.17.1.nupkg.sha512"
+      "sha512": "sha512-XZ7hY1OU305oqRC8QhIBGQwzYN5o/Z3bnUHkvNKU3MDCW02n7Q7+P69wCY31j79yvG1MWudKZa3hnipfRxtKJA==",
+      "path": "microsoft.kiota.abstractions/1.19.0",
+      "hashPath": "microsoft.kiota.abstractions.1.19.0.nupkg.sha512"
     },
-    "Microsoft.Kiota.Authentication.Azure/1.17.1": {
+    "Microsoft.Kiota.Authentication.Azure/1.19.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-BkzhCChAH+IOfH7NnB86ynvRqPfHRDdxQw1XJ/ShwsG66A9dRLJ/T4K+d+U5l4EiaCllgXDN6+TUEc5KXMgOgw==",
-      "path": "microsoft.kiota.authentication.azure/1.17.1",
-      "hashPath": "microsoft.kiota.authentication.azure.1.17.1.nupkg.sha512"
+      "sha512": "sha512-7KmNDYAO2BpoSDPP/BNzM27IuDzQvQ/HX5Dmyt0l1p88Msy/nl+O7Ak3WW0pAZgAZk9V5Pzu35F/DVn5u76UmQ==",
+      "path": "microsoft.kiota.authentication.azure/1.19.0",
+      "hashPath": "microsoft.kiota.authentication.azure.1.19.0.nupkg.sha512"
     },
     "Microsoft.Kiota.Http.HttpClientLibrary/1.17.1": {
       "type": "package",
@@ -1138,12 +1140,12 @@
       "path": "microsoft.win32.systemevents/4.7.0",
       "hashPath": "microsoft.win32.systemevents.4.7.0.nupkg.sha512"
     },
-    "Std.UriTemplate/2.0.1": {
+    "Std.UriTemplate/2.0.5": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-Ix5VXZwLfolwVHyGTSSJl6KIJ2le6E9YjLdZBMS1Xxzw7VJankRvQW8JoUL69tEgfcw+0qjgWrlxANrhvS0QCQ==",
-      "path": "std.uritemplate/2.0.1",
-      "hashPath": "std.uritemplate.2.0.1.nupkg.sha512"
+      "sha512": "sha512-PtqPdWNBObRcDHjyjbgOz2XoCJQaiA+HNDPQve/O7yGCkospfHDCuH9ULVx1msImwHHG+uhpDjiZX7bpLN/cnw==",
+      "path": "std.uritemplate/2.0.5",
+      "hashPath": "std.uritemplate.2.0.5.nupkg.sha512"
     },
     "Swashbuckle.AspNetCore/6.5.0": {
       "type": "package",

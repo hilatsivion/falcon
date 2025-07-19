@@ -12,11 +12,13 @@ namespace FalconBackend.Services
     {
         private readonly AppDbContext _context;
         private readonly OutlookService _outlookService;
+        private readonly AiTaggingService _aiTaggingService;
 
-        public UserService(AppDbContext context, OutlookService outlookService)
+        public UserService(AppDbContext context, OutlookService outlookService, AiTaggingService aiTaggingService)
         {
             _context = context;
             _outlookService = outlookService;
+            _aiTaggingService = aiTaggingService;
         }
 
         /// <summary>
@@ -157,28 +159,33 @@ namespace FalconBackend.Services
                         var emailTags = AutoAssignTags(email, availableTags);
                         email.MailTags = emailTags;
                     }
+                }
 
-                    // TODO: ✨ AI-POWERED TAGGING PLACEHOLDER ✨
-                    // This is where advanced AI tagging will be implemented later:
-                    // ================================================================
-                    // var aiTags = await _aiTaggingService.GetSmartTagsAsync(
-                    //     subject: email.Subject, 
-                    //     body: email.Body,
-                    //     sender: email.Sender,
-                    //     userPreferences: userTagPreferences
-                    // );
-                    // 
-                    // foreach (var aiTag in aiTags)
-                    // {
-                    //     email.MailTags.Add(new MailTag 
-                    //     { 
-                    //         MailId = email.MailId, 
-                    //         TagId = aiTag.TagId,
-                    //         AssignedBy = "AI",
-                    //         Confidence = aiTag.Confidence
-                    //     });
-                    // }
-                    // ================================================================
+                // Apply AI-powered tagging to all new emails in batch
+                if (newEmails.Any())
+                {
+                    try
+                    {
+                        Console.WriteLine($"--- Applying AI tagging to {newEmails.Count} new emails ---");
+                        var aiTags = await _aiTaggingService.GetAiTagsAsync(newEmails);
+                        
+                        // Apply the AI tags to the emails
+                        foreach (var aiTag in aiTags)
+                        {
+                            var email = newEmails.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
+                            if (email != null)
+                            {
+                                email.MailTags.Add(aiTag);
+                            }
+                        }
+                        
+                        Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags ---");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"--- AI tagging failed, continuing without AI tags: {ex.Message} ---");
+                        // Continue without AI tags if the service fails
+                    }
                 }
 
                 // Add new emails to the database
@@ -368,11 +375,33 @@ namespace FalconBackend.Services
                         var emailTags = AutoAssignTags(email, availableTags);
                         email.MailTags = emailTags;
                     }
+                }
 
-                    // TODO: Replace with AI-powered tagging later
-                    // This is where AI tagging will be implemented:
-                    // var aiTags = await _aiTaggingService.GetSmartTagsAsync(email.Subject, email.Body);
-                    // email.MailTags.AddRange(aiTags);
+                // Apply AI-powered tagging to all emails in batch
+                if (outlookEmails.Any())
+                {
+                    try
+                    {
+                        Console.WriteLine($"--- Applying AI tagging to {outlookEmails.Count} emails ---");
+                        var aiTags = await _aiTaggingService.GetAiTagsAsync(outlookEmails);
+                        
+                        // Apply the AI tags to the emails
+                        foreach (var aiTag in aiTags)
+                        {
+                            var email = outlookEmails.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
+                            if (email != null)
+                            {
+                                email.MailTags.Add(aiTag);
+                            }
+                        }
+                        
+                        Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags ---");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"--- AI tagging failed, continuing without AI tags: {ex.Message} ---");
+                        // Continue without AI tags if the service fails
+                    }
                 }
 
                 // Add emails to the database
@@ -415,7 +444,7 @@ namespace FalconBackend.Services
                 { "travel", new List<string> { "flight", "hotel", "travel", "trip", "booking", "reservation" } }
             };
 
-            foreach (var tag in availableTags.Take(3)) // Limit to 3 tags per email
+            foreach (var tag in availableTags) // Check all available tags
             {
                 var tagName = tag.TagName.ToLowerInvariant();
                 
@@ -432,8 +461,6 @@ namespace FalconBackend.Services
                         break; // Avoid duplicate tags
                     }
                 }
-
-                if (mailTags.Count >= 3) break; // Limit tags per email
             }
 
             return mailTags;

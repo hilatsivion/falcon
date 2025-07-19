@@ -686,10 +686,10 @@
           }
         }
       },
-      "Microsoft.Kiota.Abstractions/1.17.1": {
+      "Microsoft.Kiota.Abstractions/1.19.0": {
         "type": "package",
         "dependencies": {
-          "Std.UriTemplate": "2.0.1"
+          "Std.UriTemplate": "2.0.5"
         },
         "compile": {
           "lib/net6.0/Microsoft.Kiota.Abstractions.dll": {
@@ -702,11 +702,11 @@
           }
         }
       },
-      "Microsoft.Kiota.Authentication.Azure/1.17.1": {
+      "Microsoft.Kiota.Authentication.Azure/1.19.0": {
         "type": "package",
         "dependencies": {
           "Azure.Core": "1.44.1",
-          "Microsoft.Kiota.Abstractions": "1.17.1"
+          "Microsoft.Kiota.Abstractions": "1.19.0"
         },
         "compile": {
           "lib/net6.0/Microsoft.Kiota.Authentication.Azure.dll": {
@@ -870,7 +870,7 @@
           }
         }
       },
-      "Std.UriTemplate/2.0.1": {
+      "Std.UriTemplate/2.0.5": {
         "type": "package",
         "compile": {
           "lib/net5.0/Std.UriTemplate.dll": {}
@@ -2406,10 +2406,10 @@
         "microsoft.identitymodel.validators.nuspec"
       ]
     },
-    "Microsoft.Kiota.Abstractions/1.17.1": {
-      "sha512": "nznpJUkC8F0iwZBael68nIS90g0wKgipJsLwarknd8hsGom0nJhyogZvIJUIzRWfNNSp0JhsxRYEW0WhvmppKw==",
+    "Microsoft.Kiota.Abstractions/1.19.0": {
+      "sha512": "XZ7hY1OU305oqRC8QhIBGQwzYN5o/Z3bnUHkvNKU3MDCW02n7Q7+P69wCY31j79yvG1MWudKZa3hnipfRxtKJA==",
       "type": "package",
-      "path": "microsoft.kiota.abstractions/1.17.1",
+      "path": "microsoft.kiota.abstractions/1.19.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2424,14 +2424,14 @@
         "lib/netstandard2.0/Microsoft.Kiota.Abstractions.xml",
         "lib/netstandard2.1/Microsoft.Kiota.Abstractions.dll",
         "lib/netstandard2.1/Microsoft.Kiota.Abstractions.xml",
-        "microsoft.kiota.abstractions.1.17.1.nupkg.sha512",
+        "microsoft.kiota.abstractions.1.19.0.nupkg.sha512",
         "microsoft.kiota.abstractions.nuspec"
       ]
     },
-    "Microsoft.Kiota.Authentication.Azure/1.17.1": {
-      "sha512": "BkzhCChAH+IOfH7NnB86ynvRqPfHRDdxQw1XJ/ShwsG66A9dRLJ/T4K+d+U5l4EiaCllgXDN6+TUEc5KXMgOgw==",
+    "Microsoft.Kiota.Authentication.Azure/1.19.0": {
+      "sha512": "7KmNDYAO2BpoSDPP/BNzM27IuDzQvQ/HX5Dmyt0l1p88Msy/nl+O7Ak3WW0pAZgAZk9V5Pzu35F/DVn5u76UmQ==",
       "type": "package",
-      "path": "microsoft.kiota.authentication.azure/1.17.1",
+      "path": "microsoft.kiota.authentication.azure/1.19.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2446,7 +2446,7 @@
         "lib/netstandard2.0/Microsoft.Kiota.Authentication.Azure.xml",
         "lib/netstandard2.1/Microsoft.Kiota.Authentication.Azure.dll",
         "lib/netstandard2.1/Microsoft.Kiota.Authentication.Azure.xml",
-        "microsoft.kiota.authentication.azure.1.17.1.nupkg.sha512",
+        "microsoft.kiota.authentication.azure.1.19.0.nupkg.sha512",
         "microsoft.kiota.authentication.azure.nuspec"
       ]
     },
@@ -2675,17 +2675,17 @@
         "version.txt"
       ]
     },
-    "Std.UriTemplate/2.0.1": {
-      "sha512": "Ix5VXZwLfolwVHyGTSSJl6KIJ2le6E9YjLdZBMS1Xxzw7VJankRvQW8JoUL69tEgfcw+0qjgWrlxANrhvS0QCQ==",
+    "Std.UriTemplate/2.0.5": {
+      "sha512": "PtqPdWNBObRcDHjyjbgOz2XoCJQaiA+HNDPQve/O7yGCkospfHDCuH9ULVx1msImwHHG+uhpDjiZX7bpLN/cnw==",
       "type": "package",
-      "path": "std.uritemplate/2.0.1",
+      "path": "std.uritemplate/2.0.5",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Readme.md",
         "lib/net5.0/Std.UriTemplate.dll",
         "lib/netstandard2.0/Std.UriTemplate.dll",
-        "std.uritemplate.2.0.1.nupkg.sha512",
+        "std.uritemplate.2.0.5.nupkg.sha512",
         "std.uritemplate.nuspec"
       ]
     },
@@ -3336,28 +3336,30 @@
       "Microsoft.Extensions.FileProviders.Abstractions >= 6.0.0",
       "Microsoft.Extensions.Primitives >= 6.0.0",
       "Microsoft.Graph >= 5.85.0",
+      "Microsoft.Kiota.Abstractions >= 1.19.0",
+      "Microsoft.Kiota.Authentication.Azure >= 1.19.0",
       "Swashbuckle.AspNetCore >= 6.5.0",
       "System.IdentityModel.Tokens.Jwt >= 8.6.1"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\user\\.nuget\\packages\\": {},
+    "C:\\Users\\Alony\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\user\\Desktop\\falcon\\FalconBackend\\FalconBackend.csproj",
+      "projectUniqueName": "C:\\Users\\Alony\\OneDrive\\שולחן העבודה\\falcon\\FalconBackend\\FalconBackend.csproj",
       "projectName": "FalconBackend",
-      "projectPath": "C:\\Users\\user\\Desktop\\falcon\\FalconBackend\\FalconBackend.csproj",
-      "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\user\\Desktop\\falcon\\FalconBackend\\obj\\",
+      "projectPath": "C:\\Users\\Alony\\OneDrive\\שולחן העבודה\\falcon\\FalconBackend\\FalconBackend.csproj",
+      "packagesPath": "C:\\Users\\Alony\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Alony\\OneDrive\\שולחן העבודה\\falcon\\FalconBackend\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Alony\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -3446,6 +3448,14 @@
           "Microsoft.Graph": {
             "target": "Package",
             "version": "[5.85.0, )"
+          },
+          "Microsoft.Kiota.Abstractions": {
+            "target": "Package",
+            "version": "[1.19.0, )"
+          },
+          "Microsoft.Kiota.Authentication.Azure": {
+            "target": "Package",
+            "version": "[1.19.0, )"
           },
           "Swashbuckle.AspNetCore": {
             "target": "Package",
