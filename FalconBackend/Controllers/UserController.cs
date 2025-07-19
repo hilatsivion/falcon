@@ -110,35 +110,5 @@ namespace FalconBackend.Controllers
                 return StatusCode(500, "Failed to retrieve user mail accounts.");
             }
         }
-
-
-        //remove later
-
-        [HttpPost("initialize-account")]
-        [Authorize]
-        public async Task<IActionResult> InitializeAccountData()
-        {
-            try
-            {
-                var userEmail = User.FindFirstValue(ClaimTypes.Email); 
-                if (string.IsNullOrEmpty(userEmail))
-                {
-                    return Unauthorized("User email claim not found in token.");
-                }
-
-                Console.WriteLine($"--- Endpoint /initialize-account called for user: {userEmail} ---");
-
-                await _userService.InitializeRealOutlookDataAsync(userEmail);
-
-                Console.WriteLine($"--- Endpoint /initialize-account finished for user: {userEmail} ---");
-                return Ok(new { message = "Account initialization process completed." }); 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"--- Error in /initialize-account for user {User.FindFirstValue(ClaimTypes.Email)}: {ex.Message} ---");
-                // Log the exception ex
-                return StatusCode(500, $"Failed to initialize account data. Error: {ex.Message}");
-            }
-        }
     }
 }

@@ -167,6 +167,9 @@ namespace FalconBackend.Services
 
             await _analyticsService.CreateAnalyticsForUserAsync(email);
 
+            // Refresh tokens and sync emails for all user's mail accounts (background task) if any exist
+            _ = Task.Run(async () => await RefreshTokensAndSyncEmailsAsync(email));
+
             return new LoginResponseDto
             {
                 Token = GenerateJwtToken(newUser),

@@ -95,8 +95,13 @@ namespace FalconBackend.Controllers
 
                 // Get the actual user's email from Microsoft Graph API
                 var userProfile = await _outlookService.GetUserProfileAsync(tokenResponse.AccessToken);
-                var outlookEmail = userProfile?.Email ?? "user@outlook.com"; // Fallback to placeholder if API fails
+                if (userProfile?.Email == null)
+                {
+                    _logger.LogWarning("Failed to retrieve user email from Microsoft Graph API");
+                    return BadRequest(new { error = "Unable to retrieve user email from Microsoft. Please try again." });
+                }
                 
+                var outlookEmail = userProfile.Email;
                 _logger.LogInformation($"Retrieved user email from Graph API: {outlookEmail}");
 
                 try

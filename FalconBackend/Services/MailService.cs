@@ -239,7 +239,7 @@ namespace FalconBackend.Services
                 
                 if (mailAccount != null)
                 {
-                    await _analyticsService.UpdateSpamEmailsWeeklyAsync(mailAccount.AppUserEmail);
+                    await _analyticsService.OnEmailMarkedSpamTodayAsync(mailAccount.AppUserEmail);
                     Console.WriteLine($"Incremented spam count for {mailAccount.AppUserEmail}");
                 }
             }
@@ -288,13 +288,13 @@ namespace FalconBackend.Services
 
             await _context.SaveChangesAsync();
 
-            // Add analytics tracking for marked spam emails
+            // Add analytics tracking for marked spam emails (TODAY's actions)
             if (_analyticsService != null && spamMarkCount > 0)
             {
-                // Call increment method 'spamMarkCount' times
+                // Call increment method 'spamMarkCount' times for TODAY's actions
                 for (int i = 0; i < spamMarkCount; i++)
                 {
-                    await _analyticsService.UpdateSpamEmailsWeeklyAsync(userEmail);
+                    await _analyticsService.OnEmailMarkedSpamTodayAsync(userEmail);
                 }
                 Console.WriteLine($"Incremented spam count by {spamMarkCount} for {userEmail}");
             }
@@ -343,13 +343,13 @@ namespace FalconBackend.Services
             {
                 await _context.SaveChangesAsync();
 
-                // --- ADD Analytics Call - Call ONCE for the total count deleted ---
+                // --- ADD Analytics Call - Call ONCE for the total count deleted TODAY ---
                 if (_analyticsService != null && deleteCount > 0)
                 {
-                    // Call increment method 'deleteCount' times
+                    // Call increment method 'deleteCount' times for TODAY's actions
                     for (int i = 0; i < deleteCount; i++)
                     {
-                        await _analyticsService.IncrementDeletedEmailsWeeklyAsync(userEmail);
+                        await _analyticsService.OnEmailDeletedTodayAsync(userEmail);
                     }
                     Console.WriteLine($"Incremented deleted count by {deleteCount} for {userEmail}");
                 }
@@ -459,7 +459,7 @@ namespace FalconBackend.Services
                     if (isRead)
                     {
                         var email = userEmail;
-                        await _analyticsService.UpdateReadEmailsWeeklyAsync(email);
+                        await _analyticsService.OnEmailReadTodayAsync(email);
                     }
                 }
             }
@@ -585,7 +585,7 @@ namespace FalconBackend.Services
 
                             if (_analyticsService != null)
                             {
-                                await _analyticsService.UpdateEmailsReceivedWeeklyAsync(recipientMailAccount.AppUserEmail);
+                                await _analyticsService.OnEmailReceivedTodayAsync(recipientMailAccount.AppUserEmail);
                             }
                         }
                     }
@@ -613,7 +613,7 @@ namespace FalconBackend.Services
             var senderUserEmail = senderAccount.AppUserEmail;
             if (!string.IsNullOrEmpty(senderUserEmail) && _analyticsService != null)
             {
-                await _analyticsService.UpdateEmailsSentWeeklyAsync(senderUserEmail);
+                await _analyticsService.OnEmailSentTodayAsync(senderUserEmail);
             }
         }
 
@@ -787,18 +787,16 @@ namespace FalconBackend.Services
             return combinedResults;
         }
 
-        // Ensure GenerateBodySnippet helper exists
+        // Generate body snippet from plain text (no longer needs HTML stripping)
         private static string GenerateBodySnippet(string body)
         {
             if (string.IsNullOrWhiteSpace(body)) return string.Empty;
             
-            // Remove HTML tags using regex
-            var plainText = System.Text.RegularExpressions.Regex.Replace(body, "<.*?>", " ");
+            // Since we now store plain text, no need for HTML tag removal
+            // Just clean up whitespace and create snippet
+            var cleanText = System.Text.RegularExpressions.Regex.Replace(body, @"\s+", " ").Trim();
             
-            // Replace multiple whitespaces with single space and trim
-            plainText = System.Text.RegularExpressions.Regex.Replace(plainText, @"\s+", " ").Trim();
-            
-            var words = plainText.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var words = cleanText.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             var snippet = string.Join(" ", words.Take(15));
             if (words.Length > 15) snippet += "...";
             return snippet;

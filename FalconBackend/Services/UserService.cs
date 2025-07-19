@@ -13,12 +13,14 @@ namespace FalconBackend.Services
         private readonly AppDbContext _context;
         private readonly OutlookService _outlookService;
         private readonly AiTaggingService _aiTaggingService;
+        private readonly AnalyticsService _analyticsService;
 
-        public UserService(AppDbContext context, OutlookService outlookService, AiTaggingService aiTaggingService)
+        public UserService(AppDbContext context, OutlookService outlookService, AiTaggingService aiTaggingService, AnalyticsService analyticsService)
         {
             _context = context;
             _outlookService = outlookService;
             _aiTaggingService = aiTaggingService;
+            _analyticsService = analyticsService;
         }
 
         /// <summary>
@@ -91,7 +93,8 @@ namespace FalconBackend.Services
 
         /// <summary>
         /// Sync emails for a specific mail account with automatic token refresh
-        /// Includes placeholder for AI-powered tagging
+        /// Syncs both received emails (with AI tagging) and sent emails (without tagging)
+        /// Properly updates analytics based on email dates
         /// </summary>
         public async Task SyncMailsForAccountAsync(MailAccount mailAccount)
         {
@@ -118,90 +121,143 @@ namespace FalconBackend.Services
                 var lastSyncTime = mailAccount.LastMailSync;
                 Console.WriteLine($"--- Last sync was at: {lastSyncTime} ---");
 
-                // Fetch emails from Outlook
-                var outlookEmails = await _outlookService.GetUserEmailsAsync(validAccessToken, mailAccount.MailAccountId, 100);
-
-                if (!outlookEmails.Any())
-                {
-                    Console.WriteLine($"--- No new emails found for account {mailAccount.EmailAddress} ---");
-                    return;
-                }
-
-                // Filter out emails that are already in the database (avoid duplicates)
-                var existingEmailIds = await _context.MailReceived
-                    .Where(mr => mr.MailAccountId == mailAccount.MailAccountId)
-                    .Select(mr => mr.Subject + "|" + mr.TimeReceived.ToString("yyyy-MM-dd HH:mm:ss") + "|" + mr.Sender)
-                    .ToListAsync();
-
-                var newEmails = outlookEmails.Where(email => 
-                    !existingEmailIds.Contains(email.Subject + "|" + email.TimeReceived.ToString("yyyy-MM-dd HH:mm:ss") + "|" + email.Sender))
-                    .ToList();
-
-                if (!newEmails.Any())
-                {
-                    Console.WriteLine($"--- No new emails to sync for account {mailAccount.EmailAddress} ---");
-                    mailAccount.LastMailSync = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
-                    return;
-                }
-
-                // --- Fetch available system tags for potential auto-tagging ---
-                var availableTags = await _context.Tags
-                    .Where(t => !(t is UserCreatedTag))
-                    .ToListAsync();
-
-                // Process each new email and assign tags
-                foreach (var email in newEmails)
-                {
-                    // Auto-assign tags based on simple keyword matching
-                    if (availableTags.Any())
-                    {
-                        var emailTags = AutoAssignTags(email, availableTags);
-                        email.MailTags = emailTags;
-                    }
-                }
-
-                // Apply AI-powered tagging to all new emails in batch
-                if (newEmails.Any())
-                {
-                    try
-                    {
-                        Console.WriteLine($"--- Applying AI tagging to {newEmails.Count} new emails ---");
-                        var aiTags = await _aiTaggingService.GetAiTagsAsync(newEmails);
-                        
-                        // Apply the AI tags to the emails
-                        foreach (var aiTag in aiTags)
-                        {
-                            var email = newEmails.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
-                            if (email != null)
-                            {
-                                email.MailTags.Add(aiTag);
-                            }
-                        }
-                        
-                        Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags ---");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"--- AI tagging failed, continuing without AI tags: {ex.Message} ---");
-                        // Continue without AI tags if the service fails
-                    }
-                }
-
-                // Add new emails to the database
-                _context.MailReceived.AddRange(newEmails);
-                await _context.SaveChangesAsync();
-
-                Console.WriteLine($"--- Successfully synced {newEmails.Count} new emails for account {mailAccount.EmailAddress} ---");
+                // Sync received emails with AI tagging and analytics tracking
+                await SyncReceivedEmailsAsync(validAccessToken, mailAccount);
+                
+                // Sync sent emails without tagging but with analytics tracking
+                await SyncSentEmailsAsync(validAccessToken, mailAccount);
 
                 // Update last sync time
                 mailAccount.LastMailSync = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
+                
+                Console.WriteLine($"--- Successfully completed sync for account {mailAccount.EmailAddress} ---");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"--- FAILED to sync emails for account {mailAccount.EmailAddress}: {ex.Message} ---");
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Sync received emails and apply AI tagging with proper analytics tracking
+        /// </summary>
+        private async Task SyncReceivedEmailsAsync(string accessToken, MailAccount mailAccount)
+        {
+            Console.WriteLine($"--- Syncing received emails for account {mailAccount.EmailAddress} ---");
+            
+            // Fetch received emails from Outlook
+            var outlookEmails = await _outlookService.GetUserEmailsAsync(accessToken, mailAccount.MailAccountId, mailAccount.AppUserEmail, 100);
+
+            if (!outlookEmails.Any())
+            {
+                Console.WriteLine($"--- No new received emails found for account {mailAccount.EmailAddress} ---");
+                return;
+            }
+
+            // Filter out emails that are already in the database (avoid duplicates)
+            var existingEmailIds = await _context.MailReceived
+                .Where(mr => mr.MailAccountId == mailAccount.MailAccountId)
+                .Select(mr => mr.Subject + "|" + mr.TimeReceived.ToString("yyyy-MM-dd HH:mm:ss") + "|" + mr.Sender)
+                .ToListAsync();
+
+            var newEmails = outlookEmails.Where(email => 
+                !existingEmailIds.Contains(email.Subject + "|" + email.TimeReceived.ToString("yyyy-MM-dd HH:mm:ss") + "|" + email.Sender))
+                .ToList();
+
+            if (!newEmails.Any())
+            {
+                Console.WriteLine($"--- No new received emails to sync for account {mailAccount.EmailAddress} ---");
+                return;
+            }
+
+            // Apply AI-powered tagging to new received emails only
+            if (newEmails.Any())
+            {
+                try
+                {
+                    Console.WriteLine($"--- Applying AI tagging to {newEmails.Count} received emails ---");
+                    var aiTags = await _aiTaggingService.GetAiTagsAsync(newEmails);
+                    
+                    // Apply the AI tags to the emails
+                    foreach (var aiTag in aiTags)
+                    {
+                        var email = newEmails.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
+                        if (email != null)
+                        {
+                            email.MailTags.Add(aiTag);
+                        }
+                    }
+                    
+                    Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags to received emails ---");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"--- AI tagging failed, continuing without AI tags: {ex.Message} ---");
+                    // Continue without AI tags if the service fails
+                }
+            }
+
+            // Add new received emails to the database
+            _context.MailReceived.AddRange(newEmails);
+            await _context.SaveChangesAsync();
+
+            // Update analytics for received emails based on their actual date
+            var receivedDates = newEmails.Select(email => email.TimeReceived).ToList();
+            await _analyticsService.ProcessHistoricalEmailsAsync(mailAccount.AppUserEmail, receivedDates, new List<DateTime>());
+
+            Console.WriteLine($"--- Successfully synced {newEmails.Count} new received emails for account {mailAccount.EmailAddress} ---");
+        }
+
+        /// <summary>
+        /// Sync sent emails without applying any tagging but with proper analytics tracking
+        /// </summary>
+        private async Task SyncSentEmailsAsync(string accessToken, MailAccount mailAccount)
+        {
+            Console.WriteLine($"--- Syncing sent emails for account {mailAccount.EmailAddress} ---");
+            
+            try
+            {
+                // Fetch sent emails from Outlook Sent Items folder
+                var outlookSentEmails = await _outlookService.GetUserSentEmailsAsync(accessToken, mailAccount.MailAccountId, mailAccount.AppUserEmail, 50);
+
+                if (!outlookSentEmails.Any())
+                {
+                    Console.WriteLine($"--- No sent emails found for account {mailAccount.EmailAddress} ---");
+                    return;
+                }
+
+                // Filter out emails that are already in the database (avoid duplicates)
+                var existingSentEmailIds = await _context.MailSent
+                    .Where(ms => ms.MailAccountId == mailAccount.MailAccountId)
+                    .Select(ms => ms.Subject + "|" + ms.TimeSent.ToString("yyyy-MM-dd HH:mm:ss"))
+                    .ToListAsync();
+
+                var newSentEmails = outlookSentEmails.Where(email => 
+                    !existingSentEmailIds.Contains(email.Subject + "|" + email.TimeSent.ToString("yyyy-MM-dd HH:mm:ss")))
+                    .ToList();
+
+                if (!newSentEmails.Any())
+                {
+                    Console.WriteLine($"--- No new sent emails to sync for account {mailAccount.EmailAddress} ---");
+                    return;
+                }
+
+                // Add new sent emails to the database (no tagging for sent emails)
+                _context.MailSent.AddRange(newSentEmails);
+                await _context.SaveChangesAsync();
+
+                // Update analytics for sent emails based on their actual date
+                var sentDates = newSentEmails.Select(email => email.TimeSent).ToList();
+                await _analyticsService.ProcessHistoricalEmailsAsync(mailAccount.AppUserEmail, new List<DateTime>(), sentDates);
+
+                Console.WriteLine($"--- Successfully synced {newSentEmails.Count} new sent emails for account {mailAccount.EmailAddress} ---");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Failed to sync sent emails for account {mailAccount.EmailAddress}: {ex.Message} ---");
+                // Don't throw here - continue with received email sync if sent email sync fails
             }
         }
 
@@ -304,6 +360,7 @@ namespace FalconBackend.Services
 
         /// <summary>
         /// Fetches real Outlook emails for a user and stores them in the database
+        /// Syncs both received emails (with AI tagging) and sent emails (without tagging)
         /// Replaces the previous dummy data implementation
         /// </summary>
         public async Task InitializeRealOutlookDataAsync(string userEmail)
@@ -344,75 +401,34 @@ namespace FalconBackend.Services
                 }
 
                 // Check if emails already exist for this account (avoid duplicates)
-                bool hasExistingEmails = await _context.MailReceived
+                bool hasExistingReceivedEmails = await _context.MailReceived
                                                   .AnyAsync(mr => mr.MailAccountId == mailAccount.MailAccountId);
-                if (hasExistingEmails)
+                bool hasExistingSentEmails = await _context.MailSent
+                                                  .AnyAsync(ms => ms.MailAccountId == mailAccount.MailAccountId);
+                
+                if (hasExistingReceivedEmails && hasExistingSentEmails)
                 {
                     Console.WriteLine($"--- Emails already exist for account {mailAccount.MailAccountId}. Skipping to avoid duplicates. ---");
                     return;
                 }
 
-                // Fetch emails from Outlook using the valid token
-                var outlookEmails = await _outlookService.GetUserEmailsAsync(validAccessToken, mailAccount.MailAccountId, 50);
-
-                if (!outlookEmails.Any())
+                // Sync received emails with AI tagging (if not already synced)
+                if (!hasExistingReceivedEmails)
                 {
-                    Console.WriteLine($"--- No emails found in Outlook for account {mailAccount.MailAccountId} ---");
-                    return;
+                    await SyncReceivedEmailsForInitializationAsync(validAccessToken, mailAccount);
                 }
 
-                // --- Fetch available system tags for potential auto-tagging ---
-                var availableTags = await _context.Tags
-                                                .Where(t => !(t is UserCreatedTag))
-                                                .ToListAsync();
-
-                // Process each email and optionally assign tags based on content analysis
-                foreach (var email in outlookEmails)
+                // Sync sent emails without tagging (if not already synced)
+                if (!hasExistingSentEmails)
                 {
-                    // Auto-assign tags based on simple keyword matching (optional)
-                    if (availableTags.Any())
-                    {
-                        var emailTags = AutoAssignTags(email, availableTags);
-                        email.MailTags = emailTags;
-                    }
+                    await SyncSentEmailsForInitializationAsync(validAccessToken, mailAccount);
                 }
-
-                // Apply AI-powered tagging to all emails in batch
-                if (outlookEmails.Any())
-                {
-                    try
-                    {
-                        Console.WriteLine($"--- Applying AI tagging to {outlookEmails.Count} emails ---");
-                        var aiTags = await _aiTaggingService.GetAiTagsAsync(outlookEmails);
-                        
-                        // Apply the AI tags to the emails
-                        foreach (var aiTag in aiTags)
-                        {
-                            var email = outlookEmails.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
-                            if (email != null)
-                            {
-                                email.MailTags.Add(aiTag);
-                            }
-                        }
-                        
-                        Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags ---");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"--- AI tagging failed, continuing without AI tags: {ex.Message} ---");
-                        // Continue without AI tags if the service fails
-                    }
-                }
-
-                // Add emails to the database
-                _context.MailReceived.AddRange(outlookEmails);
-                await _context.SaveChangesAsync();
-
-                Console.WriteLine($"--- Successfully fetched and saved {outlookEmails.Count} real Outlook emails for account {mailAccount.MailAccountId} ---");
 
                 // Update last sync time
                 mailAccount.LastMailSync = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
+                
+                Console.WriteLine($"--- Successfully completed initialization for account {mailAccount.MailAccountId} ---");
             }
             catch (Exception ex)
             {
@@ -426,44 +442,92 @@ namespace FalconBackend.Services
         }
 
         /// <summary>
-        /// Auto-assigns tags to emails based on simple keyword matching
-        /// This is a basic implementation - you can enhance it with AI/ML for better accuracy
+        /// Sync received emails during initialization with AI tagging and analytics tracking
         /// </summary>
-        private List<MailTag> AutoAssignTags(MailReceived email, List<Tag> availableTags)
+        private async Task SyncReceivedEmailsForInitializationAsync(string accessToken, MailAccount mailAccount)
         {
-            var mailTags = new List<MailTag>();
-            var emailContent = $"{email.Subject} {email.Body}".ToLowerInvariant();
+            Console.WriteLine($"--- Initializing received emails for account {mailAccount.EmailAddress} ---");
+            
+            // Fetch emails from Outlook using the valid token
+            var outlookEmails = await _outlookService.GetUserEmailsAsync(accessToken, mailAccount.MailAccountId, mailAccount.AppUserEmail, 50);
 
-            // Simple keyword matching for demo purposes
-            var tagKeywords = new Dictionary<string, List<string>>
+            if (!outlookEmails.Any())
             {
-                { "work", new List<string> { "meeting", "project", "deadline", "work", "business", "office" } },
-                { "personal", new List<string> { "family", "friend", "personal", "vacation", "birthday" } },
-                { "important", new List<string> { "urgent", "important", "asap", "priority", "critical" } },
-                { "finance", new List<string> { "payment", "invoice", "money", "bank", "finance", "budget" } },
-                { "travel", new List<string> { "flight", "hotel", "travel", "trip", "booking", "reservation" } }
-            };
+                Console.WriteLine($"--- No emails found in Outlook for account {mailAccount.MailAccountId} ---");
+                return;
+            }
 
-            foreach (var tag in availableTags) // Check all available tags
+            // Apply AI-powered tagging to all emails in batch
+            if (outlookEmails.Any())
             {
-                var tagName = tag.TagName.ToLowerInvariant();
-                
-                // Check if tag name matches any keyword category
-                foreach (var category in tagKeywords)
+                try
                 {
-                    if (category.Key == tagName || category.Value.Any(keyword => emailContent.Contains(keyword)))
+                    Console.WriteLine($"--- Applying AI tagging to {outlookEmails.Count} emails ---");
+                    var aiTags = await _aiTaggingService.GetAiTagsAsync(outlookEmails);
+                    
+                    // Apply the AI tags to the emails
+                    foreach (var aiTag in aiTags)
                     {
-                        mailTags.Add(new MailTag
+                        var email = outlookEmails.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
+                        if (email != null)
                         {
-                            Tag = tag,
-                            MailReceived = email
-                        });
-                        break; // Avoid duplicate tags
+                            email.MailTags.Add(aiTag);
+                        }
                     }
+                    
+                    Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags ---");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"--- AI tagging failed, continuing without AI tags: {ex.Message} ---");
+                    // Continue without AI tags if the service fails
                 }
             }
 
-            return mailTags;
+            // Add emails to the database
+            _context.MailReceived.AddRange(outlookEmails);
+            await _context.SaveChangesAsync();
+
+            // Update analytics for received emails based on their actual date
+            var receivedDates = outlookEmails.Select(email => email.TimeReceived).ToList();
+            await _analyticsService.ProcessHistoricalEmailsAsync(mailAccount.AppUserEmail, receivedDates, new List<DateTime>());
+
+            Console.WriteLine($"--- Successfully fetched and saved {outlookEmails.Count} real Outlook received emails for account {mailAccount.MailAccountId} ---");
+        }
+
+        /// <summary>
+        /// Sync sent emails during initialization without tagging but with analytics tracking
+        /// </summary>
+        private async Task SyncSentEmailsForInitializationAsync(string accessToken, MailAccount mailAccount)
+        {
+            Console.WriteLine($"--- Initializing sent emails for account {mailAccount.EmailAddress} ---");
+            
+            try
+            {
+                // Fetch sent emails from Outlook Sent Items folder
+                var outlookSentEmails = await _outlookService.GetUserSentEmailsAsync(accessToken, mailAccount.MailAccountId, mailAccount.AppUserEmail, 50);
+
+                if (!outlookSentEmails.Any())
+                {
+                    Console.WriteLine($"--- No sent emails found in Outlook for account {mailAccount.MailAccountId} ---");
+                    return;
+                }
+
+                // Add sent emails to the database (no tagging for sent emails)
+                _context.MailSent.AddRange(outlookSentEmails);
+                await _context.SaveChangesAsync();
+
+                // Update analytics for sent emails based on their actual date
+                var sentDates = outlookSentEmails.Select(email => email.TimeSent).ToList();
+                await _analyticsService.ProcessHistoricalEmailsAsync(mailAccount.AppUserEmail, new List<DateTime>(), sentDates);
+
+                Console.WriteLine($"--- Successfully fetched and saved {outlookSentEmails.Count} real Outlook sent emails for account {mailAccount.MailAccountId} ---");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"--- Failed to sync sent emails during initialization for account {mailAccount.EmailAddress}: {ex.Message} ---");
+                // Don't throw here - continue with the process
+            }
         }
     }
 

@@ -103,6 +103,7 @@ namespace FalconBackend.Services
 
         /// <summary>
         /// Maps pipeline server labels to database tags and creates MailTag entities
+        /// Creates missing tags in database if they don't exist
         /// </summary>
         private async Task<List<MailTag>> MapLabelsToTags(List<string> labels, List<Tag> availableTags, MailReceived email)
         {
@@ -112,18 +113,18 @@ namespace FalconBackend.Services
                 return mailTags;
 
             // Create a mapping from pipeline labels to database tag names
+            // Based on user requirements: work,school,social network,news,discounts,finance,family and friends,personal,health
             var labelMapping = new Dictionary<string, string>
             {
                 { "work", "Work" },
-                { "personal", "Personal" },
-                { "finance", "Finance" },
-                { "health", "Health" },
                 { "school", "School" },
+                { "social network", "Social network" },
                 { "news", "News" },
                 { "discounts", "Discounts" },
-                { "social network", "Social network" },
+                { "finance", "Finance" },
                 { "family and friends", "Family & friends" },
-                { "spam", "Spam" } // Handle spam classification
+                { "personal", "Personal" },
+                { "health", "Health" }
             };
 
             foreach (var label in labels) // Apply all predicted tags
@@ -132,22 +133,25 @@ namespace FalconBackend.Services
                 {
                     var tag = availableTags.FirstOrDefault(t => t.TagName.Equals(tagName, StringComparison.OrdinalIgnoreCase));
                     
-                    if (tag != null)
+                    // If tag doesn't exist in database, create it
+                    if (tag == null)
                     {
-                        mailTags.Add(new MailTag
-                        {
-                            MailReceived = email,
-                            Tag = tag,
-                            TagId = tag.Id,
-                            MailReceivedId = email.MailId
-                        });
+                        _logger.LogInformation($"Creating missing system tag: {tagName}");
+                        tag = new Tag { TagName = tagName };
+                        _context.Tags.Add(tag);
+                        await _context.SaveChangesAsync();
+                        
+                        // Add to available tags list for future use in this batch
+                        availableTags.Add(tag);
                     }
-                    else if (label.ToLowerInvariant() == "spam")
+                    
+                    mailTags.Add(new MailTag
                     {
-                        // Handle spam emails by marking them as spam
-                        email.IsSpam = true;
-                        _logger.LogInformation($"Email '{email.Subject}' marked as spam by AI");
-                    }
+                        MailReceived = email,
+                        Tag = tag,
+                        TagId = tag.Id,
+                        MailReceivedId = email.MailId
+                    });
                 }
             }
 

@@ -12,6 +12,7 @@ using Microsoft.Graph.Models;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.IO; // Added for Path.GetExtension
 
 namespace FalconBackend.Services
 {
@@ -20,16 +21,18 @@ namespace FalconBackend.Services
         private readonly IConfiguration _configuration;
         private readonly ILogger<OutlookService> _logger;
         private readonly AiTaggingService _aiTaggingService;
+        private readonly FileStorageService _fileStorageService;
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly string _tenantId;
         private readonly string _graphApiUrl;
 
-        public OutlookService(IConfiguration configuration, ILogger<OutlookService> logger, AiTaggingService aiTaggingService)
+        public OutlookService(IConfiguration configuration, ILogger<OutlookService> logger, AiTaggingService aiTaggingService, FileStorageService fileStorageService)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _aiTaggingService = aiTaggingService ?? throw new ArgumentNullException(nameof(aiTaggingService));
+            _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
             
             _clientId = _configuration["MicrosoftGraph:ClientId"] ?? throw new ArgumentNullException("MicrosoftGraph:ClientId not found in configuration");
             _clientSecret = _configuration["MicrosoftGraph:ClientSecret"] ?? throw new ArgumentNullException("MicrosoftGraph:ClientSecret not found in configuration");
@@ -70,7 +73,7 @@ namespace FalconBackend.Services
         /// <summary>
         /// Fetches emails from user's Outlook inbox
         /// </summary>
-        public async Task<List<MailReceived>> GetUserEmailsAsync(string accessToken, string mailAccountId, int maxEmails = 50)
+        public async Task<List<MailReceived>> GetUserEmailsAsync(string accessToken, string mailAccountId, string userEmail, int maxEmails = 50)
         {
             try
             {
@@ -93,7 +96,7 @@ namespace FalconBackend.Services
                     {
                         try
                         {
-                            var mailReceived = ConvertToMailReceived(message, mailAccountId);
+                            var mailReceived = await ConvertToMailReceivedAsync(message, mailAccountId, accessToken, userEmail);
                             emailList.Add(mailReceived);
                         }
                         catch (Exception ex)
@@ -142,9 +145,56 @@ namespace FalconBackend.Services
         }
 
         /// <summary>
-        /// Converts Microsoft Graph Message to MailReceived entity
+        /// Fetches sent emails from user's Outlook Sent Items folder
         /// </summary>
-        private MailReceived ConvertToMailReceived(Message message, string mailAccountId)
+        public async Task<List<MailSent>> GetUserSentEmailsAsync(string accessToken, string mailAccountId, string userEmail, int maxEmails = 50)
+        {
+            try
+            {
+                _logger.LogInformation($"Fetching sent emails for account {mailAccountId}");
+                
+                var graphServiceClient = CreateGraphServiceClient(accessToken);
+                
+                // Get messages from the user's Sent Items folder using Microsoft Graph API
+                var messages = await graphServiceClient.Me.MailFolders["SentItems"].Messages.GetAsync((requestConfiguration) =>
+                {
+                    requestConfiguration.QueryParameters.Top = maxEmails;
+                    requestConfiguration.QueryParameters.Orderby = new[] { "sentDateTime desc" };
+                });
+
+                var sentEmailList = new List<MailSent>();
+
+                if (messages?.Value != null)
+                {
+                    foreach (var message in messages.Value)
+                    {
+                        try
+                        {
+                            var mailSent = await ConvertToMailSentAsync(message, mailAccountId, accessToken, userEmail);
+                            sentEmailList.Add(mailSent);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"Failed to convert sent message {message.Id}: {ex.Message}");
+                            continue; // Skip this email and continue with others
+                        }
+                    }
+                }
+
+                _logger.LogInformation($"Successfully fetched {sentEmailList.Count} sent emails for account {mailAccountId}");
+                return sentEmailList;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error fetching sent emails for account {mailAccountId}: {ex.Message}");
+                throw new Exception($"Failed to fetch sent emails from Outlook: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Converts Microsoft Graph Message to MailReceived entity with attachments
+        /// </summary>
+        private async Task<MailReceived> ConvertToMailReceivedAsync(Message message, string mailAccountId, string accessToken, string userEmail)
         {
             var mailReceived = new MailReceived
             {
@@ -152,25 +202,115 @@ namespace FalconBackend.Services
                 Subject = message.Subject ?? "No Subject",
                 Body = GetEmailBody(message),
                 Sender = GetSenderString(message),
-                TimeReceived = message.ReceivedDateTime?.DateTime ?? DateTime.UtcNow,
+                TimeReceived = ConvertToUtc(message.ReceivedDateTime),
                 IsRead = message.IsRead ?? false,
                 IsFavorite = message.Flag?.FlagStatus == Microsoft.Graph.Models.FollowupFlagStatus.Flagged,
                 Recipients = GetRecipients(message),
-                Attachments = new List<Attachments>(), // TODO: Implement attachment handling if needed
                 MailTags = new List<MailTag>() // Tags can be assigned later based on content analysis
             };
+
+            // Process attachments if the message has any
+            if (message.HasAttachments == true && !string.IsNullOrEmpty(message.Id))
+            {
+                try
+                {
+                    mailReceived.Attachments = await ProcessEmailAttachmentsAsync(
+                        accessToken, message.Id, userEmail, mailAccountId, "Received");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Failed to process attachments for received email {message.Id}: {ex.Message}");
+                    mailReceived.Attachments = new List<Attachments>(); // Fallback to empty list
+                }
+            }
+            else
+            {
+                mailReceived.Attachments = new List<Attachments>();
+            }
 
             return mailReceived;
         }
 
         /// <summary>
+        /// Converts Microsoft Graph Message to MailSent entity with attachments
+        /// </summary>
+        private async Task<MailSent> ConvertToMailSentAsync(Message message, string mailAccountId, string accessToken, string userEmail)
+        {
+            var mailSent = new MailSent
+            {
+                MailAccountId = mailAccountId,
+                Subject = message.Subject ?? "No Subject",
+                Body = GetEmailBody(message),
+                TimeSent = ConvertToUtc(message.SentDateTime),
+                IsFavorite = message.Flag?.FlagStatus == Microsoft.Graph.Models.FollowupFlagStatus.Flagged,
+                Recipients = GetRecipients(message)
+            };
+
+            // Process attachments if the message has any
+            if (message.HasAttachments == true && !string.IsNullOrEmpty(message.Id))
+            {
+                try
+                {
+                    mailSent.Attachments = await ProcessEmailAttachmentsAsync(
+                        accessToken, message.Id, userEmail, mailAccountId, "Sent");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Failed to process attachments for sent email {message.Id}: {ex.Message}");
+                    mailSent.Attachments = new List<Attachments>(); // Fallback to empty list
+                }
+            }
+            else
+            {
+                mailSent.Attachments = new List<Attachments>();
+            }
+
+            return mailSent;
+        }
+
+        /// <summary>
+        /// Converts DateTimeOffset from Microsoft Graph API to UTC DateTime for consistent storage
+        /// This ensures all email timestamps are in UTC, matching what analytics expects
+        /// </summary>
+        private DateTime ConvertToUtc(DateTimeOffset? dateTimeOffset)
+        {
+            if (dateTimeOffset.HasValue)
+            {
+                var originalOffset = dateTimeOffset.Value;
+                var utcDateTime = originalOffset.UtcDateTime;
+                
+                // Log timezone conversion for debugging (only if there's a significant offset)
+                if (Math.Abs(originalOffset.Offset.TotalHours) > 0.1) // More than ~6 minutes offset
+                {
+                    _logger.LogDebug($"Converted email timestamp from {originalOffset} to {utcDateTime:yyyy-MM-dd HH:mm:ss} UTC");
+                }
+                
+                return utcDateTime;
+            }
+            
+            // Fallback to current UTC time if no timestamp provided
+            var fallbackTime = DateTime.UtcNow;
+            _logger.LogWarning($"No timestamp provided for email, using fallback: {fallbackTime:yyyy-MM-dd HH:mm:ss} UTC");
+            return fallbackTime;
+        }
+
+        /// <summary>
         /// Extracts email body content, preferring HTML over text
+        /// Converts HTML to plain text for better AI processing and storage
         /// </summary>
         private string GetEmailBody(Message message)
         {
             if (message.Body?.Content != null)
             {
-                return message.Body.Content;
+                var htmlContent = message.Body.Content;
+                
+                // Check if content is HTML
+                if (message.Body.ContentType == Microsoft.Graph.Models.BodyType.Html)
+                {
+                    return ConvertHtmlToPlainText(htmlContent);
+                }
+                
+                return htmlContent; // Already plain text
             }
             
             if (!string.IsNullOrEmpty(message.BodyPreview))
@@ -179,6 +319,47 @@ namespace FalconBackend.Services
             }
 
             return "No body content available";
+        }
+
+        /// <summary>
+        /// Converts HTML email content to clean plain text
+        /// </summary>
+        private string ConvertHtmlToPlainText(string htmlContent)
+        {
+            if (string.IsNullOrEmpty(htmlContent))
+                return string.Empty;
+
+            try
+            {
+                // Remove script and style elements completely
+                htmlContent = System.Text.RegularExpressions.Regex.Replace(
+                    htmlContent, @"<(script|style)[^>]*?>.*?</\1>", "", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline);
+
+                // Replace common HTML elements with appropriate spacing/formatting
+                htmlContent = System.Text.RegularExpressions.Regex.Replace(htmlContent, @"<br\s*/?> | </ br>", "\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                htmlContent = System.Text.RegularExpressions.Regex.Replace(htmlContent, @"</?(div|p|h[1-6]|li|tr)[^>]*?>", "\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                htmlContent = System.Text.RegularExpressions.Regex.Replace(htmlContent, @"</?(ul|ol|table)[^>]*?>", "\n\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                
+                // Remove all remaining HTML tags
+                htmlContent = System.Text.RegularExpressions.Regex.Replace(htmlContent, @"<[^>]+>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                
+                // Decode HTML entities
+                htmlContent = System.Net.WebUtility.HtmlDecode(htmlContent);
+                
+                // Clean up whitespace
+                htmlContent = System.Text.RegularExpressions.Regex.Replace(htmlContent, @"\n\s*\n", "\n\n"); // Multiple newlines to double newline
+                htmlContent = System.Text.RegularExpressions.Regex.Replace(htmlContent, @"[ \t]+", " "); // Multiple spaces to single space
+                htmlContent = htmlContent.Trim();
+
+                return htmlContent;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Failed to convert HTML to plain text: {ex.Message}");
+                // Fallback: basic HTML tag removal
+                return System.Text.RegularExpressions.Regex.Replace(htmlContent, @"<[^>]+>", " ").Trim();
+            }
         }
 
         /// <summary>
@@ -255,6 +436,106 @@ namespace FalconBackend.Services
             {
                 _logger.LogWarning($"Access token validation failed: {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Downloads and processes all attachments for an email message
+        /// </summary>
+        private async Task<List<Attachments>> ProcessEmailAttachmentsAsync(string accessToken, string messageId, string userEmail, string mailAccountId, string emailType)
+        {
+            var attachments = new List<Attachments>();
+
+            try
+            {
+                var graphServiceClient = CreateGraphServiceClient(accessToken);
+                
+                // Get attachments for the message
+                var messageAttachments = await graphServiceClient.Me.Messages[messageId].Attachments.GetAsync();
+
+                if (messageAttachments?.Value == null || !messageAttachments.Value.Any())
+                {
+                    return attachments; // No attachments
+                }
+
+                _logger.LogInformation($"Found {messageAttachments.Value.Count} attachments for message {messageId}");
+
+                foreach (var attachment in messageAttachments.Value)
+                {
+                    try
+                    {
+                        // Only handle file attachments (not item attachments or reference attachments)
+                        if (attachment is Microsoft.Graph.Models.FileAttachment fileAttachment)
+                        {
+                            var processedAttachment = await ProcessFileAttachmentAsync(
+                                fileAttachment, userEmail, mailAccountId, emailType);
+                            
+                            if (processedAttachment != null)
+                            {
+                                attachments.Add(processedAttachment);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogInformation($"Skipping non-file attachment: {attachment.Name} (Type: {attachment.OdataType})");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"Failed to process attachment {attachment.Name}: {ex.Message}");
+                        continue; // Skip this attachment and continue with others
+                    }
+                }
+
+                _logger.LogInformation($"Successfully processed {attachments.Count} attachments for message {messageId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing attachments for message {messageId}: {ex.Message}");
+                // Return empty list if attachment processing fails - don't fail the entire email sync
+            }
+
+            return attachments;
+        }
+
+        /// <summary>
+        /// Processes a single file attachment from Microsoft Graph API
+        /// </summary>
+        private async Task<Attachments?> ProcessFileAttachmentAsync(Microsoft.Graph.Models.FileAttachment fileAttachment, string userEmail, string mailAccountId, string emailType)
+        {
+            try
+            {
+                if (fileAttachment.ContentBytes == null || fileAttachment.ContentBytes.Length == 0)
+                {
+                    _logger.LogWarning($"Attachment {fileAttachment.Name} has no content");
+                    return null;
+                }
+
+                // Save the attachment to file system
+                var filePath = await _fileStorageService.SaveAttachmentAsync(
+                    fileAttachment.ContentBytes,
+                    fileAttachment.Name ?? "unnamed_file",
+                    userEmail,
+                    mailAccountId,
+                    emailType
+                );
+
+                // Create attachment entity
+                var attachment = new Attachments
+                {
+                    Name = fileAttachment.Name ?? "unnamed_file",
+                    FileType = Path.GetExtension(fileAttachment.Name ?? "") ?? "unknown",
+                    FileSize = fileAttachment.Size ?? fileAttachment.ContentBytes.Length,
+                    FilePath = filePath
+                };
+
+                _logger.LogInformation($"Successfully processed attachment: {attachment.Name} ({attachment.FileSize} bytes)");
+                return attachment;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to process file attachment {fileAttachment.Name}: {ex.Message}");
+                return null;
             }
         }
 
