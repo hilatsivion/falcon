@@ -382,32 +382,6 @@ const GenericEmailPage = () => {
       return;
     }
 
-    if (pathname === "/trash") {
-      // --- MOCK DATA FOR TRASH PAGE ---
-      // TODO: Remove this block when backend is ready. See README_BACKEND.md for details.
-      setEmails(
-        mockTrashEmails.map((dto) =>
-          mapDtoToEmailItemProps(dto, "MailReceivedPreviewDto")
-        )
-      );
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
-
-    if (pathname === "/spam") {
-      // --- MOCK DATA FOR SPAM PAGE ---
-      // TODO: Remove this block when backend is ready. See README_BACKEND.md for details.
-      setEmails(
-        mockSpamEmails.map((dto) =>
-          mapDtoToEmailItemProps(dto, "MailReceivedPreviewDto")
-        )
-      );
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
-
     if (pathname === "/search-results") {
       const resultsFromSearch = location.state?.results || [];
       const mappedResults = resultsFromSearch.map((dto) =>
