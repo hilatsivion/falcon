@@ -13,15 +13,15 @@ namespace FalconBackend.Migrations
                 columns: new[] { "Id", "TagName", "TagType" },
                 values: new object[,]
                 {
-                    { -9, "health", "SystemTag" },
-                    { -8, "personal", "SystemTag" },
-                    { -7, "family & friends", "SystemTag" },
-                    { -6, "finance", "SystemTag" },
-                    { -5, "discounts", "SystemTag" },
-                    { -4, "news", "SystemTag" },
-                    { -3, "social network", "SystemTag" },
-                    { -2, "school", "SystemTag" },
-                    { -1, "work", "SystemTag" }
+                    { -9, "Health", "SystemTag" },
+                    { -8, "Personal", "SystemTag" },
+                    { -7, "Family & friends", "SystemTag" },
+                    { -6, "Finance", "SystemTag" },
+                    { -5, "Discounts", "SystemTag" },
+                    { -4, "News", "SystemTag" },
+                    { -3, "Social network", "SystemTag" },
+                    { -2, "School", "SystemTag" },
+                    { -1, "Work", "SystemTag" }
                 });
         }
 
