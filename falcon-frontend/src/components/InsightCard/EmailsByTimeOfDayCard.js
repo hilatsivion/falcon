@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -9,15 +9,9 @@ import {
   Cell,
 } from "recharts";
 import "./InsightCard.css";
-
-const DUMMY_DATA = [
-  { range: "00–06", avg: 2 },
-  { range: "06–09", avg: 5 },
-  { range: "09–12", avg: 12 },
-  { range: "12–15", avg: 8 },
-  { range: "15–18", avg: 6 },
-  { range: "18–24", avg: 3 },
-];
+import { API_BASE_URL } from "../../config/constants";
+import { useAuth } from "../../context/AuthContext";
+import Loader from "../Loader/Loader";
 
 const BAR_COLORS = [
   "#8B5CF6",
@@ -29,6 +23,55 @@ const BAR_COLORS = [
 ];
 
 const EmailsByTimeOfDayCard = () => {
+  const { authToken } = useAuth();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/analytics/emails-by-time-of-day`,
+          {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }
+        );
+        if (!response.ok)
+          throw new Error("Failed to fetch emails by time of day");
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err.message);
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [authToken]);
+
+  if (loading)
+    return (
+      <div className="insight-card emails-by-time-card vertical-flex">
+        <Loader />
+      </div>
+    );
+  if (error)
+    return (
+      <div className="insight-card emails-by-time-card vertical-flex">
+        <p className="error-message">{error}</p>
+      </div>
+    );
+  if (!data || data.length === 0)
+    return (
+      <div className="insight-card emails-by-time-card vertical-flex">
+        <p>No data available</p>
+      </div>
+    );
+
   return (
     <div className="insight-card emails-by-time-card vertical-flex">
       <div className="insight-title left-align">
@@ -37,7 +80,7 @@ const EmailsByTimeOfDayCard = () => {
       <div className="emails-by-time-bar-container">
         <ResponsiveContainer width="100%" height={180}>
           <BarChart
-            data={DUMMY_DATA}
+            data={data}
             margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
           >
             <XAxis
@@ -51,8 +94,8 @@ const EmailsByTimeOfDayCard = () => {
               cursor={{ fill: "#f3f3f3" }}
               formatter={(value) => [`${value} emails`, "Avg"]}
             />
-            <Bar dataKey="avg" radius={[8, 8, 0, 0]}>
-              {DUMMY_DATA.map((entry, index) => (
+            <Bar dataKey="average" radius={[8, 8, 0, 0]}>
+              {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={BAR_COLORS[index % BAR_COLORS.length]}
