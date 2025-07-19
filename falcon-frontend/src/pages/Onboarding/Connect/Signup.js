@@ -129,7 +129,7 @@ const SignUp = () => {
 
       if (data && data.token && data.aiKey) {
         login(data.token, data.aiKey);
-        navigate("/interests");
+        navigate("/outlook-connect");
       } else {
         showError("Signup succeeded, but failed to retrieve session token.");
       }

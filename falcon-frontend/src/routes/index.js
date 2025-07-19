@@ -5,7 +5,6 @@ import Compose from "../pages/Main/Compose/Compose";
 import MainLayout from "../layouts/MainLayout";
 import OnboardingRoutes from "./OnboardingRoutes";
 import AdvancedSearch from "../components/AdvancedSearch/AdvancedSearch";
-import SelectInterests from "../pages/Onboarding/SelectInterests/SelectInterests";
 import LoadingDataScreen from "../pages/Onboarding/LoadingDataScreen/LoadingDataScreen";
 import GenericEmailPage from "../pages/Main/Inbox/GenericEmailPage";
 import NotFound from "../pages/NotFound/NotFound";
@@ -25,7 +24,6 @@ const AppRoutes = () => {
         </>
       ) : (
         <>
-          <Route path="/interests" element={<SelectInterests />} />
           <Route path="/loadingData" element={<LoadingDataScreen />} />
           <Route
             path="/inbox"

@@ -88,6 +88,7 @@ const WelcomeScreen = () => {
             className="btn-white"
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate("/signup")}
+            // onClick={() => navigate("/outlook-connect")}
           >
             Create Account
           </motion.button>

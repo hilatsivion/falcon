@@ -1,0 +1,89 @@
+/* Remove .outlook-connection card styles */
+
+.welcome-container > div {
+  max-width: 400px;
+  margin: 80px auto 0 auto;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--white);
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Description */
+.welcome-container p {
+  font-size: 1rem;
+  color: var(--white);
+  margin-bottom: 32px;
+}
+
+/* Primary Button */
+.btn-outlook {
+  width: 100%;
+  padding: 16px 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.btn-outlook:hover {
+  background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+}
+
+.status-message {
+  font-size: 1rem;
+  margin-top: 10px;
+  min-height: 24px;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.spinner {
+  border: 6px solid #e0e7ef;
+  border-top: 6px solid #2563eb;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 18px;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .welcome-container > div {
+    max-width: 95vw;
+    padding: 24px 6vw;
+    margin-top: 32px;
+  }
+  .btn-outlook {
+    font-size: 1rem;
+    padding: 14px 0;
+  }
+}
