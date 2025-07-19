@@ -508,7 +508,7 @@ namespace FalconBackend.Migrations
                         new
                         {
                             Id = -3,
-                            TagName = "Social"
+                            TagName = "Social network"
                         },
                         new
                         {
@@ -518,7 +518,7 @@ namespace FalconBackend.Migrations
                         new
                         {
                             Id = -5,
-                            TagName = "Promotions"
+                            TagName = "Discounts"
                         },
                         new
                         {
@@ -528,7 +528,7 @@ namespace FalconBackend.Migrations
                         new
                         {
                             Id = -7,
-                            TagName = "Family & Friends"
+                            TagName = "Family & friends"
                         },
                         new
                         {
@@ -538,11 +538,6 @@ namespace FalconBackend.Migrations
                         new
                         {
                             Id = -9,
-                            TagName = "Travel"
-                        },
-                        new
-                        {
-                            Id = -10,
                             TagName = "Health"
                         });
                 });

@@ -9,10 +9,9 @@ export const Tag = ({ name }) => {
     Promotions: "#FFDEAD", // light apricot
     Updates: "#E0E0E0", // neutral grey
     Forums: "#C6F6D5", // soft green
-    Travel: "#CCE0FF", // calm light blue
     News: "#FFEBCC", // pale orange (attention-grabbing but soft)
     Health: "#E0FFE0", // pale mint (fresh, clean)
-    "Family & Friends": "#F9D6FF", // lavender pink (warm & social)
+    "Family & friends": "#F9D6FF", // lavender pink (warm & social)
   };
 
   return (
