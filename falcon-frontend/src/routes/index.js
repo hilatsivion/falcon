@@ -25,6 +25,7 @@ const AppRoutes = () => {
       ) : (
         <>
           <Route path="/loadingData" element={<LoadingDataScreen />} />
+          <Route path="/outlook-connect" element={<OutlookConnect />} />
           <Route
             path="/inbox"
             element={
