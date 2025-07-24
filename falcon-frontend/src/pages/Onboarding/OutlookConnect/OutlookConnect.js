@@ -6,6 +6,7 @@ import {
 } from "../../../config/constants";
 import "../Connect/connect.css";
 import "./OutlookConnect.css";
+import { getAuthToken } from "../../../utils/auth";
 
 const OutlookConnectPage = () => {
   const [status, setStatus] = useState("");
@@ -16,7 +17,7 @@ const OutlookConnectPage = () => {
     const code = urlParams.get("code");
     const error = urlParams.get("error");
 
-    const token = localStorage.getItem("falconAuthToken");
+    const token = getAuthToken();
     if (!token) return;
 
     if (error) {
@@ -69,7 +70,7 @@ const OutlookConnectPage = () => {
   };
 
   const connectToOutlook = async () => {
-    const token = localStorage.getItem("falconAuthToken");
+    const token = getAuthToken();
     if (!token) {
       setStatus("Please log in first");
       return;
