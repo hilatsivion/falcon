@@ -1,4 +1,5 @@
-export const API_BASE_URL = "https://proj.ruppin.ac.il/cgroup80/test2/tar1";
+// export const API_BASE_URL = "https://proj.ruppin.ac.il/cgroup80/test2/tar1";
+export const API_BASE_URL = "https://localhost:7236";
 
 export const REDIRECT_URI = "http://localhost:3000/outlook-connect";
 

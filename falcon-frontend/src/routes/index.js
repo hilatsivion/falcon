@@ -8,6 +8,7 @@ import AdvancedSearch from "../components/AdvancedSearch/AdvancedSearch";
 import LoadingDataScreen from "../pages/Onboarding/LoadingDataScreen/LoadingDataScreen";
 import GenericEmailPage from "../pages/Main/Inbox/GenericEmailPage";
 import NotFound from "../pages/NotFound/NotFound";
+import OutlookConnect from "../pages/Onboarding/OutlookConnect/OutlookConnect";
 
 import { useAuth } from "../context/AuthContext";
 
