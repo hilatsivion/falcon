@@ -14,6 +14,21 @@ namespace FalconBackend.Services
         private readonly ILogger<AiTaggingService> _logger;
         private readonly string _pipelineServerUrl;
 
+        // Extract label mapping to avoid duplication and recreation
+        private static readonly Dictionary<string, string> LabelMapping = new()
+        {
+            { "work", "Work" },
+            { "school", "School" },
+            { "social network", "Social network" },
+            { "news", "News" },
+            { "discounts", "Discounts" },
+            { "finance", "Finance" },
+            { "family and friends", "Family & friends" },
+            { "personal", "Personal" },
+            { "health", "Health" },
+            { "spam", "Spam" }
+        };
+
         public AiTaggingService(HttpClient httpClient, AppDbContext context, ILogger<AiTaggingService> logger, IConfiguration configuration)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
@@ -25,7 +40,7 @@ namespace FalconBackend.Services
         /// <summary>
         /// Classifies emails using the AI pipeline server and assigns appropriate tags
         /// </summary>
-        public async Task<List<MailTag>> GetAiTagsAsync(List<MailReceived> emails)
+        public async Task<List<MailTag>> GetAiTagsAsync(List<MailReceived> emails, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -98,29 +113,15 @@ namespace FalconBackend.Services
                 // Get available tags from database
                 var availableTags = await _context.Tags
                     .Where(t => !(t is UserCreatedTag))
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
                 
                 _logger.LogInformation($"📋 Found {availableTags.Count} system tags in database: [{string.Join(", ", availableTags.Select(t => $"{t.Id}:{t.TagName}"))}]");
 
                 // Create a dictionary for faster email lookup by MailId
                 var emailDict = emails.ToDictionary(e => e.MailId, e => e);
 
-                // Create MailTag entities based on AI predictions
-                var allMailTags = new List<MailTag>();
-                foreach (var result in results)
-                {
-                    if (emailDict.TryGetValue(result.Id, out var email))
-                    {
-                        _logger.LogInformation($"🔄 Processing AI result for email MailId={result.Id}");
-                        var aiTags = await MapLabelsToTags(result.Labels, availableTags, email);
-                        allMailTags.AddRange(aiTags);
-                        _logger.LogInformation($"✅ Processed email MailId={result.Id}, created {aiTags.Count} tags");
-                    }
-                    else
-                    {
-                        _logger.LogError($"❌ Could not find email with MailId={result.Id} in provided emails list");
-                    }
-                }
+                // Process all results in batch - NO individual saves
+                var allMailTags = await ProcessAllTagsInBatch(results, emailDict, availableTags, cancellationToken);
 
                 _logger.LogInformation($"🎉 AI classification completed! Total: {allMailTags.Count} MailTags created across {results.Count} emails");
                 
@@ -139,149 +140,216 @@ namespace FalconBackend.Services
         }
 
         /// <summary>
-        /// Maps pipeline server labels to database tags and creates MailTag entities
-        /// Creates missing tags in database if they don't exist
+        /// Process all AI results in a single batch operation
         /// </summary>
-        private async Task<List<MailTag>> MapLabelsToTags(List<string> labels, List<Tag> availableTags, MailReceived email)
+        private async Task<List<MailTag>> ProcessAllTagsInBatch(List<PipelineResult> results, Dictionary<int, MailReceived> emailDict, List<Tag> availableTags, CancellationToken cancellationToken)
         {
-            var mailTags = new List<MailTag>();
-            bool isSpam = false;
-
-            if (labels == null || !labels.Any())
+            var allMailTags = new List<MailTag>();
+            var emailsToUpdate = new List<MailReceived>();
+            var newTagsNeeded = new HashSet<string>();
+            
+            _logger.LogInformation($"🚀 Starting batch processing for {results.Count} AI results");
+            
+            // First pass: Collect all needed tags and identify spam emails
+            foreach (var result in results)
             {
-                _logger.LogDebug($"No labels provided for email MailId={email.MailId}");
-                return mailTags;
+                if (!emailDict.TryGetValue(result.Id, out var email))
+                {
+                    _logger.LogError($"❌ Could not find email with MailId={result.Id} in provided emails list");
+                    continue;
+                }
+
+                _logger.LogInformation($"🔄 Processing AI result for email MailId={result.Id}");
+
+                bool isSpam = false;
+                foreach (var label in result.Labels ?? new List<string>())
+                {
+                    var normalizedLabel = label.ToLowerInvariant();
+                    
+                    if (LabelMapping.TryGetValue(normalizedLabel, out var tagName))
+                    {
+                        if (tagName.Equals("Spam", StringComparison.OrdinalIgnoreCase))
+                        {
+                            isSpam = true;
+                            _logger.LogInformation($"Email MailId={email.MailId} detected as spam by AI");
+                        }
+                        else
+                        {
+                            // Check if tag exists, if not add to needed tags
+                            if (!availableTags.Any(t => t.TagName.Equals(tagName, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                newTagsNeeded.Add(tagName);
+                            }
+                        }
+                    }
+                }
+
+                if (isSpam)
+                {
+                    email.IsSpam = true;
+                    emailsToUpdate.Add(email);
+                }
             }
 
-            _logger.LogDebug($"Processing {labels.Count} labels for email MailId={email.MailId}: [{string.Join(", ", labels)}]");
-
-            // Create a mapping from pipeline labels to database tag names
-            var labelMapping = new Dictionary<string, string>
+            // Create any new tags needed
+            var newTags = new List<Tag>();
+            foreach (var tagName in newTagsNeeded)
             {
-                { "work", "Work" },
-                { "school", "School" },
-                { "social network", "Social network" },
-                { "news", "News" },
-                { "discounts", "Discounts" },
-                { "finance", "Finance" },
-                { "family and friends", "Family & friends" },
-                { "personal", "Personal" },
-                { "health", "Health" },
-                { "spam", "Spam" }
-            };
+                var newTag = new Tag { TagName = tagName };
+                newTags.Add(newTag);
+                availableTags.Add(newTag);
+                _logger.LogInformation($"Queued new system tag for creation: '{tagName}'");
+            }
 
-            foreach (var label in labels)
+            // Save new tags first if any - use AddRange for better performance
+            if (newTags.Any())
             {
-                var normalizedLabel = label.ToLowerInvariant();
-                _logger.LogDebug($"Processing label: '{label}' (normalized: '{normalizedLabel}') for email MailId={email.MailId}");
-                
-                if (labelMapping.TryGetValue(normalizedLabel, out var tagName))
+                _context.Tags.AddRange(newTags);
+                await _context.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation($"✅ Created {newTags.Count} new tags");
+            }
+
+            // Get existing MailTags to avoid duplicates
+            var emailIds = emailDict.Keys.ToList();
+            var existingMailTags = await _context.MailTags
+                .Where(mt => emailIds.Contains(mt.MailReceivedId))
+                .ToListAsync(cancellationToken);
+
+            var existingTagPairs = new HashSet<(int EmailId, int TagId)>(
+                existingMailTags.Select(mt => (mt.MailReceivedId, mt.TagId))
+            );
+
+            // Second pass: Create MailTag entities
+            var newMailTags = new List<MailTag>();
+            foreach (var result in results)
+            {
+                if (!emailDict.TryGetValue(result.Id, out var email))
+                    continue;
+
+                foreach (var label in result.Labels ?? new List<string>())
                 {
-                    if (tagName.Equals("Spam", StringComparison.OrdinalIgnoreCase))
+                    var normalizedLabel = label.ToLowerInvariant();
+                    
+                    if (LabelMapping.TryGetValue(normalizedLabel, out var tagName) && 
+                        !tagName.Equals("Spam", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Mark email as spam but don't create a tag for it
-                        isSpam = true;
-                        _logger.LogInformation($"Email MailId={email.MailId} detected as spam by AI");
-                        continue;
-                    }
-
-                    // Find or create the tag
-                    var tag = availableTags.FirstOrDefault(t => t.TagName.Equals(tagName, StringComparison.OrdinalIgnoreCase));
-
-                    if (tag == null)
-                    {
-                        // Create new tag
-                        tag = new Tag { TagName = tagName };
-                        _context.Tags.Add(tag);
-                        
-                        // Save immediately to get the ID
-                        await _context.SaveChangesAsync();
-                        
-                        // Add to available tags to prevent duplicate creation
-                        availableTags.Add(tag);
-                        
-                        _logger.LogInformation($"Created new system tag: '{tagName}' with Id={tag.Id}");
-                    }
-
-                    // Check if MailTag already exists to prevent duplicates
-                    var existingMailTag = await _context.MailTags
-                        .FirstOrDefaultAsync(mt => mt.MailReceivedId == email.MailId && mt.TagId == tag.Id);
-
-                    if (existingMailTag == null)
-                    {
-                        // Create new MailTag - DO NOT set Id property, it's auto-generated
-                        var mailTag = new MailTag
+                        var tag = availableTags.FirstOrDefault(t => t.TagName.Equals(tagName, StringComparison.OrdinalIgnoreCase));
+                        if (tag != null && !existingTagPairs.Contains((email.MailId, tag.Id)))
                         {
-                            MailReceivedId = email.MailId,
-                            TagId = tag.Id,
-                            // Set navigation properties to help Entity Framework
-                            MailReceived = email,
-                            Tag = tag
-                        };
+                            var mailTag = new MailTag
+                            {
+                                MailReceivedId = email.MailId,
+                                TagId = tag.Id
+                                // DO NOT set Id property - it conflicts with composite key
+                            };
 
-                        _context.MailTags.Add(mailTag);
-                        mailTags.Add(mailTag);
-                        
-                        _logger.LogInformation($"Created MailTag: EmailId={email.MailId}, TagId={tag.Id}, TagName='{tagName}'");
+                            newMailTags.Add(mailTag);
+                            allMailTags.Add(mailTag);
+                            _logger.LogInformation($"Queued MailTag: EmailId={email.MailId}, TagId={tag.Id}, TagName='{tagName}'");
+                        }
+                    }
+                }
+            }
+
+            // Add all MailTags at once for better performance
+            if (newMailTags.Any())
+            {
+                _logger.LogInformation($"🏷️ About to add {newMailTags.Count} MailTags to context");
+                
+                // Debug: Log each MailTag being added
+                foreach (var mailTag in newMailTags)
+                {
+                    _logger.LogDebug($"Adding MailTag: MailReceivedId={mailTag.MailReceivedId}, TagId={mailTag.TagId}");
+                }
+                
+                _context.MailTags.AddRange(newMailTags);
+                
+                // Verify they were added to change tracker
+                var addedEntries = _context.ChangeTracker.Entries<MailTag>()
+                    .Where(e => e.State == EntityState.Added)
+                    .ToList();
+                _logger.LogInformation($"✅ {addedEntries.Count} MailTags are now in Added state");
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ No new MailTags to add");
+            }
+
+            // Update spam emails with proper entity tracking
+            foreach (var email in emailsToUpdate)
+            {
+                // Use proper EF tracking - only mark specific property as modified
+                var entry = _context.Entry(email);
+                if (entry.State == EntityState.Detached)
+                {
+                    _context.Attach(email);
+                }
+                entry.Property(e => e.IsSpam).IsModified = true;
+                _logger.LogDebug($"Marked email {email.MailId} IsSpam property as modified");
+            }
+
+            // Single save operation for everything with explicit transaction
+            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                // Debug: Check what's being tracked before save
+                var trackedEntries = _context.ChangeTracker.Entries().ToList();
+                _logger.LogInformation($"📊 About to save changes. Tracked entities: {trackedEntries.Count}");
+                
+                foreach (var entry in trackedEntries)
+                {
+                    _logger.LogDebug($"Tracked: {entry.Entity.GetType().Name} - State: {entry.State}");
+                }
+
+                var changeCount = await _context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                
+                _logger.LogInformation($"✅ Successfully saved {changeCount} database changes - {allMailTags.Count} MailTags and {emailsToUpdate.Count} spam updates");
+                
+                // Debug: Verify MailTags were actually saved
+                if (newMailTags.Any())
+                {
+                    var firstMailTag = newMailTags.First();
+                    var savedMailTag = await _context.MailTags
+                        .FirstOrDefaultAsync(mt => mt.MailReceivedId == firstMailTag.MailReceivedId && mt.TagId == firstMailTag.TagId, cancellationToken);
+                    
+                    if (savedMailTag != null)
+                    {
+                        _logger.LogInformation($"✅ Verification: MailTag was saved successfully");
                     }
                     else
                     {
-                        _logger.LogDebug($"MailTag already exists: EmailId={email.MailId}, TagId={tag.Id}, TagName='{tagName}'");
-                        // Add to result list even if it already exists
-                        mailTags.Add(existingMailTag);
+                        _logger.LogError($"❌ Verification FAILED: MailTag was NOT saved to database");
                     }
                 }
-                else
-                {
-                    _logger.LogWarning($"Unknown label '{label}' received from AI pipeline for email MailId={email.MailId}");
-                }
-            }
-
-            // Handle spam detection - CRITICAL: Update the entity that's being tracked
-            if (isSpam)
-            {
-                // Find the tracked entity to avoid conflicts
-                var trackedEmail = _context.MailReceived.Local.FirstOrDefault(e => e.MailId == email.MailId);
-                if (trackedEmail != null)
-                {
-                    trackedEmail.IsSpam = true;
-                    _logger.LogInformation($"Email MailId={email.MailId} marked as spam using tracked entity");
-                }
-                else
-                {
-                    // If not tracked, attach and update
-                    _context.Attach(email);
-                    email.IsSpam = true;
-                    _context.Entry(email).Property(e => e.IsSpam).IsModified = true;
-                    _logger.LogInformation($"Email MailId={email.MailId} marked as spam using attached entity");
-                }
-            }
-
-            // Save all changes
-            try
-            {
-                var changeCount = await _context.SaveChangesAsync();
-                _logger.LogInformation($"Successfully saved {changeCount} database changes - {mailTags.Count} MailTags and spam status for email MailId={email.MailId}");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed to save MailTags for email MailId={email.MailId}: {ex.Message}");
+                await transaction.RollbackAsync(cancellationToken);
+                _logger.LogError($"❌ Failed to save batch changes: {ex.Message}");
                 if (ex.InnerException != null)
                 {
-                    _logger.LogError($"Inner exception: {ex.InnerException.Message}");
+                    _logger.LogError($"❌ Inner exception: {ex.InnerException.Message}");
                 }
+                
+                // Debug: Log validation errors if any
+                if (ex is Microsoft.EntityFrameworkCore.DbUpdateException)
+                {
+                    _logger.LogError($"❌ DbUpdateException details: {ex}");
+                }
+                
                 throw;
             }
 
-            return mailTags;
+            return allMailTags;
         }
 
         /// <summary>
         /// Classifies a single email for immediate tagging
         /// </summary>
-        public async Task<List<MailTag>> GetAiTagsForSingleEmailAsync(MailReceived email)
+        public async Task<List<MailTag>> GetAiTagsForSingleEmailAsync(MailReceived email, CancellationToken cancellationToken = default)
         {
-            return await GetAiTagsAsync(new List<MailReceived> { email });
+            return await GetAiTagsAsync(new List<MailReceived> { email }, cancellationToken);
         }
 
         /// <summary>
@@ -297,6 +365,48 @@ namespace FalconBackend.Services
             catch (Exception ex)
             {
                 _logger.LogWarning($"Pipeline server not available: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Test method to verify MailTag creation works
+        /// </summary>
+        public async Task<bool> TestMailTagCreationAsync(int emailId, int tagId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation($"🧪 Testing MailTag creation for EmailId={emailId}, TagId={tagId}");
+                
+                // Check if it already exists
+                var exists = await _context.MailTags
+                    .AnyAsync(mt => mt.MailReceivedId == emailId && mt.TagId == tagId, cancellationToken);
+                
+                if (exists)
+                {
+                    _logger.LogInformation($"✅ MailTag already exists");
+                    return true;
+                }
+                
+                var testMailTag = new MailTag
+                {
+                    MailReceivedId = emailId,
+                    TagId = tagId
+                };
+                
+                _context.MailTags.Add(testMailTag);
+                var changes = await _context.SaveChangesAsync(cancellationToken);
+                
+                _logger.LogInformation($"✅ Test MailTag created successfully. Changes: {changes}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Test MailTag creation failed: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError($"❌ Inner exception: {ex.InnerException.Message}");
+                }
                 return false;
             }
         }
