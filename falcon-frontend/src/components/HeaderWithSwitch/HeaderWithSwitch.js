@@ -1,8 +1,8 @@
 import React from "react";
 import { useLocation } from "react-router-dom";
-import listIcon from "../../assets/icons/black/list.svg";
-import folderIcon from "../../assets/icons/black/folder.svg";
-import backIcon from "../../assets/icons/black/arrow-left-full.svg";
+import { ReactComponent as ListIcon } from "../../assets/icons/black/list.svg";
+import { ReactComponent as FolderIcon } from "../../assets/icons/black/folder.svg";
+import { ReactComponent as BackIcon } from "../../assets/icons/black/arrow-left-full.svg";
 import "./HeaderWithSwitch.css";
 
 const HeaderWithSwitch = ({
@@ -39,8 +39,7 @@ const HeaderWithSwitch = ({
       >
         <div className="header-left">
           {showBackButton && (
-            <img
-              src={backIcon}
+            <BackIcon
               alt="Back"
               onClick={onBack}
               className="back-icon"
@@ -56,13 +55,11 @@ const HeaderWithSwitch = ({
               <div
                 className={`switch-circle ${isListView ? "left" : "right"}`}
               />
-              <img
-                src={listIcon}
+              <ListIcon
                 alt="List"
                 className={`switch-icon ${isListView ? "active" : "inactive"}`}
               />
-              <img
-                src={folderIcon}
+              <FolderIcon
                 alt="Folder"
                 className={`switch-icon ${isListView ? "inactive" : "active"}`}
               />
