@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@google/genai": "^1.11.0",
     "cra-template": "1.2.0",
     "framer-motion": "^12.4.2",
     "react": "^18.3.1",

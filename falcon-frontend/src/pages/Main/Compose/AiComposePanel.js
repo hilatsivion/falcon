@@ -4,9 +4,7 @@ import { ReactComponent as CloseIcon } from "../../../assets/icons/black/x.svg";
 import Loader from "../../../components/Loader/Loader";
 import { useAuth } from "../../../context/AuthContext";
 import { toast } from "react-toastify";
-
-const API_URL =
-  "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct";
+import { GoogleGenAI } from "@google/genai";
 
 const AiComposePanel = ({ onClose, onDone }) => {
   const [idea, setIdea] = useState("");
@@ -46,36 +44,22 @@ Output the result ONLY as a valid JSON object like this: {"subject": "Generated 
 Email Idea: ${idea}`;
 
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${aiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: fullPrompt,
-          parameters: {
-            max_new_tokens: 512,
-            return_full_text: false,
-          },
-        }),
-      });
+      // Initialize Google GenAI with the API key
+      const ai = new GoogleGenAI(aiKey);
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`API Error (${response.status}): ${errorBody}`);
-      }
-
-      const result = await response.json();
+      // Generate content using Gemini
+      const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const response = await model.generateContent(fullPrompt);
+      const result = await response.response;
 
       // --- Parse the result ---
-      console.log("Hugging Face API Response:", result);
+      console.log("Gemini AI Response:", result);
 
       let generatedSubject = "Error: Could not parse subject";
       let generatedBody = "Error: Could not parse body";
 
-      if (result && result[0] && typeof result[0].generated_text === "string") {
-        const rawText = result[0].generated_text;
+      if (result && result.text) {
+        const rawText = result.text;
 
         // --- Attempt to extract JSON from the raw text ---
         try {
@@ -109,13 +93,13 @@ Email Idea: ${idea}`;
       } else {
         generatedSubject = "Response Error";
         generatedBody =
-          "Error: Unexpected response format from AI (expected array with generated_text string).";
+          "Error: Unexpected response format from AI (expected text property).";
       }
 
       setSubject(generatedSubject);
       setContent(generatedBody);
     } catch (err) {
-      console.error("Error calling Hugging Face API:", err);
+      console.error("Error calling Gemini AI API:", err);
       setError(`Failed to generate: ${err.message}`);
     } finally {
       setIsGenerating(false);
