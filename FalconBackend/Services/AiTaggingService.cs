@@ -127,6 +127,7 @@ namespace FalconBackend.Services
         private async Task<List<MailTag>> MapLabelsToTags(List<string> labels, List<Tag> availableTags, MailReceived email)
         {
             var mailTags = new List<MailTag>();
+            bool isSpam = false;
 
             if (labels == null || !labels.Any())
                 return mailTags;
@@ -142,13 +143,21 @@ namespace FalconBackend.Services
                 { "finance", "Finance" },
                 { "family and friends", "Family & friends" },
                 { "personal", "Personal" },
-                { "health", "Health" }
+                { "health", "Health" },
+                { "spam", "Spam" } // Include "spam" in the mapping
             };
 
             foreach (var label in labels)
             {
                 if (labelMapping.TryGetValue(label.ToLowerInvariant(), out var tagName))
                 {
+                    if (tagName.Equals("Spam", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // If the label is "spam", mark the email as spam and skip saving the tag
+                        isSpam = true;
+                        continue;
+                    }
+
                     // Check if the tag exists in the database
                     var tag = availableTags.FirstOrDefault(t => t.TagName.Equals(tagName, StringComparison.OrdinalIgnoreCase));
 
@@ -183,7 +192,15 @@ namespace FalconBackend.Services
                 }
             }
 
-            await _context.SaveChangesAsync(); // Save all MailTags to the database
+            // If the email is marked as spam, update its IsSpam property
+            if (isSpam)
+            {
+                email.IsSpam = true;
+                _context.MailReceived.Update(email);
+                _logger.LogInformation($"Email {email.MailId} marked as spam.");
+            }
+
+            await _context.SaveChangesAsync(); // Save all MailTags and email updates to the database
             return mailTags;
         }
 
