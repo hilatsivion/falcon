@@ -73,11 +73,23 @@ namespace FalconBackend.Services
                     _logger.LogWarning("Pipeline server returned no results");
                     return new List<MailTag>();
                 }
+                
+                _logger.LogInformation($"Pipeline server returned {results.Count} results");
+                foreach (var result in results)
+                {
+                    _logger.LogDebug($"Pipeline result: Id={result.Id}, Labels=[{string.Join(", ", result.Labels)}]");
+                }
 
                 // Get available tags from database
                 var availableTags = await _context.Tags
                     .Where(t => !(t is UserCreatedTag))
                     .ToListAsync();
+                
+                _logger.LogInformation($"Found {availableTags.Count} system tags in database");
+                foreach (var tag in availableTags)
+                {
+                    _logger.LogDebug($"Available tag: Id={tag.Id}, Name={tag.TagName}");
+                }
 
                 // Create MailTag entities based on AI predictions
                 var mailTags = new List<MailTag>();
@@ -92,6 +104,13 @@ namespace FalconBackend.Services
                 }
 
                 _logger.LogInformation($"Successfully classified emails and created {mailTags.Count} AI-generated tags");
+                
+                // Debug: Log details about created tags
+                foreach (var mailTag in mailTags)
+                {
+                    _logger.LogDebug($"Created MailTag: EmailId={mailTag.MailReceivedId}, TagId={mailTag.TagId}, TagName={mailTag.Tag?.TagName}");
+                }
+                
                 return mailTags;
             }
             catch (Exception ex)
@@ -113,7 +132,6 @@ namespace FalconBackend.Services
                 return mailTags;
 
             // Create a mapping from pipeline labels to database tag names
-            // Based on user requirements: work,school,social network,news,discounts,finance,family and friends,personal,health
             var labelMapping = new Dictionary<string, string>
             {
                 { "work", "Work" },
@@ -127,34 +145,45 @@ namespace FalconBackend.Services
                 { "health", "Health" }
             };
 
-            foreach (var label in labels) // Apply all predicted tags
+            foreach (var label in labels)
             {
                 if (labelMapping.TryGetValue(label.ToLowerInvariant(), out var tagName))
                 {
+                    // Check if the tag exists in the database
                     var tag = availableTags.FirstOrDefault(t => t.TagName.Equals(tagName, StringComparison.OrdinalIgnoreCase));
-                    
-                    // If tag doesn't exist in database, create it
+
                     if (tag == null)
                     {
-                        _logger.LogInformation($"Creating missing system tag: {tagName}");
-                        tag = new Tag { TagName = tagName };
+                        // If the tag does not exist, create it
+                        tag = new Tag
+                        {
+                            TagName = tagName
+                        };
+
                         _context.Tags.Add(tag);
-                        await _context.SaveChangesAsync();
-                        
-                        // Add to available tags list for future use in this batch
+                        await _context.SaveChangesAsync(); // Save the new tag to the database
+
+                        // Add the new tag to the availableTags list to avoid duplicate creation
                         availableTags.Add(tag);
+
+                        _logger.LogInformation($"Created new system tag: {tagName}");
                     }
-                    
-                    mailTags.Add(new MailTag
+
+                    // Create the MailTag relationship
+                    var mailTag = new MailTag
                     {
                         MailReceived = email,
                         Tag = tag,
                         TagId = tag.Id,
                         MailReceivedId = email.MailId
-                    });
+                    };
+
+                    _context.MailTags.Add(mailTag); // Add the relationship to the context
+                    mailTags.Add(mailTag);
                 }
             }
 
+            await _context.SaveChangesAsync(); // Save all MailTags to the database
             return mailTags;
         }
 

@@ -172,7 +172,11 @@ namespace FalconBackend.Services
                 return;
             }
 
-            // Apply AI-powered tagging to new received emails only
+            // Add new received emails to the database FIRST
+            _context.MailReceived.AddRange(newEmails);
+            await _context.SaveChangesAsync();
+
+            // Apply AI-powered tagging to new received emails AFTER they're saved
             if (newEmails.Any())
             {
                 try
@@ -181,16 +185,12 @@ namespace FalconBackend.Services
                     var aiTags = await _aiTaggingService.GetAiTagsAsync(newEmails);
                     
                     // Apply the AI tags to the emails
-                    foreach (var aiTag in aiTags)
+                    if (aiTags.Any())
                     {
-                        var email = newEmails.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
-                        if (email != null)
-                        {
-                            email.MailTags.Add(aiTag);
-                        }
+                        _context.MailTags.AddRange(aiTags);
+                        await _context.SaveChangesAsync();
+                        Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags to received emails ---");
                     }
-                    
-                    Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags to received emails ---");
                 }
                 catch (Exception ex)
                 {
@@ -198,10 +198,6 @@ namespace FalconBackend.Services
                     // Continue without AI tags if the service fails
                 }
             }
-
-            // Add new received emails to the database
-            _context.MailReceived.AddRange(newEmails);
-            await _context.SaveChangesAsync();
 
             // Update analytics for received emails based on their actual date
             var receivedDates = newEmails.Select(email => email.TimeReceived).ToList();
@@ -457,7 +453,11 @@ namespace FalconBackend.Services
                 return;
             }
 
-            // Apply AI-powered tagging to all emails in batch
+            // Add emails to the database FIRST
+            _context.MailReceived.AddRange(outlookEmails);
+            await _context.SaveChangesAsync();
+
+            // Apply AI-powered tagging to all emails AFTER they're saved
             if (outlookEmails.Any())
             {
                 try
@@ -466,16 +466,12 @@ namespace FalconBackend.Services
                     var aiTags = await _aiTaggingService.GetAiTagsAsync(outlookEmails);
                     
                     // Apply the AI tags to the emails
-                    foreach (var aiTag in aiTags)
+                    if (aiTags.Any())
                     {
-                        var email = outlookEmails.FirstOrDefault(e => e.MailId == aiTag.MailReceivedId);
-                        if (email != null)
-                        {
-                            email.MailTags.Add(aiTag);
-                        }
+                        _context.MailTags.AddRange(aiTags);
+                        await _context.SaveChangesAsync();
+                        Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags ---");
                     }
-                    
-                    Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags ---");
                 }
                 catch (Exception ex)
                 {
@@ -483,10 +479,6 @@ namespace FalconBackend.Services
                     // Continue without AI tags if the service fails
                 }
             }
-
-            // Add emails to the database
-            _context.MailReceived.AddRange(outlookEmails);
-            await _context.SaveChangesAsync();
 
             // Update analytics for received emails based on their actual date
             var receivedDates = outlookEmails.Select(email => email.TimeReceived).ToList();
