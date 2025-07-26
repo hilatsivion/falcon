@@ -170,25 +170,31 @@ namespace FalconBackend.Services
                         };
 
                         _context.Tags.Add(tag);
-                        await _context.SaveChangesAsync(); // Save the new tag to the database
-
-                        // Add the new tag to the availableTags list to avoid duplicate creation
-                        availableTags.Add(tag);
-
+                        // Don't save immediately - we'll save all changes at the end
                         _logger.LogInformation($"Created new system tag: {tagName}");
                     }
 
-                    // Create the MailTag relationship
-                    var mailTag = new MailTag
-                    {
-                        MailReceived = email,
-                        Tag = tag,
-                        TagId = tag.Id,
-                        MailReceivedId = email.MailId
-                    };
+                    // Check if MailTag already exists to prevent duplicates
+                    var existingMailTag = await _context.MailTags
+                        .FirstOrDefaultAsync(mt => mt.MailReceivedId == email.MailId && mt.TagId == tag.Id);
 
-                    _context.MailTags.Add(mailTag); // Add the relationship to the context
-                    mailTags.Add(mailTag);
+                    if (existingMailTag == null)
+                    {
+                        // Create the MailTag relationship only if it doesn't exist
+                        var mailTag = new MailTag
+                        {
+                            MailReceivedId = email.MailId,
+                            TagId = tag.Id
+                        };
+
+                        _context.MailTags.Add(mailTag);
+                        mailTags.Add(mailTag);
+                        _logger.LogDebug($"Created MailTag: EmailId={email.MailId}, TagId={tag.Id}, TagName={tagName}");
+                    }
+                    else
+                    {
+                        _logger.LogDebug($"MailTag already exists: EmailId={email.MailId}, TagId={tag.Id}, TagName={tagName}");
+                    }
                 }
             }
 
@@ -196,11 +202,12 @@ namespace FalconBackend.Services
             if (isSpam)
             {
                 email.IsSpam = true;
-                _context.MailReceived.Update(email);
+                // Don't call Update() if the entity is already tracked
                 _logger.LogInformation($"Email {email.MailId} marked as spam.");
             }
 
-            await _context.SaveChangesAsync(); // Save all MailTags and email updates to the database
+            // Save all changes at once
+            await _context.SaveChangesAsync();
             return mailTags;
         }
 
