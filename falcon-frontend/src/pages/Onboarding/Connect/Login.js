@@ -53,7 +53,9 @@ const Login = () => {
   // Show Error for 3 seconds
   const showError = (message) => {
     const audio = new Audio(errorSound);
-    audio.play();
+    audio.play().catch(() => {
+      /* ignore audio errors */
+    });
     toast.error(message, {
       position: "top-right",
       autoClose: 3000,

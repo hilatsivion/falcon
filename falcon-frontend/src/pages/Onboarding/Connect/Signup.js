@@ -37,7 +37,9 @@ const SignUp = () => {
 
   const showError = (message) => {
     const audio = new Audio(errorSound);
-    audio.play();
+    audio.play().catch(() => {
+      /* ignore audio errors */
+    });
 
     toast.error(message, {
       position: "top-right",
