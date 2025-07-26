@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import "./connect.css";
 import "../../../styles/global.css";
 
-import eyeOpenIcon from "../../../assets/icons/black/eye-open.svg";
-import eyeClosedIcon from "../../../assets/icons/black/eye-closed.svg";
+import { ReactComponent as EyeOpenIcon } from "../../../assets/icons/black/eye-open.svg";
+import { ReactComponent as EyeClosedIcon } from "../../../assets/icons/black/eye-closed.svg";
 import logo from "../../../assets/images/falcon-white-full.svg";
 import { API_BASE_URL } from "../../../config/constants";
 import Loader from "../../../components/Loader/Loader";
@@ -175,7 +175,7 @@ const SignUp = () => {
           initial="hidden"
           animate="visible"
         >
-          Welcome to Falcon - Let’s create your account
+          Welcome to Falcon - Let's create your account
         </motion.p>
 
         <motion.input
@@ -223,10 +223,7 @@ const SignUp = () => {
             initial="hidden"
             animate="visible"
           >
-            <img
-              src={showPassword ? eyeOpenIcon : eyeClosedIcon}
-              alt="Toggle Password"
-            />
+            {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
           </motion.button>
         </motion.div>
         <motion.input

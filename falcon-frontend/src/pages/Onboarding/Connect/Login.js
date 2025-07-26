@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import "./connect.css";
 import "../../../styles/global.css";
 
-import eyeOpenIcon from "../../../assets/icons/black/eye-open.svg";
-import eyeClosedIcon from "../../../assets/icons/black/eye-closed.svg";
+import { ReactComponent as EyeOpenIcon } from "../../../assets/icons/black/eye-open.svg";
+import { ReactComponent as EyeClosedIcon } from "../../../assets/icons/black/eye-closed.svg";
 
 import logo from "../../../assets/images/falcon-white-full.svg";
 import errorSound from "../../../assets/sounds/error-message.mp3";
@@ -189,10 +189,7 @@ const Login = () => {
             initial="hidden"
             animate="visible"
           >
-            <img
-              src={showPassword ? eyeOpenIcon : eyeClosedIcon}
-              alt="Toggle Password"
-            />
+            {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
           </motion.button>
         </motion.div>
 

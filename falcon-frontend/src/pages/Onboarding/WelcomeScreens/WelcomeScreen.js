@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import "./WelcomeScreen.css";
 import "../../../styles/global.css";
 
-import logo from "../../../assets/images/falcon-white-full.svg";
+import { ReactComponent as Logo } from "../../../assets/images/falcon-white-full.svg";
 import welcomeImage from "../../../assets/images/image-mail-intro.png";
 
 // Animation Variants
@@ -50,14 +50,14 @@ const WelcomeScreen = () => {
     <div className="welcome-screen-container">
       <motion.div className="welcome-content">
         {/* Logo & Header */}
-        <motion.img
+        <motion.div
           className="logo-full-white"
-          src={logo}
-          alt="logo-falcon"
           variants={headerVariants}
           initial="hidden"
           animate="visible"
-        />
+        >
+          <Logo />
+        </motion.div>
         <motion.p
           className="sub-title"
           variants={headerVariants}
