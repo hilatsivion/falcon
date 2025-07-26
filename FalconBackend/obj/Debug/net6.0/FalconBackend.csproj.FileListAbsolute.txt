@@ -96,3 +96,4 @@ C:\Users\user\Desktop\falcon\FalconBackend\obj\Debug\net6.0\ref\FalconBackend.dl
 C:\Users\user\Desktop\falcon\FalconBackend\bin\Debug\net6.0\Microsoft.Extensions.Http.Polly.dll
 C:\Users\user\Desktop\falcon\FalconBackend\bin\Debug\net6.0\Polly.dll
 C:\Users\user\Desktop\falcon\FalconBackend\bin\Debug\net6.0\Polly.Extensions.Http.dll
+C:\Users\user\Desktop\falcon\FalconBackend\obj\Debug\net6.0\staticwebassets.upToDateCheck.txt
