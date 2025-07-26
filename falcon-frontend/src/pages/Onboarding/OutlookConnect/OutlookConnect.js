@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   API_BASE_URL,
   OAUTH_SCOPES,
@@ -11,6 +12,7 @@ import { getAuthToken } from "../../../utils/auth";
 const OutlookConnectPage = () => {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -57,8 +59,20 @@ const OutlookConnectPage = () => {
           document.title,
           window.location.pathname
         );
-        // Optionally redirect to next step:
-        // window.location.href = '/sync';
+        // Check user profile for Outlook connection flag
+        try {
+          const profileRes = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const profile = await profileRes.json();
+          // Adjust the flag name as needed (hasOutlookConnection or isOutlookConnected)
+          if (profile.hasOutlookConnection || profile.isOutlookConnected) {
+            navigate("/loadingData");
+          }
+        } catch (profileErr) {
+          // If profile check fails, still allow navigation
+          navigate("/loadingData");
+        }
       } else {
         throw new Error(result.message || "Token exchange failed");
       }
