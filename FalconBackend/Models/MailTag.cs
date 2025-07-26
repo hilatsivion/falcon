@@ -5,10 +5,8 @@ namespace FalconBackend.Models
 {
     public class MailTag
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
-
+        // Removed Id property - using composite key (MailReceivedId, TagId) defined in AppDbContext
+        
         [Required]
         [ForeignKey("MailReceived")]
         public int MailReceivedId { get; set; }

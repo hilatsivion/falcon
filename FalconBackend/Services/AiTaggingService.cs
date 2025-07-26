@@ -148,6 +148,8 @@ namespace FalconBackend.Services
             var emailsToUpdate = new List<MailReceived>();
             var newTagsNeeded = new HashSet<string>();
             
+            _logger.LogInformation($"🚀 Starting batch processing for {results.Count} AI results");
+            
             // First pass: Collect all needed tags and identify spam emails
             foreach (var result in results)
             {
@@ -238,6 +240,7 @@ namespace FalconBackend.Services
                             {
                                 MailReceivedId = email.MailId,
                                 TagId = tag.Id
+                                // DO NOT set Id property - it conflicts with composite key
                             };
 
                             newMailTags.Add(mailTag);
@@ -251,7 +254,25 @@ namespace FalconBackend.Services
             // Add all MailTags at once for better performance
             if (newMailTags.Any())
             {
+                _logger.LogInformation($"🏷️ About to add {newMailTags.Count} MailTags to context");
+                
+                // Debug: Log each MailTag being added
+                foreach (var mailTag in newMailTags)
+                {
+                    _logger.LogDebug($"Adding MailTag: MailReceivedId={mailTag.MailReceivedId}, TagId={mailTag.TagId}");
+                }
+                
                 _context.MailTags.AddRange(newMailTags);
+                
+                // Verify they were added to change tracker
+                var addedEntries = _context.ChangeTracker.Entries<MailTag>()
+                    .Where(e => e.State == EntityState.Added)
+                    .ToList();
+                _logger.LogInformation($"✅ {addedEntries.Count} MailTags are now in Added state");
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ No new MailTags to add");
             }
 
             // Update spam emails with proper entity tracking
@@ -271,9 +292,36 @@ namespace FalconBackend.Services
             using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
+                // Debug: Check what's being tracked before save
+                var trackedEntries = _context.ChangeTracker.Entries().ToList();
+                _logger.LogInformation($"📊 About to save changes. Tracked entities: {trackedEntries.Count}");
+                
+                foreach (var entry in trackedEntries)
+                {
+                    _logger.LogDebug($"Tracked: {entry.Entity.GetType().Name} - State: {entry.State}");
+                }
+
                 var changeCount = await _context.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
+                
                 _logger.LogInformation($"✅ Successfully saved {changeCount} database changes - {allMailTags.Count} MailTags and {emailsToUpdate.Count} spam updates");
+                
+                // Debug: Verify MailTags were actually saved
+                if (newMailTags.Any())
+                {
+                    var firstMailTag = newMailTags.First();
+                    var savedMailTag = await _context.MailTags
+                        .FirstOrDefaultAsync(mt => mt.MailReceivedId == firstMailTag.MailReceivedId && mt.TagId == firstMailTag.TagId, cancellationToken);
+                    
+                    if (savedMailTag != null)
+                    {
+                        _logger.LogInformation($"✅ Verification: MailTag was saved successfully");
+                    }
+                    else
+                    {
+                        _logger.LogError($"❌ Verification FAILED: MailTag was NOT saved to database");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -283,6 +331,13 @@ namespace FalconBackend.Services
                 {
                     _logger.LogError($"❌ Inner exception: {ex.InnerException.Message}");
                 }
+                
+                // Debug: Log validation errors if any
+                if (ex is Microsoft.EntityFrameworkCore.DbUpdateException)
+                {
+                    _logger.LogError($"❌ DbUpdateException details: {ex}");
+                }
+                
                 throw;
             }
 
@@ -310,6 +365,48 @@ namespace FalconBackend.Services
             catch (Exception ex)
             {
                 _logger.LogWarning($"Pipeline server not available: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Test method to verify MailTag creation works
+        /// </summary>
+        public async Task<bool> TestMailTagCreationAsync(int emailId, int tagId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation($"🧪 Testing MailTag creation for EmailId={emailId}, TagId={tagId}");
+                
+                // Check if it already exists
+                var exists = await _context.MailTags
+                    .AnyAsync(mt => mt.MailReceivedId == emailId && mt.TagId == tagId, cancellationToken);
+                
+                if (exists)
+                {
+                    _logger.LogInformation($"✅ MailTag already exists");
+                    return true;
+                }
+                
+                var testMailTag = new MailTag
+                {
+                    MailReceivedId = emailId,
+                    TagId = tagId
+                };
+                
+                _context.MailTags.Add(testMailTag);
+                var changes = await _context.SaveChangesAsync(cancellationToken);
+                
+                _logger.LogInformation($"✅ Test MailTag created successfully. Changes: {changes}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"❌ Test MailTag creation failed: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError($"❌ Inner exception: {ex.InnerException.Message}");
+                }
                 return false;
             }
         }
