@@ -7,8 +7,8 @@ import { toast } from "react-toastify";
 import "./loadingData.css";
 import "../../../styles/global.css";
 
-import logo from "../../../assets/images/falcon-logo-full-blue.svg";
-import spinnerIcon from "../../../assets/icons/black/spinner.svg";
+import { ReactComponent as Logo } from "../../../assets/images/falcon-logo-full-blue.svg";
+import { ReactComponent as SpinnerIcon } from "../../../assets/icons/black/spinner.svg";
 
 const LoadingDataPage = () => {
   const [isDataLoadingComplete, setIsDataLoadingComplete] = useState(false);
@@ -87,8 +87,8 @@ const LoadingDataPage = () => {
 
   return (
     <div className="loading-container">
-      <img className="loading-logo" src={logo} alt="Falcon Logo" />
-      <img className="loading-spinner" src={spinnerIcon} alt="Loading..." />
+      <Logo className="loading-logo" />
+      <SpinnerIcon className="loading-spinner" />
       <p className="loading-text">
         <span>Fetching all your Data</span>
       </p>
