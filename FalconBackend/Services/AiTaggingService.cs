@@ -19,7 +19,7 @@ namespace FalconBackend.Services
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _pipelineServerUrl = configuration["PipelineServer:BaseUrl"] ?? "http://localhost:8000";
+            _pipelineServerUrl = configuration["PipelineServer:BaseUrl"] ?? "https://localhost:8000";
         }
 
         /// <summary>
