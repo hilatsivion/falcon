@@ -7,7 +7,7 @@ import "../../../styles/global.css";
 import { ReactComponent as EyeOpenIcon } from "../../../assets/icons/black/eye-open.svg";
 import { ReactComponent as EyeClosedIcon } from "../../../assets/icons/black/eye-closed.svg";
 
-import logo from "../../../assets/images/falcon-white-full.svg";
+import { ReactComponent as Logo } from "../../../assets/images/falcon-white-full.svg";
 import errorSound from "../../../assets/sounds/error-message.mp3";
 
 import Loader from "../../../components/Loader/Loader";
@@ -133,7 +133,7 @@ const Login = () => {
       {/* Logo */}
       <motion.img
         className="logo-full-white-small"
-        src={logo}
+        src={Logo}
         alt="logo-falcon"
       />
 

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import ConfirmPopup from "../Popup/ConfirmPopup";
-import forwardingIcon from "../../assets/icons/black/forward-icon.svg";
-import replyIcon from "../../assets/icons/black/reply-icon.svg";
-import unreadIcon from "../../assets/icons/black/unread-icon.svg";
-import trashIcon from "../../assets/icons/black/trash-red-icon.svg";
-import backIcon from "../../assets/icons/black/arrow-left-20.svg";
+import { ReactComponent as ForwardingIcon } from "../../assets/icons/black/forward-icon.svg";
+import { ReactComponent as ReplyIcon } from "../../assets/icons/black/reply-icon.svg";
+import { ReactComponent as UnreadIcon } from "../../assets/icons/black/unread-icon.svg";
+import { ReactComponent as TrashIcon } from "../../assets/icons/black/trash-red-icon.svg";
+import { ReactComponent as BackIcon } from "../../assets/icons/black/arrow-left-20.svg";
 import { ReactComponent as StarIconFull } from "../../assets/icons/black/full-star.svg";
 import { ReactComponent as StarIconEmpty } from "../../assets/icons/black/empty-star.svg";
 import { ReactComponent as CopyIcon } from "../../assets/icons/black/copy_to_clipboard.svg";
@@ -175,7 +175,7 @@ const EmailView = ({
 
               <div className="email-toolbar">
                 <button className="email-toolbar-item" onClick={onClose}>
-                  <img src={backIcon} alt="Back" />
+                  <BackIcon />
                   <span className="small-text">Back</span>
                 </button>
                 <div className="flex-row-gap-30">
@@ -183,26 +183,26 @@ const EmailView = ({
                     className="email-toolbar-item"
                     onClick={() => (onMarkUnread ? onMarkUnread() : null)}
                   >
-                    <img src={unreadIcon} alt="Mark as Unread" />
+                    <UnreadIcon />
                   </button>
                   <button
                     className="email-toolbar-item"
                     onClick={() => (onReply ? onReply() : null)}
                   >
-                    <img src={replyIcon} alt="Reply" />
+                    <ReplyIcon />
                   </button>
                   <button
                     className="email-toolbar-item"
                     onClick={() => (onForward ? onForward() : null)}
                   >
-                    <img src={forwardingIcon} alt="Forward" />
+                    <ForwardingIcon />
                   </button>
                 </div>
                 <button
                   className="email-toolbar-item trash-icon"
                   onClick={() => setShowDeletePopup(true)}
                 >
-                  <img src={trashIcon} alt="Delete" />
+                  <TrashIcon />
                 </button>
               </div>
             </>
