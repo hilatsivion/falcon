@@ -58,7 +58,7 @@ namespace FalconBackend.Services
                 .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
                 .Where(m => _context.MailAccounts.Where(ma => ma.AppUserEmail == userEmail)
                     .Select(ma => ma.MailAccountId).Contains(m.MailAccountId)
-                    && !m.IsDeleted)
+                    && !m.IsDeleted && !m.IsSpam) // ✅ Added !m.IsSpam filter
                 .OrderByDescending(m => m.TimeReceived)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -125,7 +125,7 @@ namespace FalconBackend.Services
         {
             return await _context.MailReceived
                 .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
-                .Where(m => m.MailAccount.MailAccountId == mailAccountId && !m.IsDeleted)
+                .Where(m => m.MailAccount.MailAccountId == mailAccountId && !m.IsDeleted && !m.IsSpam) // ✅ Added !m.IsSpam filter
                 .OrderByDescending(m => m.TimeReceived)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -818,7 +818,7 @@ namespace FalconBackend.Services
 
             var receivedFavoritesQuery = _context.MailReceived
                                         .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
-                                        .Where(m => userMailAccountIds.Contains(m.MailAccountId) && m.IsFavorite == true);
+                                        .Where(m => userMailAccountIds.Contains(m.MailAccountId) && m.IsFavorite == true && !m.IsSpam); // ✅ Added !m.IsSpam filter
 
             var sentFavoritesQuery = _context.MailSent
                                     .Include(m => m.Recipients)
@@ -874,7 +874,7 @@ namespace FalconBackend.Services
                 .Include(m => m.MailTags).ThenInclude(mt => mt.Tag)
                 .Where(m => _context.MailAccounts.Where(ma => ma.AppUserEmail == userEmail)
                     .Select(ma => ma.MailAccountId).Contains(m.MailAccountId)
-                    && !m.IsRead && !m.IsDeleted)
+                    && !m.IsRead && !m.IsDeleted && !m.IsSpam) // ✅ Added !m.IsSpam filter
                 .OrderByDescending(m => m.TimeReceived)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
