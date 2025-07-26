@@ -4,7 +4,7 @@ import { ReactComponent as CloseIcon } from "../../../assets/icons/black/x.svg";
 import Loader from "../../../components/Loader/Loader";
 import { useAuth } from "../../../context/AuthContext";
 import { toast } from "react-toastify";
-import { GoogleGenAI } from "@google/genai";
+// import { GoogleGenAI } from "@google/genai";
 
 const AiComposePanel = ({ onClose, onDone }) => {
   const [idea, setIdea] = useState("");
@@ -27,6 +27,8 @@ const AiComposePanel = ({ onClose, onDone }) => {
   }, [aiKey]);
 
   const handleGenerate = async () => {
+    console.log("AI Key available:", !!aiKey, "Length:", aiKey ? aiKey.length : 0, "Key preview:", aiKey ? aiKey.substring(0, 10) + "..." : "none");
+    
     if (!aiKey) {
       toast.error("AI Key is missing. Cannot generate content.");
       setError("AI Key is missing. Please ensure you are logged in correctly.");
@@ -44,13 +46,43 @@ Output the result ONLY as a valid JSON object like this: {"subject": "Generated 
 Email Idea: ${idea}`;
 
     try {
-      // Initialize Google GenAI with the API key
-      const ai = new GoogleGenAI(aiKey);
+      // Validate API key
+      if (!aiKey || aiKey.trim() === '') {
+        throw new Error('Google AI API key is missing or empty');
+      }
 
-      // Generate content using Gemini
-      const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
-      const response = await model.generateContent(fullPrompt);
-      const result = await response.response;
+      // Make sure the API key starts with 'AIza' (Google API key format)
+      if (!aiKey.startsWith('AIza')) {
+        throw new Error('Invalid Google AI API key format. Key should start with "AIza"');
+      }
+
+      // Use direct REST API call instead of SDK for better browser compatibility
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${aiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: fullPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error (${response.status}): ${errorText}`);
+      }
+
+      const result = await response.json();
 
       // --- Parse the result ---
       console.log("Gemini AI Response:", result);
@@ -58,8 +90,8 @@ Email Idea: ${idea}`;
       let generatedSubject = "Error: Could not parse subject";
       let generatedBody = "Error: Could not parse body";
 
-      if (result && result.text) {
-        const rawText = result.text;
+      if (result && result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts[0]) {
+        const rawText = result.candidates[0].content.parts[0].text;
 
         // --- Attempt to extract JSON from the raw text ---
         try {
@@ -93,14 +125,35 @@ Email Idea: ${idea}`;
       } else {
         generatedSubject = "Response Error";
         generatedBody =
-          "Error: Unexpected response format from AI (expected text property).";
+          "Error: Unexpected response format from AI (expected candidates array with content).";
       }
 
       setSubject(generatedSubject);
       setContent(generatedBody);
     } catch (err) {
       console.error("Error calling Gemini AI API:", err);
-      setError(`Failed to generate: ${err.message}`);
+      console.error("Error details:", {
+        name: err.name,
+        message: err.message,
+        stack: err.stack
+      });
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = `Failed to generate: ${err.message}`;
+      
+      if (err.message.includes("API Key must be set")) {
+        errorMessage = "Google AI API key is not properly configured. Please check your login credentials.";
+      } else if (err.message.includes("Invalid Google AI API key format")) {
+        errorMessage = "The API key format is invalid. Please contact support.";
+      } else if (err.message.includes("network") || err.message.includes("fetch")) {
+        errorMessage = "Network error. Please check your internet connection and try again.";
+      }
+      
+      setError(errorMessage);
+      
+      // Provide fallback content for testing purposes
+      setSubject("AI Service Temporarily Unavailable");
+      setContent("The AI service is currently experiencing issues. Please try again later or compose your email manually.");
     } finally {
       setIsGenerating(false);
       setResultReady(true);
