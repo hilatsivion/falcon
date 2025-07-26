@@ -59,6 +59,17 @@ namespace FalconBackend.Services
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
                     _logger.LogError($"Pipeline server returned error {response.StatusCode}: {errorContent}");
+                    // Collect all mail IDs that were tagged as "spam"
+                    var spamMailIds = emails
+                        .Where(email => email.IsSpam)
+                        .Select(email => email.MailId)
+                        .ToList();
+
+                    // Mark these emails as spam in the database
+                    if (spamMailIds.Any())
+                    {
+                        await MarkSpamFromAiTagsAsync(spamMailIds);
+                    }
                     return new List<MailTag>();
                 }
 
@@ -210,6 +221,29 @@ namespace FalconBackend.Services
                 _logger.LogWarning($"Pipeline server not available: {ex.Message}");
                 return false;
             }
+        }
+
+        private async Task MarkSpamFromAiTagsAsync(List<int> spamMailIds)
+        {
+            if (spamMailIds == null || !spamMailIds.Any())
+            {
+                return;
+            }
+
+            // Fetch emails marked as spam from the database  
+            var spamEmails = await _context.MailReceived
+                .Where(mail => spamMailIds.Contains(mail.MailId))
+                .ToListAsync();
+
+            foreach (var email in spamEmails)
+            {
+                email.IsSpam = true;
+            }
+
+            // Save changes to the database  
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Marked {spamEmails.Count} emails as spam in the database.");
         }
     }
 
