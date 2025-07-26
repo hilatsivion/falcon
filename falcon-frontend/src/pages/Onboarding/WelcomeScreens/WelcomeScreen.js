@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import "./WelcomeScreen.css";
 import "../../../styles/global.css";
 
-import { ReactComponent as Logo } from "../../../assets/images/falcon-white-full.svg";
+import logoFalcon from "../../../assets/images/falcon-white-full.png";
 import welcomeImage from "../../../assets/images/image-mail-intro.png";
 
 // Animation Variants
@@ -56,7 +56,11 @@ const WelcomeScreen = () => {
           initial="hidden"
           animate="visible"
         >
-          <Logo />
+          <img
+            src={logoFalcon}
+            alt="logo-falcon"
+            className="logo-full-white-img"
+          />
         </motion.div>
         <motion.p
           className="sub-title"

@@ -7,7 +7,7 @@ import "../../../styles/global.css";
 
 import { ReactComponent as EyeOpenIcon } from "../../../assets/icons/black/eye-open.svg";
 import { ReactComponent as EyeClosedIcon } from "../../../assets/icons/black/eye-closed.svg";
-import { ReactComponent as Logo } from "../../../assets/images/falcon-white-full.svg";
+import logoFalcon from "../../../assets/images/falcon-white-full.png";
 import { API_BASE_URL } from "../../../config/constants";
 import Loader from "../../../components/Loader/Loader";
 import { toast } from "react-toastify";
@@ -151,7 +151,7 @@ const SignUp = () => {
 
       <motion.img
         className="logo-full-white-small"
-        src={Logo}
+        src={logoFalcon}
         alt="logo-falcon"
       />
 
