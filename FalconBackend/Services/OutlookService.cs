@@ -638,7 +638,7 @@ namespace FalconBackend.Services
                     new("client_secret", _clientSecret),
                     new("grant_type", "refresh_token"),
                     new("refresh_token", refreshToken),
-                    new("scope", "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send")
+                    new("scope", "offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send")
                 };
 
                 var tokenRequest = new FormUrlEncodedContent(tokenRequestData);
@@ -664,7 +664,7 @@ namespace FalconBackend.Services
                     ExpiresAt = DateTime.UtcNow.AddSeconds(tokenData.GetProperty("expires_in").GetInt32()),
                     TokenType = tokenData.GetProperty("token_type").GetString()!,
                     Scope = tokenData.TryGetProperty("scope", out var scopeProp) ? 
-                           scopeProp.GetString() : "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send"
+                           scopeProp.GetString() : "offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send"
                 };
 
                 _logger.LogInformation("Access token refreshed successfully");
@@ -757,7 +757,7 @@ namespace FalconBackend.Services
                     new("grant_type", "authorization_code"),
                     new("code", authorizationCode),
                     new("redirect_uri", redirectUri),
-                    new("scope", "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send")
+                    new("scope", "offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send")
                 };
 
                 var tokenRequest = new FormUrlEncodedContent(tokenRequestData);
@@ -808,7 +808,7 @@ namespace FalconBackend.Services
                     ExpiresAt = DateTime.UtcNow.AddSeconds(tokenData.GetProperty("expires_in").GetInt32()),
                     TokenType = tokenData.GetProperty("token_type").GetString()!,
                     Scope = tokenData.TryGetProperty("scope", out var scopeProp) ? 
-                           scopeProp.GetString() : "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send"
+                           scopeProp.GetString() : "offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send"
                 };
 
                 _logger.LogInformation("Tokens obtained successfully");
@@ -827,7 +827,7 @@ namespace FalconBackend.Services
         public string GetAuthorizationUrl(string redirectUri, string? state = null)
         {
             var baseUrl = $"{_configuration["MicrosoftGraph:Instance"]}common/oauth2/v2.0/authorize";
-            var scope = "https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send";
+            var scope = "offline_access https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send";
             
             var queryParams = new List<string>
             {

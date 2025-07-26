@@ -9,6 +9,8 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using BCrypt.Net;
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FalconBackend.Services
 {
@@ -20,9 +22,16 @@ namespace FalconBackend.Services
         private readonly AnalyticsService _analyticsService;
         private readonly IConfiguration _configuration;
         private readonly UserService _userService;
+        private readonly IServiceProvider _serviceProvider;
 
 
-        public AuthService(AppDbContext context, IConfiguration configuration, AnalyticsService analyticsService, UserService userService)
+        public AuthService(
+        AppDbContext context,
+        IConfiguration configuration,
+        AnalyticsService analyticsService,
+        UserService userService,
+        IServiceProvider serviceProvider 
+)
         {
             _context = context;
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -30,6 +39,7 @@ namespace FalconBackend.Services
             _jwtSecret = configuration["JwtSettings:Key"] ?? throw new Exception("JWT Secret Key not found in configuration.");
             _analyticsService = analyticsService;
             _userService = userService;
+            _serviceProvider = serviceProvider; 
         }
 
 
@@ -72,47 +82,53 @@ namespace FalconBackend.Services
         /// </summary>
         private async Task RefreshTokensAndSyncEmailsAsync(string userEmail)
         {
-            try
+            using (var scope = _serviceProvider.CreateScope())
             {
-                Console.WriteLine($"--- Starting background token refresh and email sync for user {userEmail} ---");
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var userService = scope.ServiceProvider.GetRequiredService<UserService>();
 
-                // Get all mail accounts for the user
-                var mailAccounts = await _context.MailAccounts
-                    .Where(ma => ma.AppUserEmail == userEmail)
-                    .ToListAsync();
-
-                if (!mailAccounts.Any())
+                try
                 {
-                    Console.WriteLine($"--- No mail accounts found for user {userEmail} ---");
-                    return;
+                    Console.WriteLine($"--- Starting background token refresh and email sync for user {userEmail} ---");
+
+                    // Get all mail accounts for the user
+                    var mailAccounts = await dbContext.MailAccounts
+                        .Where(ma => ma.AppUserEmail == userEmail)
+                        .ToListAsync();
+
+                    if (!mailAccounts.Any())
+                    {
+                        Console.WriteLine($"--- No mail accounts found for user {userEmail} ---");
+                        return;
+                    }
+
+                    Console.WriteLine($"--- Found {mailAccounts.Count} mail accounts for user {userEmail} ---");
+
+                    // Process each mail account
+                    foreach (var mailAccount in mailAccounts)
+                    {
+                        try
+                        {
+                            Console.WriteLine($"--- Processing mail account {mailAccount.EmailAddress} ---");
+                            
+                            // Sync emails for this account (includes automatic token refresh)
+                            await userService.SyncMailsForAccountAsync(mailAccount);
+                            
+                            Console.WriteLine($"--- Completed sync for mail account {mailAccount.EmailAddress} ---");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"--- Failed to sync mail account {mailAccount.EmailAddress}: {ex.Message} ---");
+                            // Continue with other accounts even if one fails
+                        }
+                    }
+
+                    Console.WriteLine($"--- Completed background sync for user {userEmail} ---");
                 }
-
-                Console.WriteLine($"--- Found {mailAccounts.Count} mail accounts for user {userEmail} ---");
-
-                // Process each mail account
-                foreach (var mailAccount in mailAccounts)
+                catch (Exception ex)
                 {
-                    try
-                    {
-                        Console.WriteLine($"--- Processing mail account {mailAccount.EmailAddress} ---");
-                        
-                        // Sync emails for this account (includes automatic token refresh)
-                        await _userService.SyncMailsForAccountAsync(mailAccount);
-                        
-                        Console.WriteLine($"--- Completed sync for mail account {mailAccount.EmailAddress} ---");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"--- Failed to sync mail account {mailAccount.EmailAddress}: {ex.Message} ---");
-                        // Continue with other accounts even if one fails
-                    }
+                    Debug.WriteLine($"--- Error in background token refresh and sync for user {userEmail}: {ex.Message} ---");
                 }
-
-                Console.WriteLine($"--- Completed background sync for user {userEmail} ---");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"--- Error in background token refresh and sync for user {userEmail}: {ex.Message} ---");
             }
         }
 

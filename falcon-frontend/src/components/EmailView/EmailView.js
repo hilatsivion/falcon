@@ -164,7 +164,7 @@ const EmailView = ({
                     {email.attachments.map((att, index) => (
                       <li key={`att-${index}`}>
                         <span>
-                          {att.name} ({(att.fileSize ? (att.fileSize / 1024).toFixed(1) : '0.0')} KB) -{" "}
+                          {att.name} ({(att.fileSize / 1024).toFixed(1)} KB) -{" "}
                           <i>Download link NYI</i>
                         </span>
                       </li>
