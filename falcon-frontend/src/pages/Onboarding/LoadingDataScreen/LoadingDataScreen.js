@@ -20,7 +20,7 @@ const LoadingDataPage = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsMinTimeElapsed(true);
-    }, 3000);
+    }, 30000); // 30 seconds
 
     return () => clearTimeout(timer);
   }, []);
