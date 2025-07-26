@@ -7,7 +7,7 @@ import "../../../styles/global.css";
 import { ReactComponent as EyeOpenIcon } from "../../../assets/icons/black/eye-open.svg";
 import { ReactComponent as EyeClosedIcon } from "../../../assets/icons/black/eye-closed.svg";
 
-import { ReactComponent as Logo } from "../../../assets/images/falcon-white-full.svg";
+import logoFalcon from "../../../assets/images/falcon-white-full.png";
 import errorSound from "../../../assets/sounds/error-message.mp3";
 
 import Loader from "../../../components/Loader/Loader";
@@ -53,7 +53,9 @@ const Login = () => {
   // Show Error for 3 seconds
   const showError = (message) => {
     const audio = new Audio(errorSound);
-    audio.play();
+    audio.play().catch(() => {
+      /* ignore audio errors */
+    });
     toast.error(message, {
       position: "top-right",
       autoClose: 3000,
@@ -133,7 +135,7 @@ const Login = () => {
       {/* Logo */}
       <motion.img
         className="logo-full-white-small"
-        src={Logo}
+        src={logoFalcon}
         alt="logo-falcon"
       />
 
