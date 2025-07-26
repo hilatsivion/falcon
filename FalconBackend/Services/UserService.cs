@@ -172,29 +172,53 @@ namespace FalconBackend.Services
                 return;
             }
 
+            Console.WriteLine($"--- Saving {newEmails.Count} new emails to database ---");
+            
             // Add new received emails to the database FIRST
             _context.MailReceived.AddRange(newEmails);
             await _context.SaveChangesAsync();
 
-            // Apply AI-powered tagging to new received emails AFTER they're saved
+            // CRITICAL: Refresh the email entities to get the generated MailId values
+            Console.WriteLine($"--- Refreshing email IDs from database ---");
+            var savedEmailIds = newEmails.Select(e => e.MailId).ToList();
+            Console.WriteLine($"--- Generated MailIds: [{string.Join(", ", savedEmailIds)}] ---");
+
+            // Verify the emails now have proper database IDs
+            var emailsWithInvalidIds = newEmails.Where(e => e.MailId <= 0).ToList();
+            if (emailsWithInvalidIds.Any())
+            {
+                Console.WriteLine($"--- ERROR: {emailsWithInvalidIds.Count} emails still have invalid MailIds ---");
+                // Re-fetch from database to ensure we have correct IDs
+                var uniqueKeys = newEmails.Select(e => new { e.Subject, e.TimeReceived, e.Sender }).ToList();
+                newEmails = await _context.MailReceived
+                    .Where(mr => mr.MailAccountId == mailAccount.MailAccountId)
+                    .Where(mr => uniqueKeys.Any(uk => 
+                        uk.Subject == mr.Subject && 
+                        uk.TimeReceived == mr.TimeReceived && 
+                        uk.Sender == mr.Sender))
+                    .ToListAsync();
+                
+                Console.WriteLine($"--- Re-fetched emails with IDs: [{string.Join(", ", newEmails.Select(e => e.MailId))}] ---");
+            }
+
+            // Apply AI-powered tagging to new received emails AFTER they're saved and have proper IDs
             if (newEmails.Any())
             {
                 try
                 {
-                    Console.WriteLine($"--- Applying AI tagging to {newEmails.Count} received emails ---");
+                    Console.WriteLine($"--- Applying AI tagging to {newEmails.Count} received emails with IDs: [{string.Join(", ", newEmails.Select(e => e.MailId))}] ---");
                     var aiTags = await _aiTaggingService.GetAiTagsAsync(newEmails);
                     
-                    // Apply the AI tags to the emails
-                    if (aiTags.Any())
-                    {
-                        _context.MailTags.AddRange(aiTags);
-                        await _context.SaveChangesAsync();
-                        Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags to received emails ---");
-                    }
+                    // Note: AI tagging service now handles its own database saves
+                    Console.WriteLine($"--- AI tagging completed. Tags were processed by AiTaggingService ---");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"--- AI tagging failed, continuing without AI tags: {ex.Message} ---");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"--- Inner exception: {ex.InnerException.Message} ---");
+                    }
                     // Continue without AI tags if the service fails
                 }
             }
@@ -453,29 +477,53 @@ namespace FalconBackend.Services
                 return;
             }
 
+            Console.WriteLine($"--- Saving {outlookEmails.Count} emails to database ---");
+            
             // Add emails to the database FIRST
             _context.MailReceived.AddRange(outlookEmails);
             await _context.SaveChangesAsync();
 
-            // Apply AI-powered tagging to all emails AFTER they're saved
+            // CRITICAL: Refresh the email entities to get the generated MailId values
+            Console.WriteLine($"--- Refreshing email IDs from database ---");
+            var savedEmailIds = outlookEmails.Select(e => e.MailId).ToList();
+            Console.WriteLine($"--- Generated MailIds: [{string.Join(", ", savedEmailIds)}] ---");
+
+            // Verify the emails now have proper database IDs
+            var emailsWithInvalidIds = outlookEmails.Where(e => e.MailId <= 0).ToList();
+            if (emailsWithInvalidIds.Any())
+            {
+                Console.WriteLine($"--- ERROR: {emailsWithInvalidIds.Count} emails still have invalid MailIds ---");
+                // Re-fetch from database to ensure we have correct IDs
+                var uniqueKeys = outlookEmails.Select(e => new { e.Subject, e.TimeReceived, e.Sender }).ToList();
+                outlookEmails = await _context.MailReceived
+                    .Where(mr => mr.MailAccountId == mailAccount.MailAccountId)
+                    .Where(mr => uniqueKeys.Any(uk => 
+                        uk.Subject == mr.Subject && 
+                        uk.TimeReceived == mr.TimeReceived && 
+                        uk.Sender == mr.Sender))
+                    .ToListAsync();
+                
+                Console.WriteLine($"--- Re-fetched emails with IDs: [{string.Join(", ", outlookEmails.Select(e => e.MailId))}] ---");
+            }
+
+            // Apply AI-powered tagging to all emails AFTER they're saved and have proper IDs
             if (outlookEmails.Any())
             {
                 try
                 {
-                    Console.WriteLine($"--- Applying AI tagging to {outlookEmails.Count} emails ---");
+                    Console.WriteLine($"--- Applying AI tagging to {outlookEmails.Count} emails with IDs: [{string.Join(", ", outlookEmails.Select(e => e.MailId))}] ---");
                     var aiTags = await _aiTaggingService.GetAiTagsAsync(outlookEmails);
                     
-                    // Apply the AI tags to the emails
-                    if (aiTags.Any())
-                    {
-                        _context.MailTags.AddRange(aiTags);
-                        await _context.SaveChangesAsync();
-                        Console.WriteLine($"--- Successfully applied {aiTags.Count} AI-generated tags ---");
-                    }
+                    // Note: AI tagging service now handles its own database saves
+                    Console.WriteLine($"--- AI tagging completed. Tags were processed by AiTaggingService ---");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"--- AI tagging failed, continuing without AI tags: {ex.Message} ---");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"--- Inner exception: {ex.InnerException.Message} ---");
+                    }
                     // Continue without AI tags if the service fails
                 }
             }

@@ -36,12 +36,14 @@ namespace FalconBackend.Services
 
                 _logger.LogInformation($"Classifying {emails.Count} emails using AI pipeline");
 
-                // Prepare payload for pipeline server
-                var messages = emails.Select((email, index) => new PipelineMessage
+                // Prepare payload for pipeline server - use actual MailId instead of array index
+                var messages = emails.Select(email => new PipelineMessage
                 {
-                    Id = index,
-                    Content = email.Body
+                    Id = email.MailId, // ✅ Use actual database MailId
+                    Content = email.Body ?? string.Empty
                 }).ToList();
+
+                _logger.LogDebug($"Sending emails to AI pipeline: {string.Join(", ", messages.Select(m => $"Id={m.Id}"))}");
 
                 var payload = new PipelineBatchRequest { Messages = messages };
                 var jsonPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions
@@ -77,7 +79,7 @@ namespace FalconBackend.Services
                 _logger.LogInformation($"Pipeline server returned {results.Count} results");
                 foreach (var result in results)
                 {
-                    _logger.LogDebug($"Pipeline result: Id={result.Id}, Labels=[{string.Join(", ", result.Labels)}]");
+                    _logger.LogDebug($"Pipeline result: MailId={result.Id}, Labels=[{string.Join(", ", result.Labels)}]");
                 }
 
                 // Get available tags from database
@@ -86,30 +88,27 @@ namespace FalconBackend.Services
                     .ToListAsync();
                 
                 _logger.LogInformation($"Found {availableTags.Count} system tags in database");
-                foreach (var tag in availableTags)
-                {
-                    _logger.LogDebug($"Available tag: Id={tag.Id}, Name={tag.TagName}");
-                }
+
+                // Create a dictionary for faster email lookup by MailId
+                var emailDict = emails.ToDictionary(e => e.MailId, e => e);
 
                 // Create MailTag entities based on AI predictions
                 var mailTags = new List<MailTag>();
                 foreach (var result in results)
                 {
-                    if (result.Id >= 0 && result.Id < emails.Count)
+                    if (emailDict.TryGetValue(result.Id, out var email))
                     {
-                        var email = emails[result.Id];
+                        _logger.LogDebug($"Processing AI result for email MailId={result.Id}");
                         var aiTags = await MapLabelsToTags(result.Labels, availableTags, email);
                         mailTags.AddRange(aiTags);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Could not find email with MailId={result.Id} in provided emails list");
                     }
                 }
 
                 _logger.LogInformation($"Successfully classified emails and created {mailTags.Count} AI-generated tags");
-                
-                // Debug: Log details about created tags
-                foreach (var mailTag in mailTags)
-                {
-                    _logger.LogDebug($"Created MailTag: EmailId={mailTag.MailReceivedId}, TagId={mailTag.TagId}, TagName={mailTag.Tag?.TagName}");
-                }
                 
                 return mailTags;
             }
@@ -130,7 +129,12 @@ namespace FalconBackend.Services
             bool isSpam = false;
 
             if (labels == null || !labels.Any())
+            {
+                _logger.LogDebug($"No labels provided for email MailId={email.MailId}");
                 return mailTags;
+            }
+
+            _logger.LogDebug($"Processing {labels.Count} labels for email MailId={email.MailId}: [{string.Join(", ", labels)}]");
 
             // Create a mapping from pipeline labels to database tag names
             var labelMapping = new Dictionary<string, string>
@@ -144,34 +148,40 @@ namespace FalconBackend.Services
                 { "family and friends", "Family & friends" },
                 { "personal", "Personal" },
                 { "health", "Health" },
-                { "spam", "Spam" } // Include "spam" in the mapping
+                { "spam", "Spam" }
             };
 
             foreach (var label in labels)
             {
-                if (labelMapping.TryGetValue(label.ToLowerInvariant(), out var tagName))
+                var normalizedLabel = label.ToLowerInvariant();
+                _logger.LogDebug($"Processing label: '{label}' (normalized: '{normalizedLabel}') for email MailId={email.MailId}");
+                
+                if (labelMapping.TryGetValue(normalizedLabel, out var tagName))
                 {
                     if (tagName.Equals("Spam", StringComparison.OrdinalIgnoreCase))
                     {
-                        // If the label is "spam", mark the email as spam and skip saving the tag
+                        // Mark email as spam but don't create a tag for it
                         isSpam = true;
+                        _logger.LogInformation($"Email MailId={email.MailId} detected as spam by AI");
                         continue;
                     }
 
-                    // Check if the tag exists in the database
+                    // Find or create the tag
                     var tag = availableTags.FirstOrDefault(t => t.TagName.Equals(tagName, StringComparison.OrdinalIgnoreCase));
 
                     if (tag == null)
                     {
-                        // If the tag does not exist, create it
-                        tag = new Tag
-                        {
-                            TagName = tagName
-                        };
-
+                        // Create new tag
+                        tag = new Tag { TagName = tagName };
                         _context.Tags.Add(tag);
-                        // Don't save immediately - we'll save all changes at the end
-                        _logger.LogInformation($"Created new system tag: {tagName}");
+                        
+                        // Save immediately to get the ID
+                        await _context.SaveChangesAsync();
+                        
+                        // Add to available tags to prevent duplicate creation
+                        availableTags.Add(tag);
+                        
+                        _logger.LogInformation($"Created new system tag: '{tagName}' with Id={tag.Id}");
                     }
 
                     // Check if MailTag already exists to prevent duplicates
@@ -180,7 +190,7 @@ namespace FalconBackend.Services
 
                     if (existingMailTag == null)
                     {
-                        // Create the MailTag relationship only if it doesn't exist
+                        // Create new MailTag
                         var mailTag = new MailTag
                         {
                             MailReceivedId = email.MailId,
@@ -189,25 +199,40 @@ namespace FalconBackend.Services
 
                         _context.MailTags.Add(mailTag);
                         mailTags.Add(mailTag);
-                        _logger.LogDebug($"Created MailTag: EmailId={email.MailId}, TagId={tag.Id}, TagName={tagName}");
+                        
+                        _logger.LogInformation($"Created MailTag: EmailId={email.MailId}, TagId={tag.Id}, TagName='{tagName}'");
                     }
                     else
                     {
-                        _logger.LogDebug($"MailTag already exists: EmailId={email.MailId}, TagId={tag.Id}, TagName={tagName}");
+                        _logger.LogDebug($"MailTag already exists: EmailId={email.MailId}, TagId={tag.Id}, TagName='{tagName}'");
                     }
+                }
+                else
+                {
+                    _logger.LogWarning($"Unknown label '{label}' received from AI pipeline for email MailId={email.MailId}");
                 }
             }
 
-            // If the email is marked as spam, update its IsSpam property
+            // Handle spam detection
             if (isSpam)
             {
                 email.IsSpam = true;
-                // Don't call Update() if the entity is already tracked
-                _logger.LogInformation($"Email {email.MailId} marked as spam.");
+                _context.MailReceived.Update(email);
+                _logger.LogInformation($"Email MailId={email.MailId} marked as spam in database");
             }
 
-            // Save all changes at once
-            await _context.SaveChangesAsync();
+            // Save all changes
+            try
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation($"Successfully saved {mailTags.Count} MailTags and spam status for email MailId={email.MailId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to save MailTags for email MailId={email.MailId}: {ex.Message}");
+                throw;
+            }
+
             return mailTags;
         }
 
