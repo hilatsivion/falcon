@@ -57,6 +57,8 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
         throw new Error(data.error || "Failed to refresh emails");
       }
       toast.success("Emails refreshed successfully!");
+      // Optionally refresh the current page data
+      window.location.reload();
     } catch (err) {
       toast.error(`Failed to refresh emails: ${err.message}`);
     } finally {
@@ -220,21 +222,24 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
               <LogoutIcon className="sidebar-icon" />
               <span>Logout</span>
             </div>
-            <button
-              className="sidebar-item refresh-emails"
-              onClick={handleRefreshEmails}
-              disabled={refreshing}
+            <div
+              className="sidebar-item logout"
+              onClick={refreshing ? undefined : handleRefreshEmails}
               style={{
-                width: "100%",
                 marginTop: 8,
                 opacity: refreshing ? 0.6 : 1,
+                cursor: refreshing ? "not-allowed" : "pointer",
+                pointerEvents: refreshing ? "none" : "auto",
               }}
+              tabIndex={0}
+              role="button"
+              aria-disabled={refreshing}
             >
-              <span role="img" aria-label="refresh" style={{ marginRight: 8 }}>
-                🔄
+              <span className="sidebar-icon" style={{ marginRight: 8 }}>
+                {refreshing ? "⏳" : "🔄"}
               </span>
-              {refreshing ? "Refreshing..." : "Refresh emails"}
-            </button>
+              <span>{refreshing ? "Refreshing..." : "Refresh emails"}</span>
+            </div>
 
             <div className="sidebar-user">
               <div
