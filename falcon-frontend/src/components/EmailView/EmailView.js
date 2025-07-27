@@ -77,7 +77,7 @@ const EmailView = ({
     if (!authToken || !filePath) return null;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/file/attachments/${filePath}`, {
+      const response = await fetch(`${API_BASE_URL}/api/file/Storage/${filePath}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -103,7 +103,7 @@ const EmailView = ({
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/file/attachments/${filePath}`, {
+      const response = await fetch(`${API_BASE_URL}/api/file/Storage/${filePath}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },

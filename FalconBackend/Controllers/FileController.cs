@@ -42,10 +42,32 @@ namespace FalconBackend.Controllers
                 var storagePath = Path.Combine(_environment.ContentRootPath, "Storage");
                 var fullFilePath = Path.Combine(storagePath, filePath);
 
+                // Debug logging
+                Console.WriteLine($"Requested file path: {filePath}");
+                Console.WriteLine($"Storage path: {storagePath}");
+                Console.WriteLine($"Full file path: {fullFilePath}");
+                Console.WriteLine($"File exists: {System.IO.File.Exists(fullFilePath)}");
+
                 // Check if file exists
                 if (!System.IO.File.Exists(fullFilePath))
                 {
-                    return NotFound("File not found");
+                    // Try to list files in the directory to debug
+                    var directoryPath = Path.GetDirectoryName(fullFilePath);
+                    if (Directory.Exists(directoryPath))
+                    {
+                        var files = Directory.GetFiles(directoryPath);
+                        Console.WriteLine($"Files in directory {directoryPath}:");
+                        foreach (var file in files)
+                        {
+                            Console.WriteLine($"  - {Path.GetFileName(file)}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Directory does not exist: {directoryPath}");
+                    }
+                    
+                    return NotFound($"File not found: {filePath}");
                 }
 
                 // Get file info
@@ -58,6 +80,8 @@ namespace FalconBackend.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in GetAttachment: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
