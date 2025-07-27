@@ -71,7 +71,7 @@ namespace FalconBackend.Services
         /// <summary>
         /// Fetches emails from user's Outlook inbox
         /// </summary>
-        public async Task<List<MailReceived>> GetUserEmailsAsync(string accessToken, string mailAccountId, string userEmail, int maxEmails = 50)
+        public async Task<List<MailReceived>> GetUserEmailsAsync(string accessToken, string mailAccountId, string userEmail, string accountEmailAddress, int maxEmails = 50)
         {
             try
             {
@@ -82,7 +82,7 @@ namespace FalconBackend.Services
                 // Get messages from the user's mailbox using new v5 API
                 var messages = await graphServiceClient.Me.Messages.GetAsync((requestConfiguration) =>
                 {
-                    requestConfiguration.QueryParameters.Top = maxEmails;
+                    requestConfiguration.QueryParameters.Top = maxEmails * 2; // Get more to account for filtering
                     requestConfiguration.QueryParameters.Orderby = new[] { "receivedDateTime desc" };
                 });
 
@@ -94,8 +94,21 @@ namespace FalconBackend.Services
                     {
                         try
                         {
+                            // Filter out sent emails - only process emails where the user is a recipient
+                            // Check if the sender is the current user (indicating it's a sent email)
+                            if (message.From?.EmailAddress?.Address != null && 
+                                message.From.EmailAddress.Address.Equals(accountEmailAddress, StringComparison.OrdinalIgnoreCase))
+                            {
+                                _logger.LogDebug($"Skipping sent email: {message.Subject}");
+                                continue; // Skip sent emails
+                            }
+
                             var mailReceived = await ConvertToMailReceivedAsync(message, mailAccountId, accessToken, userEmail);
                             emailList.Add(mailReceived);
+                            
+                            // Stop if we have enough received emails
+                            if (emailList.Count >= maxEmails)
+                                break;
                         }
                         catch (Exception ex)
                         {
