@@ -67,8 +67,8 @@ namespace FalconBackend.Services
             user.LastLogin = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            // Refresh tokens and sync emails for all user's mail accounts (background task)
-            _ = Task.Run(async () => await RefreshTokensAndSyncEmailsAsync(email));
+            // Refresh tokens and sync emails for all user's mail accounts (synchronous - wait for completion)
+            await RefreshTokensAndSyncEmailsAsync(email);
 
             return new LoginResponseDto
             {
