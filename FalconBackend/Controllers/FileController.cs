@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using FalconBackend.Services;
 using System.IO;
+using FalconBackend.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FalconBackend.Controllers
 {
@@ -13,15 +15,17 @@ namespace FalconBackend.Controllers
     {
         private readonly FileStorageService _fileStorageService;
         private readonly IWebHostEnvironment _environment;
+        private readonly AppDbContext _context;
 
-        public FileController(FileStorageService fileStorageService, IWebHostEnvironment environment)
+        public FileController(FileStorageService fileStorageService, IWebHostEnvironment environment, AppDbContext context)
         {
             _fileStorageService = fileStorageService;
             _environment = environment;
+            _context = context;
         }
 
-        [HttpGet("attachments/{*filePath}")]
-        public IActionResult GetAttachment(string filePath)
+        [HttpGet("attachment/{mailId}/{attachmentIndex}")]
+        public async Task<IActionResult> GetAttachmentByMailId(string mailId, int attachmentIndex)
         {
             try
             {
@@ -32,41 +36,41 @@ namespace FalconBackend.Controllers
                     return Unauthorized("User not authenticated");
                 }
 
-                // Validate that the file path belongs to the authenticated user
-                if (!filePath.StartsWith($"User_{userEmail}/"))
+                // Find the mail by mailId and include attachments
+                var mail = await _context.Mails
+                    .Include(m => m.Attachments)
+                    .Include(m => m.MailAccount)
+                    .Where(m => m.MailId.ToString() == mailId && m.MailAccount.AppUserEmail == userEmail)
+                    .FirstOrDefaultAsync();
+
+                if (mail == null)
                 {
-                    return Forbid("Access denied to this file");
+                    return NotFound("Mail not found or access denied");
+                }
+
+                if (attachmentIndex < 0 || attachmentIndex >= mail.Attachments.Count)
+                {
+                    return NotFound("Attachment not found");
+                }
+
+                var attachment = mail.Attachments.Skip(attachmentIndex).First();
+                
+                // Get the file path from the attachment
+                var filePath = attachment.FilePath;
+                var fileName = attachment.Name;
+
+                if (string.IsNullOrEmpty(filePath))
+                {
+                    return NotFound("File path not found");
                 }
 
                 // Construct the full file path
                 var storagePath = Path.Combine(_environment.ContentRootPath, "Storage");
                 var fullFilePath = Path.Combine(storagePath, filePath);
 
-                // Debug logging
-                Console.WriteLine($"Requested file path: {filePath}");
-                Console.WriteLine($"Storage path: {storagePath}");
-                Console.WriteLine($"Full file path: {fullFilePath}");
-                Console.WriteLine($"File exists: {System.IO.File.Exists(fullFilePath)}");
-
                 // Check if file exists
                 if (!System.IO.File.Exists(fullFilePath))
                 {
-                    // Try to list files in the directory to debug
-                    var directoryPath = Path.GetDirectoryName(fullFilePath);
-                    if (Directory.Exists(directoryPath))
-                    {
-                        var files = Directory.GetFiles(directoryPath);
-                        Console.WriteLine($"Files in directory {directoryPath}:");
-                        foreach (var file in files)
-                        {
-                            Console.WriteLine($"  - {Path.GetFileName(file)}");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Directory does not exist: {directoryPath}");
-                    }
-                    
                     return NotFound($"File not found: {filePath}");
                 }
 
@@ -75,16 +79,18 @@ namespace FalconBackend.Controllers
                 var contentType = GetContentType(fileInfo.Extension);
 
                 // Read and return the file
-                var fileBytes = System.IO.File.ReadAllBytes(fullFilePath);
-                return File(fileBytes, contentType, fileInfo.Name);
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(fullFilePath);
+                return File(fileBytes, contentType, fileName);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in GetAttachment: {ex.Message}");
+                Console.WriteLine($"Error in GetAttachmentByMailId: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        
 
         private string GetContentType(string extension)
         {

@@ -72,12 +72,12 @@ const EmailView = ({
   const hasAttachments =
     Array.isArray(email.attachments) && email.attachments.length > 0;
 
-  // Function to create authenticated blob URL for images
-  const createImageBlobUrl = async (filePath) => {
-    if (!authToken || !filePath) return null;
+  // Function to create authenticated blob URL for images using mail ID
+  const createImageBlobUrl = async (mailId, attachmentIndex) => {
+    if (!authToken || !mailId || attachmentIndex === undefined) return null;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/file/Storage/${filePath}`, {
+      const response = await fetch(`${API_BASE_URL}/api/file/attachment/${mailId}/${attachmentIndex}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -95,15 +95,15 @@ const EmailView = ({
     }
   };
 
-  // Function to handle file download with authentication
-  const handleDownload = async (filePath, fileName) => {
-    if (!authToken || !filePath) {
+  // Function to handle file download with authentication using mail ID
+  const handleDownload = async (mailId, attachmentIndex, fileName) => {
+    if (!authToken || !mailId || attachmentIndex === undefined) {
       toast.error("Authentication required for download");
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/file/Storage/${filePath}`, {
+      const response = await fetch(`${API_BASE_URL}/api/file/attachment/${mailId}/${attachmentIndex}`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -131,21 +131,21 @@ const EmailView = ({
   };
 
   // Component for authenticated image display
-  const AuthenticatedImage = ({ filePath, alt, className }) => {
+  const AuthenticatedImage = ({ mailId, attachmentIndex, alt, className }) => {
     const [imageUrl, setImageUrl] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
       const loadImage = async () => {
-        if (!filePath || !authToken) {
+        if (!mailId || attachmentIndex === undefined || !authToken) {
           setHasError(true);
           setIsLoading(false);
           return;
         }
 
         try {
-          const blobUrl = await createImageBlobUrl(filePath);
+          const blobUrl = await createImageBlobUrl(mailId, attachmentIndex);
           if (blobUrl) {
             setImageUrl(blobUrl);
           } else {
@@ -167,7 +167,7 @@ const EmailView = ({
           window.URL.revokeObjectURL(imageUrl);
         }
       };
-    }, [filePath, authToken]);
+    }, [mailId, attachmentIndex, authToken]);
 
     if (isLoading) {
       return (
@@ -287,7 +287,7 @@ const EmailView = ({
                 <div className="email-view-attachments">
                   <h4>Attachments:</h4>
                   <ul>
-                    {email.attachments.map((att, index) => {
+                                         {email.attachments.map((att, index) => {
                                                                     const isImage = att.name && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(att.name);
                       
                                              return (
@@ -297,7 +297,8 @@ const EmailView = ({
                                 {isImage && (
                                   <div className="attachment-thumbnail">
                                     <AuthenticatedImage 
-                                      filePath={att.filePath}
+                                      mailId={email.mailId}
+                                      attachmentIndex={index}
                                       alt={att.name}
                                       className="attachment-image"
                                     />
@@ -314,7 +315,7 @@ const EmailView = ({
                              </div>
                                                            <div className="attachment-actions">
                                 <button 
-                                  onClick={() => handleDownload(att.filePath, att.name)}
+                                  onClick={() => handleDownload(email.mailId, index, att.name)}
                                   className="attachment-download-link"
                                 >
                                   Download

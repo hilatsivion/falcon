@@ -204,6 +204,27 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "FalconBackend.Controllers.FileController",
+    "Method": "GetAttachmentByMailId",
+    "RelativePath": "api/File/attachment/{mailId}/{attachmentIndex}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "mailId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "attachmentIndex",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "FalconBackend.Controllers.MailController",
     "Method": "GetAllEmailsForAccount",
     "RelativePath": "api/mail/account/{mailAccountId}/emails",
