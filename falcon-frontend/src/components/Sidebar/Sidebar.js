@@ -46,22 +46,30 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
   const handleRefreshEmails = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/oauth/sync-emails`, {
+      // First, refresh tokens and sync emails (same as login process)
+      const response = await fetch(`${API_BASE_URL}/api/oauth/refresh-and-sync`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
+      
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || "Failed to refresh emails");
       }
-      toast.success("Emails refreshed successfully!");
-      // Optionally refresh the current page data
-      window.location.reload();
+      
+      const result = await response.json();
+      toast.success(result.message || "Emails refreshed successfully!");
+      
+      // Wait a moment for any background processes to complete
+      setTimeout(() => {
+        // Force a full page refresh (like F5)
+        window.location.reload();
+      }, 1000);
+      
     } catch (err) {
       toast.error(`Failed to refresh emails: ${err.message}`);
-    } finally {
       setRefreshing(false);
     }
   };

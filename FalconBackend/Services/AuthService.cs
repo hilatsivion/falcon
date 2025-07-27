@@ -80,7 +80,7 @@ namespace FalconBackend.Services
         /// <summary>
         /// Refresh tokens and sync emails for all user's mail accounts on login
         /// </summary>
-        private async Task RefreshTokensAndSyncEmailsAsync(string userEmail)
+        public async Task RefreshTokensAndSyncEmailsAsync(string userEmail)
         {
             using (var scope = _serviceProvider.CreateScope())
             {

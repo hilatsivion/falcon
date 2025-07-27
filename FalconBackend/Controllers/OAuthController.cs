@@ -13,12 +13,14 @@ namespace FalconBackend.Controllers
     {
         private readonly OutlookService _outlookService;
         private readonly UserService _userService;
+        private readonly AuthService _authService;
         private readonly ILogger<OAuthController> _logger;
 
-        public OAuthController(OutlookService outlookService, UserService userService, ILogger<OAuthController> logger)
+        public OAuthController(OutlookService outlookService, UserService userService, AuthService authService, ILogger<OAuthController> logger)
         {
             _outlookService = outlookService ?? throw new ArgumentNullException(nameof(outlookService));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -231,6 +233,40 @@ namespace FalconBackend.Controllers
             {
                 _logger.LogError($"Error syncing emails: {ex.Message}");
                 return StatusCode(500, new { error = "Failed to sync emails", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Refresh tokens and sync emails (same as login process)
+        /// This endpoint performs the complete sync process including token refresh
+        /// </summary>
+        [HttpPost("refresh-and-sync")]
+        [Authorize]
+        public async Task<IActionResult> RefreshAndSync()
+        {
+            try
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    return BadRequest("User email not found in token");
+                }
+
+                _logger.LogInformation($"Refresh and sync requested for user {userEmail}");
+
+                // Perform the same sync process as login
+                await _authService.RefreshTokensAndSyncEmailsAsync(userEmail);
+
+                return Ok(new 
+                { 
+                    message = "Emails refreshed and synced successfully!",
+                    timestamp = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in refresh and sync: {ex.Message}");
+                return StatusCode(500, new { error = "Failed to refresh and sync emails", details = ex.Message });
             }
         }
     }
