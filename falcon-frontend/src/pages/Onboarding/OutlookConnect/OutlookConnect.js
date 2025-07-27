@@ -59,20 +59,7 @@ const OutlookConnectPage = () => {
           document.title,
           window.location.pathname
         );
-        // Check user profile for Outlook connection flag
-        try {
-          const profileRes = await fetch(`${API_BASE_URL}/api/auth/profile`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const profile = await profileRes.json();
-          // Adjust the flag name as needed (hasOutlookConnection or isOutlookConnected)
-          if (profile.hasOutlookConnection || profile.isOutlookConnected) {
-            navigate("/");
-          }
-        } catch (profileErr) {
-          // If profile check fails, still allow navigation
-          navigate("/");
-        }
+        navigate("/");
       } else {
         throw new Error(result.message || "Token exchange failed");
       }
