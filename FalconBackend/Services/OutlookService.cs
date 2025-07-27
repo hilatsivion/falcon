@@ -75,12 +75,12 @@ namespace FalconBackend.Services
         {
             try
             {
-                _logger.LogInformation($"Fetching emails for account {mailAccountId}");
+                _logger.LogInformation($"Fetching received emails for account {mailAccountId}");
                 
                 var graphServiceClient = CreateGraphServiceClient(accessToken);
                 
-                // Get messages from the user's mailbox using new v5 API
-                var messages = await graphServiceClient.Me.Messages.GetAsync((requestConfiguration) =>
+                // Get messages from the user's inbox folder (received emails only)
+                var messages = await graphServiceClient.Me.MailFolders["Inbox"].Messages.GetAsync((requestConfiguration) =>
                 {
                     requestConfiguration.QueryParameters.Top = maxEmails;
                     requestConfiguration.QueryParameters.Orderby = new[] { "receivedDateTime desc" };
@@ -94,8 +94,19 @@ namespace FalconBackend.Services
                     {
                         try
                         {
-                            var mailReceived = await ConvertToMailReceivedAsync(message, mailAccountId, accessToken, userEmail);
-                            emailList.Add(mailReceived);
+                            // Only process emails that are actually received (not sent by the user)
+                            // Check if the sender is different from the user's email
+                            var senderEmail = GetSenderEmail(message);
+                            if (!string.IsNullOrEmpty(senderEmail) && 
+                                !senderEmail.Equals(userEmail, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var mailReceived = await ConvertToMailReceivedAsync(message, mailAccountId, accessToken, userEmail);
+                                emailList.Add(mailReceived);
+                            }
+                            else
+                            {
+                                _logger.LogInformation($"Skipping email from {senderEmail} as it appears to be sent by the user");
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -105,13 +116,13 @@ namespace FalconBackend.Services
                     }
                 }
 
-                _logger.LogInformation($"Successfully fetched {emailList.Count} emails for account {mailAccountId}");
+                _logger.LogInformation($"Successfully fetched {emailList.Count} received emails for account {mailAccountId}");
                 return emailList;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error fetching emails for account {mailAccountId}: {ex.Message}");
-                throw new Exception($"Failed to fetch emails from Outlook: {ex.Message}", ex);
+                _logger.LogError($"Error fetching received emails for account {mailAccountId}: {ex.Message}");
+                throw new Exception($"Failed to fetch received emails from Outlook: {ex.Message}", ex);
             }
         }
 
@@ -354,6 +365,19 @@ namespace FalconBackend.Services
             }
 
             return "Unknown Sender";
+        }
+
+        /// <summary>
+        /// Extracts the sender's email address from a message
+        /// </summary>
+        private string GetSenderEmail(Message message)
+        {
+            if (message.From?.EmailAddress?.Address != null)
+            {
+                return message.From.EmailAddress.Address;
+            }
+            
+            return string.Empty;
         }
 
         /// <summary>
