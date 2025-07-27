@@ -28,6 +28,14 @@ const AppRoutes = () => {
           <Route path="/loadingData" element={<LoadingDataScreen />} />
           <Route path="/outlook-connect" element={<OutlookConnect />} />
           <Route
+            path="/"
+            element={
+              <MainLayout>
+                <GenericEmailPage />
+              </MainLayout>
+            }
+          />
+          <Route
             path="/inbox"
             element={
               <MainLayout>
