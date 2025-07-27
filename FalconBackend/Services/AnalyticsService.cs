@@ -405,9 +405,6 @@ namespace FalconBackend.Services
         /// </summary>
         public async Task<List<object>> GetEmailCategoryBreakdownAsync(string userEmail)
         {
-            var currentMonth = DateTime.UtcNow.Date.AddDays(1 - DateTime.UtcNow.Day);
-            var nextMonth = currentMonth.AddMonths(1);
-
             var userMailAccountIds = await _context.MailAccounts
                 .Where(ma => ma.AppUserEmail == userEmail)
                 .Select(ma => ma.MailAccountId)
@@ -418,43 +415,62 @@ namespace FalconBackend.Services
                 return new List<object>();
             }
 
-            var allEmails = await _context.Mails
+            // Get all received emails with their tags for all time
+            var emailsWithTags = await _context.MailReceived
+                .Include(m => m.MailTags)
+                .ThenInclude(mt => mt.Tag)
                 .Where(m => userMailAccountIds.Contains(m.MailAccountId) &&
-                           ((m is MailReceived && ((MailReceived)m).TimeReceived >= currentMonth && ((MailReceived)m).TimeReceived < nextMonth) ||
-                            (m is MailSent && ((MailSent)m).TimeSent >= currentMonth && ((MailSent)m).TimeSent < nextMonth)))
+                           !m.IsDeleted)
                 .ToListAsync();
 
-            if (!allEmails.Any())
+            if (!emailsWithTags.Any())
             {
                 return new List<object> { new { name = "No Data", value = 100.0 } };
             }
 
-            var totalEmails = allEmails.Count;
-            var receivedCount = allEmails.OfType<MailReceived>().Count(m => !m.IsSpam && !m.IsDeleted);
-            var sentCount = allEmails.OfType<MailSent>().Count(m => !m.IsDeleted);
-            var spamCount = allEmails.Count(m => m.IsSpam && !m.IsDeleted);
-            var favoriteCount = allEmails.Count(m => m.IsFavorite && !m.IsDeleted);
-            var deletedCount = allEmails.Count(m => m.IsDeleted);
+            // Count emails by tag
+            var tagCounts = new Dictionary<string, int>();
+            var totalEmailsWithTags = 0;
 
+            foreach (var email in emailsWithTags)
+            {
+                if (email.MailTags != null && email.MailTags.Any())
+                {
+                    foreach (var mailTag in email.MailTags)
+                    {
+                        if (mailTag.Tag != null)
+                        {
+                            var tagName = mailTag.Tag.TagName;
+                            if (!tagCounts.ContainsKey(tagName))
+                            {
+                                tagCounts[tagName] = 0;
+                            }
+                            tagCounts[tagName]++;
+                        }
+                    }
+                    totalEmailsWithTags++;
+                }
+            }
+
+            // If no emails have tags, return "No Tags" category
+            if (totalEmailsWithTags == 0)
+            {
+                return new List<object> { new { name = "No Tags", value = 100.0 } };
+            }
+
+            // Calculate percentages and create result
             var categories = new List<object>();
+            foreach (var tagCount in tagCounts.OrderByDescending(tc => tc.Value))
+            {
+                var percentage = Math.Round((double)tagCount.Value / totalEmailsWithTags * 100, 1);
+                categories.Add(new { name = tagCount.Key, value = percentage });
+            }
 
-            if (receivedCount > 0)
-                categories.Add(new { name = "Received", value = Math.Round((double)receivedCount / totalEmails * 100, 1) });
-            
-            if (sentCount > 0)
-                categories.Add(new { name = "Sent", value = Math.Round((double)sentCount / totalEmails * 100, 1) });
-            
-            if (spamCount > 0)
-                categories.Add(new { name = "Spam", value = Math.Round((double)spamCount / totalEmails * 100, 1) });
-            
-            if (favoriteCount > 0)
-                categories.Add(new { name = "Favorites", value = Math.Round((double)favoriteCount / totalEmails * 100, 1) });
-            
-            if (deletedCount > 0)
-                categories.Add(new { name = "Deleted", value = Math.Round((double)deletedCount / totalEmails * 100, 1) });
-
+            // If no categories were added (edge case), add "No Tags"
             if (!categories.Any())
-                categories.Add(new { name = "Other", value = 100.0 });
+            {
+                categories.Add(new { name = "No Tags", value = 100.0 });
+            }
 
             return categories;
         }
