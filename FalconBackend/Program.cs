@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.FileProviders;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -132,6 +133,15 @@ app.UseHttpsRedirection();
 app.UseRouting(); 
 
 app.UseCors(myAllowSpecificOrigins);
+
+// Enable static file serving for attachments (JPG, PNG, etc.)
+app.UseStaticFiles(); // This serves files from wwwroot
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "Storage")),
+    RequestPath = "/attachments"
+});
 
 app.UseAuthentication(); // Needed for JWT to work
 app.UseAuthorization();
