@@ -161,14 +161,50 @@ const EmailView = ({
                 <div className="email-view-attachments">
                   <h4>Attachments:</h4>
                   <ul>
-                    {email.attachments.map((att, index) => (
-                      <li key={`att-${index}`}>
-                        <span>
-                          {att.name} ({(att.fileSize / 1024).toFixed(1)} KB) -{" "}
-                          <i>Download link NYI</i>
-                        </span>
-                      </li>
-                    ))}
+                    {email.attachments.map((att, index) => {
+                      // Convert the file path to a URL for the frontend
+                      const getAttachmentUrl = (filePath) => {
+                        if (!filePath) return null;
+                        
+                        // Remove the "Storage/" prefix and add "/attachments/" prefix
+                        const relativePath = filePath.replace(/^Storage\//, '');
+                        return `/attachments/${relativePath}`;
+                      };
+
+                      const attachmentUrl = getAttachmentUrl(att.filePath);
+                      const isImage = att.name && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(att.name);
+                      
+                      return (
+                        <li key={`att-${index}`}>
+                          <div className="attachment-item">
+                            <span className="attachment-name">
+                              {att.name} ({(att.fileSize / 1024).toFixed(1)} KB)
+                            </span>
+                            <div className="attachment-actions">
+                              {isImage && attachmentUrl && (
+                                <a 
+                                  href={attachmentUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="attachment-preview-link"
+                                >
+                                  Preview
+                                </a>
+                              )}
+                              {attachmentUrl && (
+                                <a 
+                                  href={attachmentUrl} 
+                                  download={att.name}
+                                  className="attachment-download-link"
+                                >
+                                  Download
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
