@@ -174,36 +174,42 @@ const EmailView = ({
                       const attachmentUrl = getAttachmentUrl(att.filePath);
                       const isImage = att.name && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(att.name);
                       
-                      return (
-                        <li key={`att-${index}`}>
-                          <div className="attachment-item">
-                            <span className="attachment-name">
-                              {att.name} ({(att.fileSize / 1024).toFixed(1)} KB)
-                            </span>
-                            <div className="attachment-actions">
-                              {isImage && attachmentUrl && (
-                                <a 
-                                  href={attachmentUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="attachment-preview-link"
-                                >
-                                  Preview
-                                </a>
-                              )}
-                              {attachmentUrl && (
-                                <a 
-                                  href={attachmentUrl} 
-                                  download={att.name}
-                                  className="attachment-download-link"
-                                >
-                                  Download
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </li>
-                      );
+                                             return (
+                         <li key={`att-${index}`}>
+                           <div className="attachment-item">
+                             <div className="attachment-info">
+                               {isImage && attachmentUrl && (
+                                 <div className="attachment-thumbnail">
+                                   <img 
+                                     src={attachmentUrl} 
+                                     alt={att.name}
+                                     className="attachment-image"
+                                   />
+                                 </div>
+                               )}
+                               <div className="attachment-details">
+                                 <span className="attachment-name">
+                                   {att.name}
+                                 </span>
+                                 <span className="attachment-size">
+                                   ({(att.fileSize / 1024).toFixed(1)} KB)
+                                 </span>
+                               </div>
+                             </div>
+                             <div className="attachment-actions">
+                               {attachmentUrl && (
+                                 <a 
+                                   href={attachmentUrl} 
+                                   download={att.name}
+                                   className="attachment-download-link"
+                                 >
+                                   Download
+                                 </a>
+                               )}
+                             </div>
+                           </div>
+                         </li>
+                       );
                     })}
                   </ul>
                 </div>
