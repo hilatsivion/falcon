@@ -509,6 +509,7 @@ namespace FalconBackend.Services
             {
                 throw new InvalidOperationException("Sender mail account not found.");
             }
+            string senderDisplayAddress = senderAccount.EmailAddress;
 
             // Actually send the email via Outlook API
             Console.WriteLine($"--- Sending email via Outlook API: {request.Subject} ---");
@@ -520,43 +521,100 @@ namespace FalconBackend.Services
             }
             Console.WriteLine($"--- Email sent successfully via Outlook API ---");
 
-            // Save attachments to file system for future sync
-            if (attachments != null && attachments.Any())
+            var executionStrategy = _context.Database.CreateExecutionStrategy();
+
+            await executionStrategy.ExecuteAsync(async () =>
             {
+                using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    foreach (var attachment in attachments)
+                    var mailSent = new MailSent
                     {
-                        using var stream = attachment.OpenReadStream();
-                        using var memoryStream = new MemoryStream();
-                        await stream.CopyToAsync(memoryStream);
-                        var bytes = memoryStream.ToArray();
+                        MailAccountId = request.MailAccountId,
+                        Subject = request.Subject,
+                        Body = request.Body,
+                        TimeSent = DateTime.UtcNow,
+                        Recipients = request.Recipients.Select(email => new Recipient { Email = email }).ToList(),
+                        Attachments = new List<Attachments>()
+                    };
 
-                        await _fileStorageService.SaveAttachmentAsync(
-                            bytes,
-                            attachment.FileName,
-                            senderAccount.AppUserEmail,
-                            request.MailAccountId,
-                            "Sent"
-                        );
+                    _context.MailSent.Add(mailSent);
+                    await _context.SaveChangesAsync();
+
+                    await SaveAttachments(attachments, mailSent.MailId, mailSent.MailAccountId, "Sent", mailSent.Attachments);
+                    await _context.SaveChangesAsync(); // Save attachments added in SaveAttachments
+
+                    
+                    List<MailReceived> receivedCopies = new List<MailReceived>();
+                    foreach (var recipientEmail in request.Recipients)
+                    {
+                        var recipientMailAccount = await _context.MailAccounts
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(ma => ma.EmailAddress == recipientEmail);
+
+                        if (recipientMailAccount != null)
+                        {
+                            var receivedAttachments = new List<Attachments>();
+                            // Copy attachment records after saving mailSent and its attachments
+                            foreach (var sentAttachment in mailSent.Attachments)
+                            {
+                                receivedAttachments.Add(new Attachments
+                                {
+                                    // MailId will be set by EF Core relationship
+                                    Name = sentAttachment.Name,
+                                    FileType = sentAttachment.FileType,
+                                    FileSize = sentAttachment.FileSize,
+                                    FilePath = sentAttachment.FilePath // Link to the same physical file
+                                });
+                            }
+
+                            var mailReceived = new MailReceived
+                            {
+                                MailAccountId = recipientMailAccount.MailAccountId,
+                                Sender = senderDisplayAddress,
+                                Subject = request.Subject,
+                                Body = request.Body,
+                                TimeReceived = mailSent.TimeSent,
+                                IsRead = false,
+                                IsFavorite = false,
+                                Attachments = receivedAttachments, // Assign copied attachment records
+                                Recipients = new List<Recipient> { new Recipient { Email = recipientEmail } },
+                                MailTags = new List<MailTag>()
+                            };
+                            receivedCopies.Add(mailReceived);
+
+                            if (_analyticsService != null)
+                            {
+                                await _analyticsService.OnEmailReceivedTodayAsync(recipientMailAccount.AppUserEmail);
+                            }
+                        }
                     }
-                    Console.WriteLine($"--- Attachments saved to file system for future sync ---");
+
+                    if (receivedCopies.Any())
+                    {
+                        _context.MailReceived.AddRange(receivedCopies);
+                    }
+
+                    await _context.SaveChangesAsync(); // Save received copies and their attachments
+
+                    await transaction.CommitAsync();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"--- Warning: Failed to save attachments to file system: {ex.Message} ---");
-                    // Don't fail the send operation if attachment saving fails
+                    if (transaction != null)
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                    Console.WriteLine($"Error during SendMail transaction: {ex.Message}");
+                    throw;
                 }
-            }
+            });
 
-            // Update analytics for sent email
             var senderUserEmail = senderAccount.AppUserEmail;
             if (!string.IsNullOrEmpty(senderUserEmail) && _analyticsService != null)
             {
                 await _analyticsService.OnEmailSentTodayAsync(senderUserEmail);
             }
-
-            Console.WriteLine($"--- Email sent successfully. Will appear in database after next sync ---");
         }
 
         public async Task<MailReceivedDto?> GetReceivedMailByIdAsync(string userEmail, int mailId)
