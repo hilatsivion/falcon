@@ -161,14 +161,55 @@ const EmailView = ({
                 <div className="email-view-attachments">
                   <h4>Attachments:</h4>
                   <ul>
-                    {email.attachments.map((att, index) => (
-                      <li key={`att-${index}`}>
-                        <span>
-                          {att.name} ({(att.fileSize / 1024).toFixed(1)} KB) -{" "}
-                          <i>Download link NYI</i>
-                        </span>
-                      </li>
-                    ))}
+                    {email.attachments.map((att, index) => {
+                                             // Convert the file path to a URL for the frontend
+                       const getAttachmentUrl = (filePath) => {
+                         if (!filePath) return null;
+                         
+                         // The backend now returns relative paths, just add "/attachments/" prefix
+                         return `/attachments/${filePath}`;
+                       };
+
+                      const attachmentUrl = getAttachmentUrl(att.filePath);
+                      const isImage = att.name && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(att.name);
+                      
+                                             return (
+                         <li key={`att-${index}`}>
+                           <div className="attachment-item">
+                             <div className="attachment-info">
+                               {isImage && attachmentUrl && (
+                                 <div className="attachment-thumbnail">
+                                   <img 
+                                     src={attachmentUrl} 
+                                     alt={att.name}
+                                     className="attachment-image"
+                                   />
+                                 </div>
+                               )}
+                               <div className="attachment-details">
+                                 <span className="attachment-name">
+                                   {att.name}
+                                 </span>
+                                 <span className="attachment-size">
+                                   ({(att.fileSize / 1024).toFixed(1)} KB)
+                                 </span>
+                               </div>
+                             </div>
+                             <div className="attachment-actions">
+                               {attachmentUrl && (
+                                 <a 
+                                   href={attachmentUrl} 
+                                   download={att.name}
+                                   className="attachment-download-link"
+                                 >
+                                   Download
+                                 </a>
+                               )}
+                             </div>
+                           </div>
+                         </li>
+                       );
+                    })}
                   </ul>
                 </div>
               )}

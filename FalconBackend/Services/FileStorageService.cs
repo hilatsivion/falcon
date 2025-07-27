@@ -59,7 +59,9 @@ namespace FalconBackend.Services
                     await file.CopyToAsync(stream);
                 }
 
-                return filePath; // Return the file path for database storage
+                // Return relative path from Storage folder for database storage
+                var relativePath = Path.GetRelativePath(_basePath, filePath);
+                return relativePath.Replace('\\', '/'); // Use forward slashes for web URLs
             }
             catch (Exception ex)
             {
@@ -101,7 +103,9 @@ namespace FalconBackend.Services
 
                 await File.WriteAllBytesAsync(filePath, fileContent);
 
-                return filePath; // Return the file path for database storage
+                // Return relative path from Storage folder for database storage
+                var relativePath = Path.GetRelativePath(_basePath, filePath);
+                return relativePath.Replace('\\', '/'); // Use forward slashes for web URLs
             }
             catch (Exception ex)
             {
