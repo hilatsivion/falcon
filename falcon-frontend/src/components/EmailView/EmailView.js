@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ConfirmPopup from "../Popup/ConfirmPopup";
 import { ReactComponent as ForwardingIcon } from "../../assets/icons/black/forward-icon.svg";
 import { ReactComponent as ReplyIcon } from "../../assets/icons/black/reply-icon.svg";
@@ -16,6 +16,7 @@ import { formatEmailTime } from "../../utils/formatters";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { toast } from "react-toastify";
 import { API_BASE_URL } from "../../config/constants";
+import { useAuth } from "../../context/AuthContext";
 
 const EmailView = ({
   email,
@@ -28,6 +29,7 @@ const EmailView = ({
   isTrashPage,
 }) => {
   const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const { authToken } = useAuth();
 
   if (!email) {
     return null;
@@ -69,6 +71,129 @@ const EmailView = ({
 
   const hasAttachments =
     Array.isArray(email.attachments) && email.attachments.length > 0;
+
+  // Function to create authenticated blob URL for images
+  const createImageBlobUrl = async (filePath) => {
+    if (!authToken || !filePath) return null;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/file/attachments/${filePath}`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load image: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      return window.URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error creating image blob URL:', error);
+      return null;
+    }
+  };
+
+  // Function to handle file download with authentication
+  const handleDownload = async (filePath, fileName) => {
+    if (!authToken || !filePath) {
+      toast.error("Authentication required for download");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/file/attachments/${filePath}`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Download started!");
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error("Download failed. Please try again.");
+    }
+  };
+
+  // Component for authenticated image display
+  const AuthenticatedImage = ({ filePath, alt, className }) => {
+    const [imageUrl, setImageUrl] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
+
+    useEffect(() => {
+      const loadImage = async () => {
+        if (!filePath || !authToken) {
+          setHasError(true);
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          const blobUrl = await createImageBlobUrl(filePath);
+          if (blobUrl) {
+            setImageUrl(blobUrl);
+          } else {
+            setHasError(true);
+          }
+        } catch (error) {
+          console.error('Error loading image:', error);
+          setHasError(true);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      loadImage();
+
+      // Cleanup function to revoke blob URL when component unmounts
+      return () => {
+        if (imageUrl) {
+          window.URL.revokeObjectURL(imageUrl);
+        }
+      };
+    }, [filePath, authToken]);
+
+    if (isLoading) {
+      return (
+        <div className={`${className} loading-placeholder`}>
+          <div className="loading-spinner"></div>
+        </div>
+      );
+    }
+
+    if (hasError || !imageUrl) {
+      return (
+        <div className={`${className} error-placeholder`}>
+          <span>⚠️</span>
+        </div>
+      );
+    }
+
+    return (
+      <img 
+        src={imageUrl} 
+        alt={alt}
+        className={className}
+        onError={() => setHasError(true)}
+      />
+    );
+  };
 
   return (
     <>
@@ -163,36 +288,18 @@ const EmailView = ({
                   <h4>Attachments:</h4>
                   <ul>
                     {email.attachments.map((att, index) => {
-                                             // Convert the file path to a URL for the frontend
-                       const getAttachmentUrl = (filePath) => {
-                         if (!filePath) return null;
-                         
-                         // Use the new FileController endpoint with full API base URL
-                         return `${API_BASE_URL}/api/file/attachments/${filePath}`;
-                       };
-
-                      const attachmentUrl = getAttachmentUrl(att.filePath);
-                      const isImage = att.name && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(att.name);
+                                                                    const isImage = att.name && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(att.name);
                       
                                              return (
                          <li key={`att-${index}`}>
                            <div className="attachment-item">
-                             <div className="attachment-info">
-                                                               {isImage && attachmentUrl && (
+                                                           <div className="attachment-info">
+                                {isImage && (
                                   <div className="attachment-thumbnail">
-                                    <img 
-                                      src={attachmentUrl} 
+                                    <AuthenticatedImage 
+                                      filePath={att.filePath}
                                       alt={att.name}
                                       className="attachment-image"
-                                      onError={(e) => {
-                                        console.error('Image failed to load:', attachmentUrl);
-                                        console.error('Error:', e);
-                                        // Fallback to a placeholder or hide the image
-                                        e.target.style.display = 'none';
-                                      }}
-                                      onLoad={() => {
-                                        console.log('Image loaded successfully:', attachmentUrl);
-                                      }}
                                     />
                                   </div>
                                 )}
@@ -205,17 +312,14 @@ const EmailView = ({
                                  </span>
                                </div>
                              </div>
-                             <div className="attachment-actions">
-                               {attachmentUrl && (
-                                 <a 
-                                   href={attachmentUrl} 
-                                   download={att.name}
-                                   className="attachment-download-link"
-                                 >
-                                   Download
-                                 </a>
-                               )}
-                             </div>
+                                                           <div className="attachment-actions">
+                                <button 
+                                  onClick={() => handleDownload(att.filePath, att.name)}
+                                  className="attachment-download-link"
+                                >
+                                  Download
+                                </button>
+                              </div>
                            </div>
                          </li>
                        );
