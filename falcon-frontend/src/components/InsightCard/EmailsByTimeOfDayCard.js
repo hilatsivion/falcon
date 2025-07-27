@@ -42,6 +42,7 @@ const EmailsByTimeOfDayCard = () => {
         if (!response.ok)
           throw new Error("Failed to fetch emails by time of day");
         const result = await response.json();
+        console.log(result);
         setData(result);
       } catch (err) {
         setError(err.message);
@@ -94,7 +95,7 @@ const EmailsByTimeOfDayCard = () => {
               cursor={{ fill: "#f3f3f3" }}
               formatter={(value) => [`${value} emails`, "Avg"]}
             />
-            <Bar dataKey="average" radius={[8, 8, 0, 0]}>
+            <Bar dataKey="avg" radius={[8, 8, 0, 0]}>
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
