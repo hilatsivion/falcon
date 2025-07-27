@@ -377,7 +377,10 @@ namespace FalconBackend.Controllers
 
                 await _mailService.SendMailAsync(request, attachments);
 
-                return Ok("Mail sent successfully.");
+                return Ok(new { 
+                    message = "Mail sent successfully.",
+                    note = "The email will appear in your Sent folder after the next sync."
+                });
             }
             catch (KeyNotFoundException ex) 
             {
