@@ -148,7 +148,7 @@ namespace FalconBackend.Services
             Console.WriteLine($"--- Syncing received emails for account {mailAccount.EmailAddress} ---");
             
             // Fetch received emails from Outlook
-            var outlookEmails = await _outlookService.GetUserEmailsAsync(accessToken, mailAccount.MailAccountId, mailAccount.AppUserEmail, mailAccount.EmailAddress, 100);
+            var outlookEmails = await _outlookService.GetUserEmailsAsync(accessToken, mailAccount.MailAccountId, mailAccount.AppUserEmail, 100);
 
             if (!outlookEmails.Any())
             {
@@ -469,7 +469,7 @@ namespace FalconBackend.Services
             Console.WriteLine($"--- Initializing received emails for account {mailAccount.EmailAddress} ---");
             
             // Fetch emails from Outlook using the valid token
-            var outlookEmails = await _outlookService.GetUserEmailsAsync(accessToken, mailAccount.MailAccountId, mailAccount.AppUserEmail, mailAccount.EmailAddress, 50);
+            var outlookEmails = await _outlookService.GetUserEmailsAsync(accessToken, mailAccount.MailAccountId, mailAccount.AppUserEmail, 50);
 
             if (!outlookEmails.Any())
             {
