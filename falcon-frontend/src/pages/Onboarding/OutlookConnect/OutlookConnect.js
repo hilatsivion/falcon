@@ -67,11 +67,11 @@ const OutlookConnectPage = () => {
           const profile = await profileRes.json();
           // Adjust the flag name as needed (hasOutlookConnection or isOutlookConnected)
           if (profile.hasOutlookConnection || profile.isOutlookConnected) {
-            navigate("/loadingData");
+            navigate("/");
           }
         } catch (profileErr) {
           // If profile check fails, still allow navigation
-          navigate("/loadingData");
+          navigate("/");
         }
       } else {
         throw new Error(result.message || "Token exchange failed");
