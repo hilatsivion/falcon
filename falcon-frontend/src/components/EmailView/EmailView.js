@@ -162,14 +162,13 @@ const EmailView = ({
                   <h4>Attachments:</h4>
                   <ul>
                     {email.attachments.map((att, index) => {
-                      // Convert the file path to a URL for the frontend
-                      const getAttachmentUrl = (filePath) => {
-                        if (!filePath) return null;
-                        
-                        // Remove the "Storage/" prefix and add "/attachments/" prefix
-                        const relativePath = filePath.replace(/^Storage\//, '');
-                        return `/attachments/${relativePath}`;
-                      };
+                                             // Convert the file path to a URL for the frontend
+                       const getAttachmentUrl = (filePath) => {
+                         if (!filePath) return null;
+                         
+                         // The backend now returns relative paths, just add "/attachments/" prefix
+                         return `/attachments/${filePath}`;
+                       };
 
                       const attachmentUrl = getAttachmentUrl(att.filePath);
                       const isImage = att.name && /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(att.name);
