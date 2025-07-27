@@ -15,6 +15,7 @@ import { formatEmailTime } from "../../utils/formatters";
 
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { toast } from "react-toastify";
+import { API_BASE_URL } from "../../config/constants";
 
 const EmailView = ({
   email,
@@ -166,8 +167,8 @@ const EmailView = ({
                        const getAttachmentUrl = (filePath) => {
                          if (!filePath) return null;
                          
-                         // The backend now returns relative paths, just add "/attachments/" prefix
-                         return `/attachments/${filePath}`;
+                         // Use the new FileController endpoint with full API base URL
+                         return `${API_BASE_URL}/api/file/attachments/${filePath}`;
                        };
 
                       const attachmentUrl = getAttachmentUrl(att.filePath);
@@ -177,15 +178,24 @@ const EmailView = ({
                          <li key={`att-${index}`}>
                            <div className="attachment-item">
                              <div className="attachment-info">
-                               {isImage && attachmentUrl && (
-                                 <div className="attachment-thumbnail">
-                                   <img 
-                                     src={attachmentUrl} 
-                                     alt={att.name}
-                                     className="attachment-image"
-                                   />
-                                 </div>
-                               )}
+                                                               {isImage && attachmentUrl && (
+                                  <div className="attachment-thumbnail">
+                                    <img 
+                                      src={attachmentUrl} 
+                                      alt={att.name}
+                                      className="attachment-image"
+                                      onError={(e) => {
+                                        console.error('Image failed to load:', attachmentUrl);
+                                        console.error('Error:', e);
+                                        // Fallback to a placeholder or hide the image
+                                        e.target.style.display = 'none';
+                                      }}
+                                      onLoad={() => {
+                                        console.log('Image loaded successfully:', attachmentUrl);
+                                      }}
+                                    />
+                                  </div>
+                                )}
                                <div className="attachment-details">
                                  <span className="attachment-name">
                                    {att.name}

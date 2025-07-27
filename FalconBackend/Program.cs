@@ -134,14 +134,8 @@ app.UseRouting();
 
 app.UseCors(myAllowSpecificOrigins);
 
-// Enable static file serving for attachments (JPG, PNG, etc.)
-app.UseStaticFiles(); // This serves files from wwwroot
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "Storage")),
-    RequestPath = "/attachments"
-});
+// Enable static file serving for wwwroot (if needed for other static files)
+app.UseStaticFiles();
 
 app.UseAuthentication(); // Needed for JWT to work
 app.UseAuthorization();
