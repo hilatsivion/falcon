@@ -59,7 +59,7 @@ const OutlookConnectPage = () => {
           document.title,
           window.location.pathname
         );
-        navigate("/");
+        navigate("/inbox");
       } else {
         throw new Error(result.message || "Token exchange failed");
       }
